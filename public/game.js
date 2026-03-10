@@ -82,6 +82,9 @@ class Bike {
   }
 
   update() {
+    // Trail decay runs ALWAYS (alive or dead)
+    this.decayTrail();
+
     if (!this.alive) return;
     this.frame++;
 
@@ -130,20 +133,19 @@ class Bike {
       }
     }
 
-    // Trail decay — remove old trail points
-    if (this.alive) {
-      while (this.trail.length > 2 && (frameCount - this.trail[0].birth) > this.trailLifetime) {
-        this.trail.shift();
-      }
-      while (this.trailSegments.length > 1 && (frameCount - this.trailSegments[0].birth) > this.trailLifetime) {
-        this.trailSegments.shift();
-      }
-    }
-
     // Wall collision
     if (this.x < WALL_THICKNESS || this.x > MAP_W - WALL_THICKNESS ||
         this.y < WALL_THICKNESS || this.y > MAP_H - WALL_THICKNESS) {
       this.die();
+    }
+  }
+
+  decayTrail() {
+    while (this.trail.length > 2 && (frameCount - this.trail[0].birth) > this.trailLifetime) {
+      this.trail.shift();
+    }
+    while (this.trailSegments.length > 1 && (frameCount - this.trailSegments[0].birth) > this.trailLifetime) {
+      this.trailSegments.shift();
     }
   }
 
@@ -235,12 +237,14 @@ class Bike {
 
       // Trail check
       for (const bike of bikes) {
-        if (!bike.alive && bike !== this) continue;
         const segs = bike.trailSegments;
         const skipLast = (bike === this) ? 10 : 0;
         const len = segs.length - skipLast;
         for (let i = Math.max(0, len - 300); i < len; i++) {
           const s = segs[i];
+          // Skip expired/fading segments
+          const age = frameCount - s.birth;
+          if (age > bike.trailLifetime * 0.9) continue;
           if (pointToSegmentDist(px, py, s.x1, s.y1, s.x2, s.y2) < TRAIL_WIDTH + 3) {
             return d;
           }
@@ -573,6 +577,13 @@ function checkCollisions() {
 
       for (let i = 0; i < len; i++) {
         const s = segs[i];
+        // Skip expired segments (age > lifetime)
+        const age = frameCount - s.birth;
+        if (age > other.trailLifetime) continue;
+        // Segments in their last 10% of life have reduced collision (fading out)
+        const lifeRatio = age / other.trailLifetime;
+        if (lifeRatio > 0.9) continue;
+
         if (pointToSegmentDist(hx, hy, s.x1, s.y1, s.x2, s.y2) < TRAIL_WIDTH + 2) {
           bike.die();
           // Award kill buff to trail owner (if not self-kill)
