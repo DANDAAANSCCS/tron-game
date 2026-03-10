@@ -185,7 +185,11 @@ function selectItem(index) {
 
   // Handle menu actions
   const actions = ['start', 'multiplayer', 'options', 'ranking'];
-  console.log(`Selected: ${actions[index]}`);
+  if (actions[index] === 'start') {
+    setTimeout(() => {
+      window.location.href = '/game.html';
+    }, 500);
+  }
 }
 
 // ── Simple Audio Feedback (Web Audio API) ──
