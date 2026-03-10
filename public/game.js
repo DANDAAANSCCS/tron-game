@@ -15,10 +15,12 @@ const PLAYER_SPEED = 4.5;
 const AI_COUNT = 5;
 const TURN_SPEED = 0.045;
 const TRAIL_WIDTH = 3;
-const BOOST_SPEED = 7;
-const BOOST_DURATION = 120; // frames
-const BOOST_COOLDOWN = 300;
+const BOOST_SPEED = 12;
+const BOOST_DURATION = 90; // frames
+const BOOST_COOLDOWN = 240;
 const COLLISION_GRACE = 60; // frames of invulnerability at start
+const BASE_TRAIL_LIFETIME = 180; // 3 seconds at 60fps
+const KILL_BUFF_FRAMES = 30; // +0.5s per kill
 
 // ── Colors ──
 const COLORS = [
@@ -64,12 +66,14 @@ class Bike {
     this.color = COLORS[colorIndex];
     this.isPlayer = isPlayer;
     this.alive = true;
-    this.trail = [{ x, y }];
+    this.trail = [{ x, y, birth: 0 }];
     this.trailSegments = []; // precomputed line segments for collision
     this.boosting = false;
     this.boostTimer = 0;
     this.boostCooldown = 0;
     this.frame = 0;
+    this.trailLifetime = BASE_TRAIL_LIFETIME;
+    this.kills = 0;
 
     // AI properties
     this.aiTurnTarget = angle;
@@ -112,7 +116,7 @@ class Bike {
     const dx = this.x - last.x;
     const dy = this.y - last.y;
     if (dx * dx + dy * dy > 4) {
-      this.trail.push({ x: this.x, y: this.y });
+      this.trail.push({ x: this.x, y: this.y, birth: frameCount });
       // Keep segments array updated
       if (this.trail.length >= 2) {
         const len = this.trail.length;
@@ -121,7 +125,18 @@ class Bike {
           y1: this.trail[len - 2].y,
           x2: this.trail[len - 1].x,
           y2: this.trail[len - 1].y,
+          birth: frameCount,
         });
+      }
+    }
+
+    // Trail decay — remove old trail points
+    if (this.alive) {
+      while (this.trail.length > 2 && (frameCount - this.trail[0].birth) > this.trailLifetime) {
+        this.trail.shift();
+      }
+      while (this.trailSegments.length > 1 && (frameCount - this.trailSegments[0].birth) > this.trailLifetime) {
+        this.trailSegments.shift();
       }
     }
 
@@ -254,15 +269,13 @@ class Bike {
     ctx.lineWidth = TRAIL_WIDTH * 4;
     ctx.shadowColor = this.color.main;
     ctx.shadowBlur = 20;
-    this.drawTrailPath(ctx);
-    ctx.stroke();
+    this.drawTrailPath(ctx, true);
 
     // Trail core
     ctx.shadowBlur = 0;
     ctx.strokeStyle = this.alive ? this.color.glow + '0.7)' : this.color.glow + '0.25)';
     ctx.lineWidth = TRAIL_WIDTH;
-    this.drawTrailPath(ctx);
-    ctx.stroke();
+    this.drawTrailPath(ctx, true);
 
     // Bright head
     if (this.alive) {
@@ -286,8 +299,7 @@ class Bike {
     }
   }
 
-  drawTrailPath(ctx) {
-    ctx.beginPath();
+  drawTrailPath(ctx, useFade = false) {
     // Only draw trail segments in view (with margin)
     const margin = 200;
     const vl = camera.x - margin;
@@ -295,26 +307,44 @@ class Bike {
     const vt = camera.y - margin;
     const vb = camera.y + canvas.height + margin;
 
-    let moved = false;
-    for (let i = 0; i < this.trail.length; i++) {
-      const p = this.trail[i];
-      // rough visibility check
-      if (i > 0) {
-        const prev = this.trail[i - 1];
-        const inView = (p.x > vl && p.x < vr && p.y > vt && p.y < vb) ||
-                       (prev.x > vl && prev.x < vr && prev.y > vt && prev.y < vb);
-        if (!inView) {
-          moved = false;
-          continue;
+    if (!useFade) {
+      ctx.beginPath();
+      let moved = false;
+      for (let i = 0; i < this.trail.length; i++) {
+        const p = this.trail[i];
+        if (i > 0) {
+          const prev = this.trail[i - 1];
+          const inView = (p.x > vl && p.x < vr && p.y > vt && p.y < vb) ||
+                         (prev.x > vl && prev.x < vr && prev.y > vt && prev.y < vb);
+          if (!inView) { moved = false; continue; }
         }
+        if (!moved) { ctx.moveTo(p.x, p.y); moved = true; }
+        else { ctx.lineTo(p.x, p.y); }
       }
-      if (!moved) {
-        ctx.moveTo(p.x, p.y);
-        moved = true;
-      } else {
-        ctx.lineTo(p.x, p.y);
-      }
+      return;
     }
+
+    // Fade mode: draw segments individually with alpha based on age
+    for (let i = 1; i < this.trail.length; i++) {
+      const p = this.trail[i];
+      const prev = this.trail[i - 1];
+      const inView = (p.x > vl && p.x < vr && p.y > vt && p.y < vb) ||
+                     (prev.x > vl && prev.x < vr && prev.y > vt && prev.y < vb);
+      if (!inView) continue;
+
+      const age = frameCount - p.birth;
+      const lifeRatio = 1 - (age / this.trailLifetime);
+      const fadeAlpha = Math.max(0, Math.min(1, lifeRatio));
+      // Only fade the oldest 30% of trail
+      const alpha = lifeRatio < 0.3 ? fadeAlpha / 0.3 : 1;
+
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
   }
 
   drawBike(ctx) {
@@ -418,6 +448,103 @@ function drawExplosions(ctx) {
   ctx.shadowBlur = 0;
 }
 
+// ── Kill text popups ──
+const killTexts = [];
+
+function spawnKillText(x, y, color) {
+  killTexts.push({ x, y, color, life: 60, text: '+0.5s TRAIL' });
+}
+
+function updateKillTexts() {
+  for (let i = killTexts.length - 1; i >= 0; i--) {
+    killTexts[i].life--;
+    killTexts[i].y -= 1;
+    if (killTexts[i].life <= 0) killTexts.splice(i, 1);
+  }
+}
+
+function drawKillTexts(ctx) {
+  for (const kt of killTexts) {
+    const alpha = kt.life / 60;
+    ctx.globalAlpha = alpha;
+    ctx.font = '700 14px Orbitron';
+    ctx.fillStyle = kt.color;
+    ctx.shadowColor = kt.color;
+    ctx.shadowBlur = 10;
+    ctx.textAlign = 'center';
+    ctx.fillText(kt.text, kt.x, kt.y);
+  }
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+}
+
+// ── Boost screen effect ──
+let boostScreenIntensity = 0;
+
+function drawBoostEffect() {
+  if (!player) return;
+
+  // Ramp intensity
+  if (player.boosting) {
+    boostScreenIntensity = Math.min(1, boostScreenIntensity + 0.08);
+  } else {
+    boostScreenIntensity = Math.max(0, boostScreenIntensity - 0.04);
+  }
+
+  if (boostScreenIntensity <= 0) return;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const intensity = boostScreenIntensity;
+
+  // Speed lines
+  ctx.save();
+  const lineCount = Math.floor(20 * intensity);
+  for (let i = 0; i < lineCount; i++) {
+    const angle = player.angle + (Math.random() - 0.5) * 0.8;
+    const cx = w / 2;
+    const cy = h / 2;
+    const dist = 150 + Math.random() * Math.max(w, h) * 0.4;
+    const len = 40 + Math.random() * 120 * intensity;
+
+    const x1 = cx + Math.cos(angle + Math.PI) * dist;
+    const y1 = cy + Math.sin(angle + Math.PI) * dist;
+    const x2 = cx + Math.cos(angle + Math.PI) * (dist + len);
+    const y2 = cy + Math.sin(angle + Math.PI) * (dist + len);
+
+    ctx.strokeStyle = `rgba(0, 255, 242, ${0.15 * intensity * Math.random()})`;
+    ctx.lineWidth = 1 + Math.random() * 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Vignette / tunnel vision
+  const grad = ctx.createRadialGradient(w / 2, h / 2, w * 0.25, w / 2, h / 2, w * 0.7);
+  grad.addColorStop(0, 'transparent');
+  grad.addColorStop(1, `rgba(0, 20, 30, ${0.5 * intensity})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Chromatic aberration edges
+  ctx.shadowBlur = 0;
+  const aberration = 3 * intensity;
+  // Left edge cyan tint
+  const leftGrad = ctx.createLinearGradient(0, 0, 80 * intensity, 0);
+  leftGrad.addColorStop(0, `rgba(0, 255, 242, ${0.12 * intensity})`);
+  leftGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = leftGrad;
+  ctx.fillRect(0, 0, 80 * intensity, h);
+  // Right edge orange tint
+  const rightGrad = ctx.createLinearGradient(w, 0, w - 80 * intensity, 0);
+  rightGrad.addColorStop(0, `rgba(255, 102, 0, ${0.12 * intensity})`);
+  rightGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = rightGrad;
+  ctx.fillRect(w - 80 * intensity, 0, 80 * intensity, h);
+}
+
 // ── Collision ──
 function pointToSegmentDist(px, py, x1, y1, x2, y2) {
   const dx = x2 - x1;
@@ -448,6 +575,12 @@ function checkCollisions() {
         const s = segs[i];
         if (pointToSegmentDist(hx, hy, s.x1, s.y1, s.x2, s.y2) < TRAIL_WIDTH + 2) {
           bike.die();
+          // Award kill buff to trail owner (if not self-kill)
+          if (other !== bike && other.alive) {
+            other.kills++;
+            other.trailLifetime += KILL_BUFF_FRAMES;
+            spawnKillText(other.x, other.y, other.color.main);
+          }
           break;
         }
       }
@@ -472,6 +605,12 @@ function updateCamera() {
   // Clamp to map
   camera.x = Math.max(0, Math.min(MAP_W - canvas.width, camera.x));
   camera.y = Math.max(0, Math.min(MAP_H - canvas.height, camera.y));
+
+  // Boost camera shake
+  if (player && player.boosting) {
+    camera.x += (Math.random() - 0.5) * 3;
+    camera.y += (Math.random() - 0.5) * 3;
+  }
 }
 
 // ── Drawing ──
@@ -663,6 +802,7 @@ function gameLoop() {
 
   checkCollisions();
   updateExplosions();
+  updateKillTexts();
   updateCamera();
 
   // Draw
@@ -677,9 +817,11 @@ function gameLoop() {
   }
 
   drawExplosions(ctx);
+  drawKillTexts(ctx);
   ctx.restore();
 
   drawWalls();
+  drawBoostEffect();
   drawMinimap();
   updateHUD();
 
