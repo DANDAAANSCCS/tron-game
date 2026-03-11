@@ -184,7 +184,7 @@ function selectItem(index) {
   setTimeout(() => item.classList.remove('flash'), 400);
 
   // Handle menu actions
-  const actions = ['start', 'controls', 'ranking'];
+  const actions = ['start', 'upgrades', 'controls', 'ranking'];
   if (actions[index] === 'start') {
     setTimeout(() => {
       window.location.href = '/game.html';
