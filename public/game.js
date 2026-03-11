@@ -65,6 +65,12 @@ let fireTimer = 0;
 let empCooldown = 0;
 let autoAimTarget = null;
 
+// ── Currency ──
+let gold = 0;
+let gems = 0;
+let rewardPopups = []; // big center popups for gems/wave rewards
+const BULLET_SPREAD = 0.08; // radians of random spread
+
 // Wave management
 let waveEnemiesTotal = 0;
 let waveEnemiesSpawned = 0;
@@ -186,9 +192,11 @@ class Turret {
   }
 
   shoot() {
+    const spread = (Math.random() - 0.5) * BULLET_SPREAD * 2;
+    const shootAngle = this.angle + spread;
     const bx = this.x + Math.cos(this.angle) * (this.radius + 12);
     const by = this.y + Math.sin(this.angle) * (this.radius + 12);
-    bullets.push(new Bullet(bx, by, this.angle));
+    bullets.push(new Bullet(bx, by, shootAngle));
     this.recoil = 5;
 
     // Muzzle flash particles
@@ -636,12 +644,12 @@ class Enemy {
     this.alive = false;
     spawnExplosion(this.x, this.y, COL.orange, 25);
     spawnExplosion(this.x, this.y, COL.yellow, 10);
-    // Ground scorch
     groundDecals.push({ x: this.x, y: this.y, radius: 18, alpha: 0.2, color: COL.orange });
     score += 10;
     totalKills++;
     waveEnemiesKilled++;
-    spawnFloatingText(this.x, this.y - 15, '+10', COL.yellow);
+    gold += 1;
+    spawnFloatingText(this.x, this.y - 15, '+1 gold', '#ffd700');
   }
 
   draw(ctx) {
@@ -852,6 +860,156 @@ function drawFloatingTexts(ctx) {
   ctx.shadowBlur = 0;
 }
 
+// ── Reward Popups (screen-space, big center announcements) ──
+function spawnRewardPopup(text, color) {
+  rewardPopups.push({ text, color, life: 120, y: 0 });
+}
+
+function updateRewardPopups() {
+  for (let i = rewardPopups.length - 1; i >= 0; i--) {
+    rewardPopups[i].life--;
+    rewardPopups[i].y += 0.3;
+    if (rewardPopups[i].life <= 0) rewardPopups.splice(i, 1);
+  }
+}
+
+function drawRewardPopups() {
+  const baseY = canvas.height * 0.35;
+  for (let i = 0; i < rewardPopups.length; i++) {
+    const rp = rewardPopups[i];
+    const alpha = Math.min(1, rp.life / 40);
+    const scale = rp.life > 100 ? 1 + (120 - rp.life) * 0.02 : 1;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `900 ${Math.round(28 * scale)}px Orbitron`;
+    ctx.fillStyle = rp.color;
+    ctx.shadowColor = rp.color;
+    ctx.shadowBlur = 20;
+    ctx.textAlign = 'center';
+    ctx.fillText(rp.text, canvas.width / 2, baseY + i * 40 - rp.y);
+    ctx.restore();
+  }
+  ctx.shadowBlur = 0;
+}
+
+// ── Gem drawing (for HUD) ──
+function drawGemIcon(x, y, size, ctx2d) {
+  const c = ctx2d || ctx;
+  c.save();
+  c.translate(x, y);
+
+  // Gem shape: pointed top and bottom, wide middle
+  const w = size * 0.5;
+  const h = size;
+
+  // Outer glow
+  c.shadowColor = '#e040fb';
+  c.shadowBlur = 10;
+
+  // Main gem body
+  const gemGrad = c.createLinearGradient(-w, -h * 0.3, w, h * 0.3);
+  gemGrad.addColorStop(0, '#e040fb');
+  gemGrad.addColorStop(0.3, '#f48cff');
+  gemGrad.addColorStop(0.5, '#ffffff');
+  gemGrad.addColorStop(0.7, '#f48cff');
+  gemGrad.addColorStop(1, '#aa00ff');
+  c.fillStyle = gemGrad;
+
+  // Top half (crown)
+  c.beginPath();
+  c.moveTo(0, -h * 0.55);       // top point
+  c.lineTo(w, -h * 0.1);         // top-right
+  c.lineTo(w * 0.7, h * 0.05);   // mid-right
+  c.lineTo(-w * 0.7, h * 0.05);  // mid-left
+  c.lineTo(-w, -h * 0.1);        // top-left
+  c.closePath();
+  c.fill();
+
+  // Bottom half (pavilion)
+  const pavGrad = c.createLinearGradient(0, 0, 0, h * 0.55);
+  pavGrad.addColorStop(0, '#d050f0');
+  pavGrad.addColorStop(0.5, '#aa00ff');
+  pavGrad.addColorStop(1, '#7700cc');
+  c.fillStyle = pavGrad;
+
+  c.beginPath();
+  c.moveTo(-w * 0.7, h * 0.05);
+  c.lineTo(w * 0.7, h * 0.05);
+  c.lineTo(0, h * 0.55);         // bottom point
+  c.closePath();
+  c.fill();
+
+  // Facet lines
+  c.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  c.lineWidth = 0.8;
+  // Crown facets
+  c.beginPath();
+  c.moveTo(0, -h * 0.55);
+  c.lineTo(-w * 0.3, h * 0.05);
+  c.moveTo(0, -h * 0.55);
+  c.lineTo(w * 0.3, h * 0.05);
+  // Pavilion facets
+  c.moveTo(-w * 0.7, h * 0.05);
+  c.lineTo(0, h * 0.55);
+  c.moveTo(w * 0.7, h * 0.05);
+  c.lineTo(0, h * 0.55);
+  c.moveTo(0, h * 0.05);
+  c.lineTo(0, h * 0.55);
+  c.stroke();
+
+  // Highlight sparkle
+  c.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  c.shadowBlur = 4;
+  c.shadowColor = '#fff';
+  c.beginPath();
+  c.arc(-w * 0.2, -h * 0.2, size * 0.08, 0, Math.PI * 2);
+  c.fill();
+
+  c.shadowBlur = 0;
+  c.restore();
+}
+
+// ── Gold coin drawing (for HUD) ──
+function drawCoinIcon(x, y, size, ctx2d) {
+  const c = ctx2d || ctx;
+  c.save();
+  c.translate(x, y);
+  const r = size * 0.4;
+
+  // Coin glow
+  c.shadowColor = '#ffd700';
+  c.shadowBlur = 8;
+
+  // Outer coin
+  const coinGrad = c.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r);
+  coinGrad.addColorStop(0, '#fff8b0');
+  coinGrad.addColorStop(0.4, '#ffd700');
+  coinGrad.addColorStop(1, '#b8860b');
+  c.fillStyle = coinGrad;
+  c.beginPath();
+  c.arc(0, 0, r, 0, Math.PI * 2);
+  c.fill();
+
+  // Inner ring
+  c.strokeStyle = 'rgba(184, 134, 11, 0.6)';
+  c.lineWidth = 1;
+  c.beginPath();
+  c.arc(0, 0, r * 0.7, 0, Math.PI * 2);
+  c.stroke();
+
+  // $ symbol
+  c.fillStyle = '#b8860b';
+  c.shadowBlur = 0;
+  c.font = `700 ${Math.round(r * 1.1)}px Orbitron`;
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('$', 0, 1);
+
+  c.shadowBlur = 0;
+  c.restore();
+}
+
 // ── EMP Ability ──
 function triggerEMP() {
   if (empCooldown > 0 || !turret.alive) return;
@@ -1001,10 +1159,37 @@ function updateWaveSpawning() {
 
   if (waveEnemiesKilled >= waveEnemiesTotal) {
     wavePaused = true;
+
+    // Rewards for completing current wave
+    const completedWave = wave;
+    let goldReward = 5;
+    let gemReward = 0;
+    let rewardMsg = '+5 gold';
+
+    // Bonus every 10 waves
+    if (completedWave % 10 === 0) {
+      goldReward += 15;
+      rewardMsg = `+${goldReward} gold`;
+    }
+
+    // Gem every 5 waves
+    if (completedWave % 5 === 0) {
+      gemReward = 1;
+    }
+
+    gold += goldReward;
+    gems += gemReward;
+    score += (completedWave + 1) * 50;
+
+    // Show reward popup
+    spawnRewardPopup(rewardMsg, '#ffd700');
+    if (gemReward > 0) {
+      spawnRewardPopup('+1 GEM', '#e040fb');
+    }
+
     wave++;
-    score += wave * 50;
     showOverlay(`WAVE ${wave}`, 'INCOMING...');
-    waveStartDelay = 180;
+    waveStartDelay = 210;
   }
 }
 
@@ -1262,6 +1447,8 @@ function updateHUD() {
   document.getElementById('wave-val').textContent = wave;
   document.getElementById('enemies-val').textContent = Math.max(0, waveEnemiesTotal - waveEnemiesKilled);
   document.getElementById('score-val').textContent = score;
+  document.getElementById('gold-val').textContent = gold;
+  document.getElementById('gems-val').textContent = gems;
 
   // Fire mode indicator
   const modeEl = document.getElementById('mode-val');
@@ -1292,6 +1479,22 @@ function updateHUD() {
   } else {
     empSlot.classList.add('ready');
     if (cdEl) cdEl.remove();
+  }
+}
+
+// ── HUD Currency Icons (drawn on canvas for fanciness) ──
+function drawHUDIcons() {
+  // Gold coin icon next to gold counter
+  const goldEl = document.getElementById('gold-val');
+  if (goldEl) {
+    const rect = goldEl.getBoundingClientRect();
+    drawCoinIcon(rect.left - 14, rect.top + rect.height / 2, 16, ctx);
+  }
+  // Gem icon next to gem counter
+  const gemEl = document.getElementById('gems-val');
+  if (gemEl) {
+    const rect = gemEl.getBoundingClientRect();
+    drawGemIcon(rect.left - 14, rect.top + rect.height / 2, 16, ctx);
   }
 }
 
@@ -1327,6 +1530,9 @@ function initGame() {
   fireTimer = 0;
   deathTimer = 0;
   autoAimTarget = null;
+  gold = 0;
+  gems = 0;
+  rewardPopups = [];
 
   camera.x = turret.x - canvas.width / 2;
   camera.y = turret.y - canvas.height / 2;
@@ -1366,6 +1572,7 @@ function gameLoop() {
   checkBulletCollisions();
   updateParticles();
   updateFloatingTexts();
+  updateRewardPopups();
   updateEMPWaves();
   updateCamera();
 
@@ -1392,7 +1599,9 @@ function gameLoop() {
   drawWalls();
   drawVignette();
   drawCrosshair();
+  drawRewardPopups();
   drawMinimap();
+  drawHUDIcons();
   updateHUD();
 
   // Game over: go back to menu after delay
@@ -1401,7 +1610,7 @@ function gameLoop() {
     drawDeathEffect();
 
     if (deathTimer === 1) {
-      showOverlay('SYSTEM OFFLINE', `SCORE: ${score} — RETURNING TO MENU...`);
+      showOverlay('SYSTEM OFFLINE', `SCORE: ${score} | GOLD: ${gold} | GEMS: ${gems} — RETURNING TO MENU...`);
     }
 
     if (deathTimer >= DEATH_RETURN_DELAY) {
