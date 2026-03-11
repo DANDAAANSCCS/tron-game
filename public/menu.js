@@ -190,6 +190,11 @@ function selectItem(index) {
       window.location.href = '/levels.html';
     }, 500);
   }
+  if (actions[index] === 'upgrades') {
+    setTimeout(() => {
+      window.location.href = '/upgrades.html';
+    }, 500);
+  }
 }
 
 // ── Simple Audio Feedback (Web Audio API) ──

@@ -30,7 +30,28 @@ const MAX_WAVES = 100;
 const TANK_START_WAVE = 50;
 const BOSS_WAVE = 100;
 const STORAGE_KEY = 'neonDefenseProgress';
+const PERM_STORAGE_KEY = 'neonDefensePermUpgrades';
+const GEM_STORAGE_KEY = 'neonDefenseGems';
 let levelStartTime = Date.now();
+
+// ── Permanent upgrades (loaded from localStorage) ──
+function loadPermUpgrades() {
+  try { return JSON.parse(localStorage.getItem(PERM_STORAGE_KEY)) || {}; } catch (e) { return {}; }
+}
+function loadGems() {
+  try { return parseInt(localStorage.getItem(GEM_STORAGE_KEY)) || 0; } catch (e) { return 0; }
+}
+function saveGems(amount) {
+  localStorage.setItem(GEM_STORAGE_KEY, String(amount));
+}
+const permUpg = loadPermUpgrades();
+const permBonus = {
+  health:    (permUpg.health    || 0) * 0.05,
+  damage:    (permUpg.damage    || 0) * 0.05,
+  regen:     (permUpg.regen     || 0) * 0.05,
+  precision: (permUpg.precision || 0) * 0.05,
+  fireRate:  (permUpg.fireRate  || 0) * 0.05,
+};
 
 // ── Enemy config (Runner) ──
 const ENEMY_BASE_HP = 50;
@@ -141,16 +162,16 @@ function getUpgradeValue(upg) {
 }
 
 function getCurrentDamage() {
-  return BULLET_DAMAGE * (1 + getUpgradeValue(upgrades.damage));
+  return BULLET_DAMAGE * (1 + getUpgradeValue(upgrades.damage) + permBonus.damage);
 }
 
 function getCurrentFireRate(base) {
-  const reduction = getUpgradeValue(upgrades.fireRate);
+  const reduction = getUpgradeValue(upgrades.fireRate) + permBonus.fireRate;
   return Math.max(2, Math.round(base * (1 - reduction)));
 }
 
 function getCurrentSpread() {
-  const reduction = getUpgradeValue(upgrades.precision);
+  const reduction = getUpgradeValue(upgrades.precision) + permBonus.precision;
   return BASE_BULLET_SPREAD * Math.max(0.05, 1 - reduction);
 }
 
@@ -159,7 +180,7 @@ function getDoubleBulletChance() {
 }
 
 function getCurrentMaxHp() {
-  return Math.round(PLAYER_MAX_HP * (1 + getUpgradeValue(upgrades.health)));
+  return Math.round(PLAYER_MAX_HP * (1 + getUpgradeValue(upgrades.health) + permBonus.health));
 }
 
 function buyUpgrade(key) {
@@ -271,6 +292,7 @@ class Turret {
     this.recoil = 0;
     this.ringRotation = 0;
     this.outerRingRotation = 0;
+    this.regenAccum = 0;
   }
 
   update() {
@@ -279,6 +301,16 @@ class Turret {
 
     this.ringRotation += 0.015;
     this.outerRingRotation -= 0.008;
+
+    // Regen (permanent upgrade) — regen 0.5 HP/sec base * (1 + regenBonus)
+    if (permBonus.regen > 0 && this.alive && this.hp < this.maxHp) {
+      this.regenAccum += (0.5 / 60) * (1 + permBonus.regen * 10);
+      if (this.regenAccum >= 1) {
+        const heal = Math.floor(this.regenAccum);
+        this.hp = Math.min(this.maxHp, this.hp + heal);
+        this.regenAccum -= heal;
+      }
+    }
 
     // Determine aiming mode
     autoAimTarget = this.findNearestEnemy();
@@ -2175,6 +2207,8 @@ function hideOverlay() {
 }
 
 // ── Save Progress (localStorage) ──
+let gemsbanked = 0; // gems already banked to global storage this session
+
 function saveProgress(completed = false) {
   let allProgress = {};
   try {
@@ -2195,6 +2229,14 @@ function saveProgress(completed = false) {
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(allProgress));
   levelStartTime = Date.now();
+
+  // Bank gems earned this session to the global gem storage
+  const newGems = gems - gemsbanked;
+  if (newGems > 0) {
+    const currentGems = loadGems();
+    saveGems(currentGems + newGems);
+    gemsbanked = gems;
+  }
 }
 
 // ── Init ──
@@ -2223,6 +2265,7 @@ function initGame() {
   waveTanksSpawned = 0;
   waveBossSpawned = 0;
   levelStartTime = Date.now();
+  gemsbanked = 0;
   for (const key in upgrades) { upgrades[key].level = 0; upgrades[key].tier = 0; }
 
   camera.x = turret.x - canvas.width / 2;

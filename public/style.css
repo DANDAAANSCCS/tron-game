@@ -470,6 +470,234 @@ body {
   opacity: 1;
 }
 
+/* ══════════════════════════════════════ */
+/*  PERMANENT UPGRADES PAGE              */
+/* ══════════════════════════════════════ */
+
+.upgrades-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 30px 40px;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.upgrades-header {
+  margin-bottom: 30px;
+}
+
+.gems-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 6px 18px;
+  border: 1px solid rgba(224, 64, 251, 0.3);
+  background: rgba(224, 64, 251, 0.05);
+}
+
+.gems-display canvas {
+  vertical-align: middle;
+}
+
+#gems-count {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #e040fb;
+  text-shadow: 0 0 10px #e040fb;
+}
+
+.upgrades-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+/* Upgrade Card */
+.upg-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  width: 520px;
+  background: rgba(5, 5, 15, 0.85);
+  border: 1px solid rgba(0, 255, 242, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  text-align: left;
+}
+
+.upg-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: transparent;
+  transition: background 0.3s ease;
+}
+
+.upg-card.active {
+  border-color: rgba(0, 255, 242, 0.35);
+  background: rgba(0, 255, 242, 0.03);
+  box-shadow: 0 0 15px rgba(0, 255, 242, 0.06);
+}
+
+.upg-card.active::before {
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.upg-card:hover {
+  border-color: rgba(0, 255, 242, 0.4);
+  transform: translateX(4px);
+}
+
+.upg-card.bought {
+  animation: upgBought 0.4s ease;
+}
+
+@keyframes upgBought {
+  0% { background: rgba(0, 255, 242, 0.03); }
+  40% { background: rgba(224, 64, 251, 0.2); box-shadow: 0 0 25px rgba(224, 64, 251, 0.3); }
+  100% { background: rgba(0, 255, 242, 0.03); }
+}
+
+.upg-card.deny {
+  animation: upgDeny 0.3s ease;
+}
+
+@keyframes upgDeny {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.upg-icon {
+  font-size: 2rem;
+  width: 48px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.upg-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.upg-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+}
+
+.upg-desc {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.upg-stats {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.upg-level {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.upg-total {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.upg-bar-wrap {
+  margin-top: 2px;
+}
+
+.upg-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.upg-bar-fill {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.upg-cost-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.upg-cost {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid rgba(224, 64, 251, 0.3);
+  background: rgba(224, 64, 251, 0.05);
+  transition: all 0.3s ease;
+}
+
+.upg-cost.can-buy {
+  border-color: rgba(224, 64, 251, 0.5);
+  background: rgba(224, 64, 251, 0.08);
+}
+
+.upg-cost.no-buy {
+  border-color: rgba(255, 255, 255, 0.1);
+  opacity: 0.4;
+}
+
+.upg-cost-val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 900;
+  color: #e040fb;
+  text-shadow: 0 0 8px rgba(224, 64, 251, 0.5);
+}
+
+.no-buy .upg-cost-val {
+  color: rgba(255, 255, 255, 0.3);
+  text-shadow: none;
+}
+
+.upg-cost-gem {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 2px;
+  color: rgba(224, 64, 251, 0.6);
+}
+
+.upg-key {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  color: rgba(0, 255, 242, 0.25);
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .logo {
@@ -498,5 +726,16 @@ body {
   .level-thumbnail {
     width: 120px;
     height: 120px;
+  }
+
+  .upg-card {
+    width: 100%;
+    max-width: 360px;
+    padding: 10px 14px;
+  }
+
+  .upg-icon {
+    font-size: 1.4rem;
+    width: 36px;
   }
 }
