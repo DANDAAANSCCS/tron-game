@@ -222,151 +222,218 @@ class Turret {
   draw(ctx) {
     ctx.save();
     ctx.translate(this.x, this.y);
+    const dmg = this.damageFlash > 0;
+    const pri = dmg ? COL.red : COL.cyan;
+    const priA = dmg ? 'rgba(255,0,85,' : 'rgba(0,255,242,';
 
-    // Range circle (pulsing)
+    // ── Range circle (dashed, pulsing) ──
     const rangePulse = 0.03 + Math.sin(frameCount * 0.02) * 0.015;
-    ctx.strokeStyle = `rgba(0, 255, 242, ${rangePulse})`;
+    ctx.strokeStyle = `${priA}${rangePulse})`;
     ctx.lineWidth = 1;
-    ctx.setLineDash([8, 12]);
+    ctx.setLineDash([8, 14]);
     ctx.beginPath();
     ctx.arc(0, 0, TURRET_RANGE, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Outer rotating ring segments
-    ctx.strokeStyle = 'rgba(0, 255, 242, 0.12)';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 4; i++) {
-      const a = this.outerRingRotation + (i / 4) * Math.PI * 2;
+    // ── Ambient ground glow ──
+    const ambGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, 55);
+    ambGrad.addColorStop(0, `${priA}0.06)`);
+    ambGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = ambGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, 55, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── Outer shield ring (slow counter-rotate, 6 arc segments) ──
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 6; i++) {
+      const a = this.outerRingRotation + (i / 6) * Math.PI * 2;
+      const gap = 0.12;
+      const arcLen = (Math.PI * 2 / 6) - gap;
+      ctx.strokeStyle = `${priA}${0.08 + Math.sin(frameCount * 0.04 + i) * 0.04})`;
       ctx.beginPath();
-      ctx.arc(0, 0, 38, a, a + 0.35);
+      ctx.arc(0, 0, 42, a, a + arcLen);
       ctx.stroke();
     }
 
-    // Base platform - hexagonal with fill
-    ctx.rotate(Math.PI / 6);
-    const hex = 32;
-    const dmg = this.damageFlash > 0;
-
-    // Hex fill
-    ctx.fillStyle = dmg ? 'rgba(255, 0, 85, 0.08)' : 'rgba(0, 255, 242, 0.04)';
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2;
-      const px = Math.cos(a) * hex;
-      const py = Math.sin(a) * hex;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    }
-    ctx.closePath();
-    ctx.fill();
-
-    // Hex border
-    ctx.strokeStyle = dmg ? 'rgba(255, 0, 85, 0.6)' : 'rgba(0, 255, 242, 0.3)';
+    // ── Base body — circular layered platform ──
+    // Outer ring
+    ctx.strokeStyle = `${priA}0.25)`;
     ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 30, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Inner hex
-    ctx.strokeStyle = dmg ? 'rgba(255, 0, 85, 0.3)' : 'rgba(0, 255, 242, 0.15)';
+    // Filled base disc
+    const baseGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
+    baseGrad.addColorStop(0, `${priA}0.07)`);
+    baseGrad.addColorStop(0.7, `${priA}0.03)`);
+    baseGrad.addColorStop(1, `${priA}0.01)`);
+    ctx.fillStyle = baseGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mid ring
+    ctx.strokeStyle = `${priA}0.15)`;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
-      const px = Math.cos(a) * 20;
-      const py = Math.sin(a) * 20;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    }
-    ctx.closePath();
+    ctx.arc(0, 0, 22, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Hex vertex dots
-    ctx.fillStyle = dmg ? COL.red : COL.cyan;
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.arc(Math.cos(a) * hex, Math.sin(a) * hex, 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.rotate(-Math.PI / 6);
-
-    // Rotating ring arcs (inner)
-    ctx.strokeStyle = 'rgba(0, 255, 242, 0.2)';
-    ctx.lineWidth = 1.5;
+    // ── Rotating inner arcs (energy ring) ──
+    ctx.lineWidth = 2;
     for (let i = 0; i < 3; i++) {
       const a = this.ringRotation + (i / 3) * Math.PI * 2;
+      const alpha = 0.25 + Math.sin(frameCount * 0.08 + i * 2) * 0.1;
+      ctx.strokeStyle = `${priA}${alpha})`;
       ctx.beginPath();
-      ctx.arc(0, 0, 26, a, a + 0.5);
+      ctx.arc(0, 0, 17, a, a + 0.7);
       ctx.stroke();
     }
 
-    // Core glow (multi-layered)
-    const coreGlow = 0.6 + Math.sin(frameCount * 0.06) * 0.2;
-    // Outer core halo
-    const coreGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, 14);
-    coreGrad.addColorStop(0, dmg ? `rgba(255, 0, 85, ${coreGlow})` : `rgba(0, 255, 242, ${coreGlow})`);
-    coreGrad.addColorStop(0.5, dmg ? 'rgba(255, 0, 85, 0.15)' : 'rgba(0, 255, 242, 0.15)');
-    coreGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = coreGrad;
+    // ── Cross-hair notches on base (N/S/E/W) ──
+    ctx.strokeStyle = `${priA}0.2)`;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 24, Math.sin(a) * 24);
+      ctx.lineTo(Math.cos(a) * 30, Math.sin(a) * 30);
+      ctx.stroke();
+    }
+
+    // ── Decorative diagonal ticks ──
+    ctx.strokeStyle = `${priA}0.1)`;
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 27, Math.sin(a) * 27);
+      ctx.lineTo(Math.cos(a) * 30, Math.sin(a) * 30);
+      ctx.stroke();
+    }
+
+    // ── Core reactor (multi-layer glow) ──
+    const coreBreath = 0.6 + Math.sin(frameCount * 0.06) * 0.2;
+
+    // Halo
+    const haloGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 12);
+    haloGrad.addColorStop(0, `${priA}${coreBreath * 0.7})`);
+    haloGrad.addColorStop(0.4, `${priA}${coreBreath * 0.2})`);
+    haloGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = haloGrad;
     ctx.beginPath();
-    ctx.arc(0, 0, 14, 0, Math.PI * 2);
+    ctx.arc(0, 0, 12, 0, Math.PI * 2);
     ctx.fill();
 
-    // Core center
-    ctx.fillStyle = dmg ? COL.red : COL.cyan;
-    ctx.shadowColor = dmg ? COL.red : COL.cyan;
-    ctx.shadowBlur = 30;
+    // Core ring
+    ctx.strokeStyle = pri;
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = pri;
+    ctx.shadowBlur = 20;
     ctx.beginPath();
-    ctx.arc(0, 0, 5, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+    ctx.stroke();
 
-    // Core white hot center
+    // Hot center
     ctx.fillStyle = COL.white;
-    ctx.shadowBlur = 15;
+    ctx.shadowColor = pri;
+    ctx.shadowBlur = 25;
     ctx.beginPath();
-    ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Cannon barrel (with recoil)
+    // ── Cannon (with recoil) ──
     ctx.rotate(this.angle);
-    const recoilOffset = -this.recoil;
+    const rc = -this.recoil;
 
-    // Barrel shadow/base
-    ctx.fillStyle = 'rgba(0, 255, 242, 0.15)';
-    ctx.fillRect(8 + recoilOffset, -7, 12, 14);
+    // Barrel housing / mount
+    ctx.fillStyle = `${priA}0.12)`;
+    ctx.beginPath();
+    ctx.moveTo(10 + rc, -9);
+    ctx.lineTo(16 + rc, -6);
+    ctx.lineTo(16 + rc, 6);
+    ctx.lineTo(10 + rc, 9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = `${priA}0.25)`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
-    // Main barrel
-    ctx.fillStyle = COL.cyan;
-    ctx.shadowColor = COL.cyan;
-    ctx.shadowBlur = 18;
-    ctx.fillRect(12 + recoilOffset, -3.5, 26, 7);
+    // Main barrel body (tapered)
+    ctx.shadowColor = pri;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = pri;
+    ctx.beginPath();
+    ctx.moveTo(15 + rc, -4);
+    ctx.lineTo(40 + rc, -2.5);
+    ctx.lineTo(40 + rc, 2.5);
+    ctx.lineTo(15 + rc, 4);
+    ctx.closePath();
+    ctx.fill();
 
-    // Barrel detail lines
-    ctx.fillStyle = 'rgba(0, 200, 210, 0.6)';
-    ctx.fillRect(18 + recoilOffset, -2, 2, 4);
-    ctx.fillRect(24 + recoilOffset, -2, 2, 4);
+    // Barrel inner line (bright center)
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(18 + rc, 0);
+    ctx.lineTo(38 + rc, 0);
+    ctx.stroke();
 
-    // Barrel tip (bright)
+    // Barrel segments / vents
+    ctx.strokeStyle = `${priA}0.3)`;
+    ctx.lineWidth = 1;
+    const vents = [22, 28, 34];
+    for (const vx of vents) {
+      ctx.beginPath();
+      ctx.moveTo(vx + rc, -3.5);
+      ctx.lineTo(vx + rc, 3.5);
+      ctx.stroke();
+    }
+
+    // Muzzle tip
     ctx.fillStyle = COL.white;
     ctx.shadowColor = COL.white;
-    ctx.shadowBlur = 12;
-    ctx.fillRect(36 + recoilOffset, -4.5, 5, 9);
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(40 + rc, -3.5);
+    ctx.lineTo(44 + rc, -2);
+    ctx.lineTo(44 + rc, 2);
+    ctx.lineTo(40 + rc, 3.5);
+    ctx.closePath();
+    ctx.fill();
 
-    // Side rails
-    ctx.fillStyle = 'rgba(0, 255, 242, 0.4)';
+    // Side stabilizers
+    ctx.fillStyle = `${priA}0.35)`;
     ctx.shadowBlur = 0;
-    ctx.fillRect(14 + recoilOffset, -6, 18, 1.5);
-    ctx.fillRect(14 + recoilOffset, 4.5, 18, 1.5);
+    // Top stabilizer
+    ctx.beginPath();
+    ctx.moveTo(16 + rc, -5);
+    ctx.lineTo(30 + rc, -4);
+    ctx.lineTo(30 + rc, -6);
+    ctx.lineTo(18 + rc, -7);
+    ctx.closePath();
+    ctx.fill();
+    // Bottom stabilizer
+    ctx.beginPath();
+    ctx.moveTo(16 + rc, 5);
+    ctx.lineTo(30 + rc, 4);
+    ctx.lineTo(30 + rc, 6);
+    ctx.lineTo(18 + rc, 7);
+    ctx.closePath();
+    ctx.fill();
 
-    // Auto-aim indicator
+    // Auto-aim glow at muzzle
     if (!mouseDown && autoAimTarget) {
-      ctx.fillStyle = 'rgba(255, 102, 0, 0.6)';
+      ctx.fillStyle = 'rgba(255, 102, 0, 0.5)';
       ctx.shadowColor = COL.orange;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.arc(40 + recoilOffset, 0, 2, 0, Math.PI * 2);
+      ctx.arc(44 + rc, 0, 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -379,7 +446,7 @@ class Turret {
     // Auto-aim line to target
     if (!mouseDown && autoAimTarget && this.alive) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(255, 102, 0, 0.12)';
+      ctx.strokeStyle = 'rgba(255, 102, 0, 0.1)';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 8]);
       ctx.beginPath();
