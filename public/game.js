@@ -72,21 +72,51 @@ let rewardPopups = [];
 const BASE_BULLET_SPREAD = 0.32;
 
 // ── Upgrades ──
+const PIPS_PER_TIER = 10;
 let upgrades = {
-  damage:    { level: 0, base: 5, perLevel: 0.05, label: 'DAMAGE',     icon: '⚔', desc: '+5% DMG',      color: '#ff4444' },
-  fireRate:  { level: 0, base: 5, perLevel: 0.02, label: 'FIRE RATE',  icon: '⚡', desc: '+2% SPEED',    color: '#ffdd00' },
-  precision: { level: 0, base: 5, perLevel: 0.01, label: 'PRECISION',  icon: '◎', desc: '-1% SPREAD',   color: '#00fff2' },
-  doubleBul: { level: 0, base: 5, perLevel: 0.02, label: 'DOUBLE SHOT',icon: '⟐', desc: '+2% CHANCE',  color: '#e040fb', max: 0.65 },
+  damage:    { level: 0, tier: 0, basePerLevel: 0.05, label: 'DAMAGE',      icon: '⚔', descBase: 'DMG',      color: '#ff4444',  baseCost: 5 },
+  fireRate:  { level: 0, tier: 0, basePerLevel: 0.02, label: 'FIRE RATE',   icon: '⚡', descBase: 'SPEED',    color: '#ffdd00',  baseCost: 5 },
+  precision: { level: 0, tier: 0, basePerLevel: 0.02, label: 'PRECISION',   icon: '◎', descBase: 'SPREAD',   color: '#00fff2',  baseCost: 5 },
+  doubleBul: { level: 0, tier: 0, basePerLevel: 0.02, label: 'DOUBLE SHOT', icon: '⟐', descBase: 'CHANCE',  color: '#e040fb',  baseCost: 5, max: 0.65 },
+  health:    { level: 0, tier: 0, basePerLevel: 0.05, label: 'HEALTH',      icon: '♥', descBase: 'HP',       color: '#00ff66',  baseCost: 5 },
 };
-const UPGRADE_COST_SCALE = 1.20; // +20% per level
+const UPGRADE_COST_SCALE = 1.20;
 let upgradesPanelOpen = false;
 
+function getUpgradePerLevel(upg) {
+  // Base % + 1% per tier
+  return upg.basePerLevel + upg.tier * 0.01;
+}
+
+function getUpgradeDesc(upg) {
+  const pct = Math.round(getUpgradePerLevel(upg) * 100);
+  if (upg === upgrades.precision) return `-${pct}% ${upg.descBase}`;
+  return `+${pct}% ${upg.descBase}`;
+}
+
+function getPipLevel(upg) {
+  // Level within current tier (0-9)
+  return upg.level % PIPS_PER_TIER;
+}
+
 function getUpgradeCost(upg) {
-  return Math.round(upg.base * Math.pow(UPGRADE_COST_SCALE, upg.level));
+  return Math.round(upg.baseCost * Math.pow(UPGRADE_COST_SCALE, upg.level));
 }
 
 function getUpgradeValue(upg) {
-  return upg.level * upg.perLevel;
+  // Sum of all levels with their respective tier bonuses
+  let total = 0;
+  let lvl = 0;
+  let t = 0;
+  while (lvl < upg.level) {
+    const tierEnd = Math.min(upg.level, (t + 1) * PIPS_PER_TIER);
+    const count = tierEnd - lvl;
+    const perLvl = upg.basePerLevel + t * 0.01;
+    total += count * perLvl;
+    lvl = tierEnd;
+    t++;
+  }
+  return total;
 }
 
 function getCurrentDamage() {
@@ -100,11 +130,15 @@ function getCurrentFireRate(base) {
 
 function getCurrentSpread() {
   const reduction = getUpgradeValue(upgrades.precision);
-  return BASE_BULLET_SPREAD * Math.max(0.1, 1 - reduction);
+  return BASE_BULLET_SPREAD * Math.max(0.05, 1 - reduction);
 }
 
 function getDoubleBulletChance() {
   return Math.min(upgrades.doubleBul.max, getUpgradeValue(upgrades.doubleBul));
+}
+
+function getCurrentMaxHp() {
+  return Math.round(PLAYER_MAX_HP * (1 + getUpgradeValue(upgrades.health)));
 }
 
 function buyUpgrade(key) {
@@ -114,6 +148,22 @@ function buyUpgrade(key) {
   if (key === 'doubleBul' && getUpgradeValue(upg) >= upg.max) return false;
   gold -= cost;
   upg.level++;
+
+  // Check tier up (every 10 levels)
+  if (upg.level % PIPS_PER_TIER === 0) {
+    upg.tier++;
+    spawnFloatingText(turret.x, turret.y - 70, `TIER ${upg.tier + 1}!`, upg.color);
+    spawnRewardPopup(`${upg.label} TIER UP!`, upg.color);
+  }
+
+  // Apply health upgrade immediately
+  if (key === 'health' && turret) {
+    const newMax = getCurrentMaxHp();
+    const hpGain = newMax - turret.maxHp;
+    turret.maxHp = newMax;
+    turret.hp = Math.min(turret.hp + hpGain, turret.maxHp);
+  }
+
   spawnFloatingText(turret.x, turret.y - 50, 'UPGRADED!', upg.color);
   return true;
 }
@@ -149,9 +199,9 @@ window.addEventListener('keydown', e => {
   }
   // Buy upgrades 1-4
   if (upgradesPanelOpen && gameState === 'playing') {
-    const upgradeKeys = ['damage', 'fireRate', 'precision', 'doubleBul'];
+    const upgradeKeys = ['damage', 'fireRate', 'precision', 'doubleBul', 'health'];
     const num = parseInt(e.key);
-    if (num >= 1 && num <= 4) {
+    if (num >= 1 && num <= 5) {
       buyUpgrade(upgradeKeys[num - 1]);
     }
   }
@@ -1552,7 +1602,6 @@ function updateHUD() {
 // ── Upgrades Panel ──
 function drawUpgradesPanel() {
   if (!upgradesPanelOpen) {
-    // Just show hint
     ctx.save();
     ctx.font = '600 10px Share Tech Mono';
     ctx.fillStyle = 'rgba(0, 255, 242, 0.3)';
@@ -1562,16 +1611,17 @@ function drawUpgradesPanel() {
     return;
   }
 
-  const panelW = 420;
-  const panelH = 310;
+  const upgradeKeys = ['damage', 'fireRate', 'precision', 'doubleBul', 'health'];
+  const panelW = 440;
+  const rowH = 50;
+  const panelH = 80 + upgradeKeys.length * rowH + 25;
   const px = (canvas.width - panelW) / 2;
-  const py = (canvas.height - panelH) / 2 - 20;
-  const upgradeKeys = ['damage', 'fireRate', 'precision', 'doubleBul'];
+  const py = (canvas.height - panelH) / 2 - 10;
 
   ctx.save();
 
   // Panel background
-  ctx.fillStyle = 'rgba(3, 3, 12, 0.92)';
+  ctx.fillStyle = 'rgba(3, 3, 12, 0.93)';
   ctx.fillRect(px, py, panelW, panelH);
 
   // Panel border
@@ -1585,13 +1635,9 @@ function drawUpgradesPanel() {
   ctx.lineWidth = 2;
   ctx.shadowColor = COL.cyan;
   ctx.shadowBlur = 8;
-  // TL
   ctx.beginPath(); ctx.moveTo(px, py + cs); ctx.lineTo(px, py); ctx.lineTo(px + cs, py); ctx.stroke();
-  // TR
   ctx.beginPath(); ctx.moveTo(px + panelW - cs, py); ctx.lineTo(px + panelW, py); ctx.lineTo(px + panelW, py + cs); ctx.stroke();
-  // BL
   ctx.beginPath(); ctx.moveTo(px, py + panelH - cs); ctx.lineTo(px, py + panelH); ctx.lineTo(px + cs, py + panelH); ctx.stroke();
-  // BR
   ctx.beginPath(); ctx.moveTo(px + panelW - cs, py + panelH); ctx.lineTo(px + panelW, py + panelH); ctx.lineTo(px + panelW, py + panelH - cs); ctx.stroke();
   ctx.shadowBlur = 0;
 
@@ -1601,7 +1647,7 @@ function drawUpgradesPanel() {
   ctx.shadowColor = COL.cyan;
   ctx.shadowBlur = 12;
   ctx.textAlign = 'center';
-  ctx.fillText('UPGRADES', px + panelW / 2, py + 32);
+  ctx.fillText('UPGRADES', px + panelW / 2, py + 30);
   ctx.shadowBlur = 0;
 
   // Gold display
@@ -1609,79 +1655,102 @@ function drawUpgradesPanel() {
   ctx.fillStyle = '#ffd700';
   ctx.shadowColor = '#ffd700';
   ctx.shadowBlur = 6;
-  ctx.fillText(`GOLD: ${gold}`, px + panelW / 2, py + 52);
+  ctx.fillText(`GOLD: ${gold}`, px + panelW / 2, py + 50);
   ctx.shadowBlur = 0;
 
   // Separator
   ctx.strokeStyle = 'rgba(0, 255, 242, 0.1)';
   ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(px + 20, py + 62); ctx.lineTo(px + panelW - 20, py + 62); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px + 20, py + 60); ctx.lineTo(px + panelW - 20, py + 60); ctx.stroke();
 
-  // Draw each upgrade row
-  const rowH = 55;
-  const startY = py + 75;
+  // Rows
+  const startY = py + 70;
 
   for (let i = 0; i < upgradeKeys.length; i++) {
     const key = upgradeKeys[i];
     const upg = upgrades[key];
     const cost = getUpgradeCost(upg);
-    const canBuy = gold >= cost && !(key === 'doubleBul' && getUpgradeValue(upg) >= upg.max);
-    const ry = startY + i * rowH;
     const isMaxed = key === 'doubleBul' && getUpgradeValue(upg) >= upg.max;
+    const canBuy = gold >= cost && !isMaxed;
+    const ry = startY + i * rowH;
+    const pipLvl = getPipLevel(upg);
+    const tierNum = upg.tier;
 
-    // Row background (subtle)
+    // Row bg
     ctx.fillStyle = canBuy ? 'rgba(0, 255, 242, 0.03)' : 'rgba(255, 255, 255, 0.01)';
-    ctx.fillRect(px + 15, ry, panelW - 30, rowH - 6);
-
-    // Row border
+    ctx.fillRect(px + 12, ry, panelW - 24, rowH - 4);
     ctx.strokeStyle = canBuy ? `${upg.color}44` : 'rgba(255, 255, 255, 0.05)';
     ctx.lineWidth = 1;
-    ctx.strokeRect(px + 15, ry, panelW - 30, rowH - 6);
+    ctx.strokeRect(px + 12, ry, panelW - 24, rowH - 4);
 
     // Key number
-    ctx.font = '900 16px Orbitron';
+    ctx.font = '900 15px Orbitron';
     ctx.fillStyle = canBuy ? upg.color : 'rgba(255, 255, 255, 0.2)';
     ctx.shadowColor = canBuy ? upg.color : 'transparent';
     ctx.shadowBlur = canBuy ? 8 : 0;
     ctx.textAlign = 'center';
-    ctx.fillText(`${i + 1}`, px + 38, ry + 30);
+    ctx.fillText(`${i + 1}`, px + 32, ry + 28);
     ctx.shadowBlur = 0;
 
     // Icon
-    ctx.font = '20px sans-serif';
-    ctx.fillText(upg.icon, px + 65, ry + 31);
+    ctx.font = '18px sans-serif';
+    ctx.fillText(upg.icon, px + 58, ry + 28);
 
-    // Label
-    ctx.font = '700 12px Orbitron';
+    // Label + tier badge
+    ctx.font = '700 11px Orbitron';
     ctx.fillStyle = canBuy ? '#fff' : 'rgba(255, 255, 255, 0.3)';
     ctx.textAlign = 'left';
-    ctx.fillText(upg.label, px + 88, ry + 20);
+    ctx.fillText(upg.label, px + 80, ry + 18);
 
-    // Description + current value
-    ctx.font = '600 10px Share Tech Mono';
-    ctx.fillStyle = canBuy ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.15)';
-    let valText = upg.desc;
-    if (key === 'damage') valText += ` (${Math.round(getUpgradeValue(upg) * 100)}%)`;
-    else if (key === 'fireRate') valText += ` (${Math.round(getUpgradeValue(upg) * 100)}%)`;
-    else if (key === 'precision') valText += ` (${Math.round(getUpgradeValue(upg) * 100)}%)`;
-    else if (key === 'doubleBul') valText += ` (${Math.round(getUpgradeValue(upg) * 100)}%)`;
-    ctx.fillText(valText, px + 88, ry + 36);
-
-    // Level pips
-    const maxPips = 10;
-    const pipW = 8;
-    const pipH = 4;
-    const pipStartX = px + 250;
-    for (let p = 0; p < maxPips; p++) {
-      const filled = p < upg.level;
-      ctx.fillStyle = filled ? upg.color : 'rgba(255, 255, 255, 0.08)';
-      if (filled) {
-        ctx.shadowColor = upg.color;
-        ctx.shadowBlur = 4;
-      }
-      ctx.fillRect(pipStartX + p * (pipW + 2), ry + 14, pipW, pipH);
+    // Tier badge
+    if (tierNum > 0) {
+      const tierText = `T${tierNum + 1}`;
+      const tx = px + 80 + ctx.measureText(upg.label).width + 8;
+      ctx.font = '700 8px Orbitron';
+      ctx.fillStyle = upg.color;
+      ctx.shadowColor = upg.color;
+      ctx.shadowBlur = 4;
+      // Badge bg
+      const tw = ctx.measureText(tierText).width + 6;
+      ctx.fillStyle = `${upg.color}22`;
+      ctx.fillRect(tx - 3, ry + 9, tw, 12);
+      ctx.strokeStyle = `${upg.color}66`;
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(tx - 3, ry + 9, tw, 12);
+      ctx.fillStyle = upg.color;
+      ctx.fillText(tierText, tx, ry + 18);
       ctx.shadowBlur = 0;
     }
+
+    // Description (dynamic)
+    ctx.font = '600 9px Share Tech Mono';
+    ctx.fillStyle = canBuy ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.15)';
+    ctx.textAlign = 'left';
+    const desc = getUpgradeDesc(upg);
+    const totalPct = Math.round(getUpgradeValue(upg) * 100);
+    ctx.fillText(`${desc}  [total: ${totalPct}%]`, px + 80, ry + 33);
+
+    // Progress pips (10 per tier, fills and resets)
+    const maxPips = PIPS_PER_TIER;
+    const pipW = 7;
+    const pipH = 4;
+    const pipStartX = px + 268;
+    for (let p = 0; p < maxPips; p++) {
+      const filled = p < pipLvl;
+      ctx.fillStyle = filled ? upg.color : 'rgba(255, 255, 255, 0.06)';
+      if (filled) {
+        ctx.shadowColor = upg.color;
+        ctx.shadowBlur = 3;
+      }
+      ctx.fillRect(pipStartX + p * (pipW + 2), ry + 12, pipW, pipH);
+      ctx.shadowBlur = 0;
+    }
+
+    // Tier label under pips
+    ctx.font = '600 7px Share Tech Mono';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.textAlign = 'center';
+    ctx.fillText(`LVL ${upg.level}`, pipStartX + (maxPips * (pipW + 2)) / 2 - 1, ry + 24);
 
     // Cost / MAX
     ctx.font = '700 11px Orbitron';
@@ -1690,12 +1759,12 @@ function drawUpgradesPanel() {
       ctx.fillStyle = upg.color;
       ctx.shadowColor = upg.color;
       ctx.shadowBlur = 6;
-      ctx.fillText('MAX', px + panelW - 25, ry + 32);
+      ctx.fillText('MAX', px + panelW - 22, ry + 28);
     } else {
       ctx.fillStyle = canBuy ? '#ffd700' : 'rgba(255, 200, 0, 0.25)';
       ctx.shadowColor = canBuy ? '#ffd700' : 'transparent';
       ctx.shadowBlur = canBuy ? 4 : 0;
-      ctx.fillText(`${cost}g`, px + panelW - 25, ry + 32);
+      ctx.fillText(`${cost}g`, px + panelW - 22, ry + 28);
     }
     ctx.shadowBlur = 0;
   }
@@ -1704,7 +1773,7 @@ function drawUpgradesPanel() {
   ctx.font = '600 10px Share Tech Mono';
   ctx.fillStyle = 'rgba(0, 255, 242, 0.4)';
   ctx.textAlign = 'center';
-  ctx.fillText('[B] CLOSE    [1-4] BUY', px + panelW / 2, py + panelH - 12);
+  ctx.fillText('[B] CLOSE    [1-5] BUY', px + panelW / 2, py + panelH - 10);
 
   ctx.restore();
 }
@@ -1761,7 +1830,7 @@ function initGame() {
   gems = 0;
   rewardPopups = [];
   upgradesPanelOpen = false;
-  for (const key in upgrades) upgrades[key].level = 0;
+  for (const key in upgrades) { upgrades[key].level = 0; upgrades[key].tier = 0; }
 
   camera.x = turret.x - canvas.width / 2;
   camera.y = turret.y - canvas.height / 2;
