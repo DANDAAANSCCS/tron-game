@@ -69,7 +69,7 @@ let autoAimTarget = null;
 let gold = 0;
 let gems = 0;
 let rewardPopups = []; // big center popups for gems/wave rewards
-const BULLET_SPREAD = 0.08; // radians of random spread
+const BULLET_SPREAD = 0.18; // radians of random spread
 
 // Wave management
 let waveEnemiesTotal = 0;
