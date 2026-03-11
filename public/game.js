@@ -1673,6 +1673,11 @@ function updateWaveSpawning() {
       gemReward = 1;
     }
 
+    // Bonus gems every 10 waves
+    if (completedWave % 10 === 0) {
+      gemReward += 5;
+    }
+
     gold += goldReward;
     gems += gemReward;
     score += (completedWave + 1) * 50;
@@ -1680,7 +1685,7 @@ function updateWaveSpawning() {
     // Show reward popup
     spawnRewardPopup(rewardMsg, '#ffd700');
     if (gemReward > 0) {
-      spawnRewardPopup('+1 GEM', '#e040fb');
+      spawnRewardPopup(`+${gemReward} GEM${gemReward > 1 ? 'S' : ''}`, '#e040fb');
     }
 
     // Save progress after every wave
@@ -1688,10 +1693,12 @@ function updateWaveSpawning() {
 
     // Check win condition
     if (wave >= MAX_WAVES) {
+      gems += 25;
       gameState = 'victory';
       saveProgress(true);
       showOverlay('VICTORY!', `LEVEL ${currentLevel} COMPLETE — SCORE: ${score}`);
       spawnRewardPopup('LEVEL COMPLETE!', '#00ff66');
+      spawnRewardPopup('+25 GEMS', '#e040fb');
       setTimeout(() => {
         window.location.href = '/levels.html';
       }, 4000);
