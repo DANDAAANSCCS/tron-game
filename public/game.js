@@ -30,28 +30,39 @@ const MAX_WAVES = 100;
 const TANK_START_WAVE = 50;
 const BOSS_WAVE = 100;
 const STORAGE_KEY = 'neonDefenseProgress';
-const PERM_STORAGE_KEY = 'neonDefensePermUpgrades';
-const GEM_STORAGE_KEY = 'neonDefenseGems';
 let levelStartTime = Date.now();
 
-// ── Permanent upgrades (loaded from localStorage) ──
-function loadPermUpgrades() {
-  try { return JSON.parse(localStorage.getItem(PERM_STORAGE_KEY)) || {}; } catch (e) { return {}; }
+// ── Server data (loaded async before game starts) ──
+let serverGameData = { gems: 0, permUpgrades: {}, levelProgress: {} };
+
+async function loadServerGameData() {
+  try {
+    const res = await fetch('/api/gamedata');
+    if (res.ok) serverGameData = await res.json();
+  } catch (e) {}
 }
-function loadGems() {
-  try { return parseInt(localStorage.getItem(GEM_STORAGE_KEY)) || 0; } catch (e) { return 0; }
+
+async function saveServerGameData(data) {
+  try {
+    await fetch('/api/gamedata', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  } catch (e) {}
 }
-function saveGems(amount) {
-  localStorage.setItem(GEM_STORAGE_KEY, String(amount));
+
+// ── Permanent upgrades (set after loading from server) ──
+const permBonus = { health: 0, damage: 0, regen: 0, precision: 0, fireRate: 0 };
+
+function applyPermBonuses() {
+  const pu = serverGameData.permUpgrades || {};
+  permBonus.health    = (pu.health    || 0) * 0.05;
+  permBonus.damage    = (pu.damage    || 0) * 0.05;
+  permBonus.regen     = (pu.regen     || 0) * 0.05;
+  permBonus.precision = (pu.precision || 0) * 0.05;
+  permBonus.fireRate  = (pu.fireRate  || 0) * 0.05;
 }
-const permUpg = loadPermUpgrades();
-const permBonus = {
-  health:    (permUpg.health    || 0) * 0.05,
-  damage:    (permUpg.damage    || 0) * 0.05,
-  regen:     (permUpg.regen     || 0) * 0.05,
-  precision: (permUpg.precision || 0) * 0.05,
-  fireRate:  (permUpg.fireRate  || 0) * 0.05,
-};
 
 // ── Enemy config (Runner) ──
 const ENEMY_BASE_HP = 50;
@@ -2213,37 +2224,40 @@ function hideOverlay() {
   overlay.classList.add('hidden');
 }
 
-// ── Save Progress (localStorage) ──
-let gemsbanked = 0; // gems already banked to global storage this session
+// ── Save Progress (server API) ──
+let gemsbanked = 0;
 
 function saveProgress(completed = false) {
-  let allProgress = {};
-  try {
-    allProgress = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  } catch (e) {}
-
   const levelKey = `level${currentLevel}`;
-  const existing = allProgress[levelKey] || { waveReached: 0, completed: false, timePlayed: 0, score: 0 };
+  const existing = (serverGameData.levelProgress || {})[levelKey] || { waveReached: 0, completed: false, timePlayed: 0, score: 0 };
 
   const sessionTime = Math.floor((Date.now() - levelStartTime) / 1000);
 
-  allProgress[levelKey] = {
+  const levelData = {
     waveReached: Math.max(existing.waveReached, wave),
     completed: existing.completed || completed,
     timePlayed: existing.timePlayed + sessionTime,
     score: Math.max(existing.score, score)
   };
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(allProgress));
+  // Update local cache
+  if (!serverGameData.levelProgress) serverGameData.levelProgress = {};
+  serverGameData.levelProgress[levelKey] = levelData;
   levelStartTime = Date.now();
 
-  // Bank gems earned this session to the global gem storage
+  // Bank gems earned this session
   const newGems = gems - gemsbanked;
+  const totalGems = (serverGameData.gems || 0) + (newGems > 0 ? newGems : 0);
   if (newGems > 0) {
-    const currentGems = loadGems();
-    saveGems(currentGems + newGems);
+    serverGameData.gems = totalGems;
     gemsbanked = gems;
   }
+
+  // Save to server
+  saveServerGameData({
+    gems: totalGems,
+    levelProgress: { [levelKey]: levelData },
+  });
 }
 
 // ── Init ──
@@ -2372,6 +2386,10 @@ function gameLoop() {
 
 // ── Countdown & Start ──
 async function startGame() {
+  // Load server data (perm upgrades, gems) before starting
+  await loadServerGameData();
+  applyPermBonuses();
+
   initGame();
   gameState = 'countdown';
 

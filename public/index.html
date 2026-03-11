@@ -51,6 +51,25 @@
     </div>
   </div>
 
+  <div class="user-bar" id="user-bar" style="display:none;">
+    <span class="user-name" id="user-display"></span>
+    <button class="logout-btn" id="logout-btn">[LOGOUT]</button>
+  </div>
+  <script src="auth-check.js"></script>
   <script src="menu.js"></script>
+  <script>
+    // Show user bar once auth is confirmed
+    const _checkUser = setInterval(() => {
+      if (window.currentUser) {
+        clearInterval(_checkUser);
+        document.getElementById('user-display').textContent = window.currentUser.displayName;
+        document.getElementById('user-bar').style.display = '';
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+          await fetch('/auth/logout', { method: 'POST' });
+          window.location.href = '/login.html';
+        });
+      }
+    }, 100);
+  </script>
 </body>
 </html>

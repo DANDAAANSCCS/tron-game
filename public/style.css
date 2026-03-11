@@ -698,6 +698,222 @@ body {
   color: rgba(0, 255, 242, 0.25);
 }
 
+/* ══════════════════════════════════════ */
+/*  LOGIN PAGE                           */
+/* ══════════════════════════════════════ */
+
+.login-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 30px 40px;
+  width: 400px;
+  max-width: 95vw;
+}
+
+.login-logo {
+  margin-bottom: 30px;
+}
+
+.login-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 24px;
+}
+
+.login-tab {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 4px;
+  color: rgba(0, 255, 242, 0.35);
+  background: transparent;
+  border: 1px solid rgba(0, 255, 242, 0.1);
+  border-bottom: none;
+  padding: 10px 28px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.login-tab.active {
+  color: var(--cyan);
+  border-color: rgba(0, 255, 242, 0.3);
+  background: rgba(0, 255, 242, 0.03);
+  text-shadow: 0 0 8px var(--cyan);
+}
+
+.login-tab:hover:not(.active) {
+  color: rgba(0, 255, 242, 0.6);
+}
+
+.login-form {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-form.active {
+  display: flex;
+}
+
+.form-group {
+  text-align: left;
+}
+
+.form-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: rgba(0, 255, 242, 0.45);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  background: rgba(0, 255, 242, 0.03);
+  border: 1px solid rgba(0, 255, 242, 0.2);
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.form-input::placeholder {
+  color: rgba(0, 255, 242, 0.15);
+  letter-spacing: 1px;
+}
+
+.form-input:focus {
+  border-color: rgba(0, 255, 242, 0.5);
+  background: rgba(0, 255, 242, 0.05);
+  box-shadow: 0 0 12px rgba(0, 255, 242, 0.1);
+}
+
+.form-error {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: #ff0055;
+  text-shadow: 0 0 8px rgba(255, 0, 85, 0.4);
+  min-height: 18px;
+}
+
+.form-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  background: rgba(0, 255, 242, 0.05);
+  border: 1px solid rgba(0, 255, 242, 0.3);
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 8px var(--cyan);
+}
+
+.form-btn:hover {
+  background: rgba(0, 255, 242, 0.1);
+  border-color: rgba(0, 255, 242, 0.6);
+  box-shadow: 0 0 20px rgba(0, 255, 242, 0.15);
+}
+
+.form-btn:active {
+  background: rgba(0, 255, 242, 0.2);
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 255, 242, 0.1);
+}
+
+.divider-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 4px;
+  color: rgba(0, 255, 242, 0.25);
+}
+
+.google-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 20px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 3px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.google-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.login-footer {
+  margin-top: 30px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: rgba(0, 255, 242, 0.2);
+}
+
+/* User bar (shown on menu/game pages) */
+.user-bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 8px 16px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+}
+
+.user-name {
+  color: rgba(0, 255, 242, 0.6);
+}
+
+.logout-btn {
+  color: rgba(255, 102, 0, 0.5);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+}
+
+.logout-btn:hover {
+  color: var(--orange);
+  text-shadow: 0 0 8px var(--orange);
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .logo {

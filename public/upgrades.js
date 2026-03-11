@@ -209,9 +209,6 @@ function drawGemIcon(cvs) {
 }
 
 // ── Permanent Upgrades Data ──
-const PERM_STORAGE_KEY = 'neonDefensePermUpgrades';
-const GEM_STORAGE_KEY = 'neonDefenseGems';
-
 const PERM_UPGRADES = [
   { id: 'health',    label: 'HEALTH',      icon: '♥',  color: '#00ff66', desc: '+5% MAX HP' },
   { id: 'damage',    label: 'DAMAGE',      icon: '⚔', color: '#ff4444', desc: '+5% BULLET DMG' },
@@ -224,25 +221,33 @@ const BASE_COST = 5;
 const COST_SCALE = 1.10;
 const BONUS_PER_LEVEL = 0.05;
 
-function getPermUpgrades() {
+// Server-backed data
+let serverGems = 0;
+let serverUpgrades = {};
+
+async function loadServerData() {
   try {
-    return JSON.parse(localStorage.getItem(PERM_STORAGE_KEY)) || {};
-  } catch (e) { return {}; }
+    const res = await fetch('/api/gamedata');
+    if (res.ok) {
+      const data = await res.json();
+      serverGems = data.gems || 0;
+      serverUpgrades = data.permUpgrades || {};
+    }
+  } catch (e) {}
 }
 
-function savePermUpgrades(data) {
-  localStorage.setItem(PERM_STORAGE_KEY, JSON.stringify(data));
-}
-
-function getGems() {
+async function saveToServer(gems, permUpgrades) {
   try {
-    return parseInt(localStorage.getItem(GEM_STORAGE_KEY)) || 0;
-  } catch (e) { return 0; }
+    await fetch('/api/gamedata', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gems, permUpgrades }),
+    });
+  } catch (e) {}
 }
 
-function saveGems(amount) {
-  localStorage.setItem(GEM_STORAGE_KEY, String(amount));
-}
+function getPermUpgrades() { return serverUpgrades; }
+function getGems() { return serverGems; }
 
 function getUpgradeCost(level) {
   return Math.round(BASE_COST * Math.pow(COST_SCALE, level));
@@ -317,12 +322,10 @@ function highlightCard(index) {
 
 function buyUpgrade(index) {
   const upg = PERM_UPGRADES[index];
-  const upgData = getPermUpgrades();
-  const level = upgData[upg.id] || 0;
+  const level = serverUpgrades[upg.id] || 0;
   const cost = getUpgradeCost(level);
-  let gems = getGems();
 
-  if (gems < cost) {
+  if (serverGems < cost) {
     playDenySound();
     const card = document.querySelectorAll('.upg-card')[index];
     card.classList.add('deny');
@@ -330,10 +333,9 @@ function buyUpgrade(index) {
     return;
   }
 
-  gems -= cost;
-  upgData[upg.id] = level + 1;
-  savePermUpgrades(upgData);
-  saveGems(gems);
+  serverGems -= cost;
+  serverUpgrades[upg.id] = level + 1;
+  saveToServer(serverGems, serverUpgrades);
   playBuySound();
 
   // Flash effect
@@ -388,4 +390,4 @@ if (backBtn) {
 
 // ── Init ──
 drawGemIcon(document.getElementById('gem-icon-cvs'));
-buildUpgradeCards();
+loadServerData().then(() => buildUpgradeCards());

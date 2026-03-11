@@ -138,15 +138,20 @@ const LEVELS = [
   }
 ];
 
-const STORAGE_KEY = 'neonDefenseProgress';
+let serverData = null;
+
+async function loadServerData() {
+  try {
+    const res = await fetch('/api/gamedata');
+    if (res.ok) serverData = await res.json();
+  } catch (e) {}
+}
 
 function getProgress(levelId) {
-  try {
-    const all = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-    return all[`level${levelId}`] || { waveReached: 0, completed: false, timePlayed: 0, score: 0 };
-  } catch (e) {
-    return { waveReached: 0, completed: false, timePlayed: 0, score: 0 };
+  if (serverData && serverData.levelProgress) {
+    return serverData.levelProgress[`level${levelId}`] || { waveReached: 0, completed: false, timePlayed: 0, score: 0 };
   }
+  return { waveReached: 0, completed: false, timePlayed: 0, score: 0 };
 }
 
 function formatTime(totalSeconds) {
@@ -322,4 +327,5 @@ if (backBtn) {
   });
 }
 
-buildLevelCards();
+// Init: load server data then build cards
+loadServerData().then(() => buildLevelCards());
