@@ -187,7 +187,7 @@ function selectItem(index) {
   const actions = ['start', 'upgrades', 'controls', 'ranking'];
   if (actions[index] === 'start') {
     setTimeout(() => {
-      window.location.href = '/game.html';
+      window.location.href = '/levels.html';
     }, 500);
   }
 }

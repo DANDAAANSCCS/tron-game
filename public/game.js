@@ -23,12 +23,33 @@ const EMP_RADIUS = 350;
 const EMP_DAMAGE = 60;
 const PLAYER_MAX_HP = 100;
 
-// ── Enemy config ──
+// ── Level config ──
+const urlParams = new URLSearchParams(window.location.search);
+const currentLevel = parseInt(urlParams.get('level')) || 1;
+const MAX_WAVES = 100;
+const TANK_START_WAVE = 50;
+const BOSS_WAVE = 100;
+const STORAGE_KEY = 'neonDefenseProgress';
+let levelStartTime = Date.now();
+
+// ── Enemy config (Runner) ──
 const ENEMY_BASE_HP = 50;
 const ENEMY_BASE_SPEED = 1.2;
 const ENEMY_RADIUS = 12;
 const ENEMY_DAMAGE = 10;
 const ENEMY_ATTACK_RANGE = 40;
+
+// ── Enemy config (Tank) ──
+const TANK_BASE_HP = 300;
+const TANK_BASE_SPEED = 0.6;
+const TANK_RADIUS = 20;
+const TANK_DAMAGE = 20;
+
+// ── Enemy config (Boss) ──
+const BOSS_BASE_HP = 5000;
+const BOSS_BASE_SPEED = 0.4;
+const BOSS_RADIUS = 40;
+const BOSS_DAMAGE = 35;
 
 // ── Colors ──
 const COL = {
@@ -176,6 +197,10 @@ let spawnTimer = 0;
 let spawnInterval = 60;
 let wavePaused = false;
 let waveStartDelay = 0;
+let waveTanksToSpawn = 0;
+let waveBossToSpawn = 0;
+let waveTanksSpawned = 0;
+let waveBossSpawned = 0;
 
 // Death state
 let deathTimer = 0;
@@ -686,13 +711,14 @@ class Bullet {
 
 // ── Enemy: Runner ──
 class Enemy {
-  constructor(x, y, hp, speed) {
+  constructor(x, y, hp, speed, type = 'runner') {
     this.x = x;
     this.y = y;
     this.hp = hp;
     this.maxHp = hp;
     this.speed = speed;
-    this.radius = ENEMY_RADIUS;
+    this.type = type;
+    this.radius = type === 'boss' ? BOSS_RADIUS : type === 'tank' ? TANK_RADIUS : ENEMY_RADIUS;
     this.alive = true;
     this.angle = 0;
     this.damageFlash = 0;
@@ -727,8 +753,9 @@ class Enemy {
       if (this.attackTimer >= 60) {
         this.attackTimer = 0;
         if (turret.alive) {
-          turret.takeDamage(ENEMY_DAMAGE);
-          spawnFloatingText(turret.x, turret.y - 30, `-${ENEMY_DAMAGE}`, COL.red);
+          const dmg = this.type === 'boss' ? BOSS_DAMAGE : this.type === 'tank' ? TANK_DAMAGE : ENEMY_DAMAGE;
+          turret.takeDamage(dmg);
+          spawnFloatingText(turret.x, turret.y - 30, `-${dmg}`, COL.red);
           // Attack flash effect
           spawnParticle(this.x, this.y, 0, 0, COL.red, 10, 8);
         }
@@ -745,7 +772,7 @@ class Enemy {
         this.y + Math.sin(backAngle) * this.radius,
         Math.cos(backAngle) * 0.8 + (Math.random() - 0.5) * 0.5,
         Math.sin(backAngle) * 0.8 + (Math.random() - 0.5) * 0.5,
-        COL.orange, 12 + Math.random() * 8, 2);
+        this.type === 'boss' ? COL.purple : this.type === 'tank' ? COL.red : COL.orange, 12 + Math.random() * 8, this.type === 'boss' ? 4 : 2);
     }
   }
 
@@ -759,15 +786,34 @@ class Enemy {
 
   die() {
     this.alive = false;
-    spawnExplosion(this.x, this.y, COL.orange, 25);
-    spawnExplosion(this.x, this.y, COL.yellow, 10);
-    groundDecals.push({ x: this.x, y: this.y, radius: 18, alpha: 0.2, color: COL.orange });
-    score += 10;
+    const isBoss = this.type === 'boss';
+    const isTank = this.type === 'tank';
+    const baseColor = isBoss ? COL.purple : isTank ? COL.red : COL.orange;
+
+    spawnExplosion(this.x, this.y, baseColor, isBoss ? 60 : isTank ? 35 : 25);
+    spawnExplosion(this.x, this.y, COL.yellow, isBoss ? 30 : isTank ? 15 : 10);
+    groundDecals.push({ x: this.x, y: this.y, radius: isBoss ? 50 : isTank ? 25 : 18, alpha: 0.2, color: baseColor });
+
+    const scoreGain = isBoss ? 500 : isTank ? 25 : 10;
+    score += scoreGain;
     totalKills++;
     waveEnemiesKilled++;
-    const goldPerKill = 1 + Math.floor(wave / 5);
+
+    const goldMultiplier = isBoss ? 20 : isTank ? 3 : 1;
+    const goldPerKill = (1 + Math.floor(wave / 5)) * goldMultiplier;
     gold += goldPerKill;
     spawnFloatingText(this.x, this.y - 15, `+${goldPerKill} gold`, '#ffd700');
+
+    if (isBoss) {
+      gems += 1;
+      spawnFloatingText(this.x, this.y - 35, '+1 GEM', '#e040fb');
+      spawnRewardPopup('BOSS DEFEATED!', '#aa00ff');
+      camera.shakeX = (Math.random() - 0.5) * 20;
+      camera.shakeY = (Math.random() - 0.5) * 20;
+    }
+    if (isTank) {
+      spawnFloatingText(this.x, this.y - 35, 'TANK DOWN', COL.red);
+    }
   }
 
   draw(ctx) {
@@ -780,11 +826,28 @@ class Enemy {
     const scale = 1.0 + Math.max(0, this.spawnAnim) * 0.5;
     ctx.scale(scale, scale);
 
+    if (this.type === 'boss') {
+      this.drawBoss(ctx, pulse);
+    } else if (this.type === 'tank') {
+      this.drawTank(ctx, pulse);
+    } else {
+      this.drawRunner(ctx, pulse);
+    }
+
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // HP bar
+    this.drawEnemyHpBar(ctx);
+  }
+
+  drawRunner(ctx, pulse) {
+    const r = this.radius;
     // Threat ring (pulsing)
     ctx.strokeStyle = `rgba(255, 102, 0, ${pulse * 0.2})`;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(0, 0, this.radius + 6 + Math.sin(frameCount * 0.1 + this.pulsePhase) * 2, 0, Math.PI * 2);
+    ctx.arc(0, 0, r + 6 + Math.sin(frameCount * 0.1 + this.pulsePhase) * 2, 0, Math.PI * 2);
     ctx.stroke();
 
     // Rotating threat segments
@@ -793,37 +856,35 @@ class Enemy {
     for (let i = 0; i < 3; i++) {
       const a = frameCount * 0.03 + this.pulsePhase + (i / 3) * Math.PI * 2;
       ctx.beginPath();
-      ctx.arc(0, 0, this.radius + 3, a, a + 0.3);
+      ctx.arc(0, 0, r + 3, a, a + 0.3);
       ctx.stroke();
     }
 
     ctx.rotate(this.angle);
 
-    // Body glow (under)
-    const bodyGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius + 2);
+    // Body glow
+    const bodyGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r + 2);
     bodyGrad.addColorStop(0, this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 102, 0, 0.2)');
     bodyGrad.addColorStop(1, 'transparent');
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.arc(0, 0, this.radius + 2, 0, Math.PI * 2);
+    ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
     ctx.fill();
 
     // Main body - angular shape
     ctx.fillStyle = this.damageFlash > 0 ? COL.white : COL.orange;
     ctx.shadowColor = COL.orange;
     ctx.shadowBlur = 18;
-
     ctx.beginPath();
-    ctx.moveTo(this.radius + 2, 0);
-    ctx.lineTo(2, -this.radius * 0.7);
-    ctx.lineTo(-this.radius * 0.5, -this.radius * 0.4);
-    ctx.lineTo(-this.radius * 0.8, 0);
-    ctx.lineTo(-this.radius * 0.5, this.radius * 0.4);
-    ctx.lineTo(2, this.radius * 0.7);
+    ctx.moveTo(r + 2, 0);
+    ctx.lineTo(2, -r * 0.7);
+    ctx.lineTo(-r * 0.5, -r * 0.4);
+    ctx.lineTo(-r * 0.8, 0);
+    ctx.lineTo(-r * 0.5, r * 0.4);
+    ctx.lineTo(2, r * 0.7);
     ctx.closePath();
     ctx.fill();
 
-    // Body edge highlight
     ctx.strokeStyle = this.damageFlash > 0 ? COL.yellow : 'rgba(255, 150, 50, 0.6)';
     ctx.lineWidth = 1;
     ctx.shadowBlur = 0;
@@ -833,10 +894,10 @@ class Enemy {
     ctx.strokeStyle = 'rgba(255, 200, 100, 0.3)';
     ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.moveTo(-this.radius * 0.3, -this.radius * 0.2);
-    ctx.lineTo(this.radius * 0.5, -this.radius * 0.15);
-    ctx.moveTo(-this.radius * 0.3, this.radius * 0.2);
-    ctx.lineTo(this.radius * 0.5, this.radius * 0.15);
+    ctx.moveTo(-r * 0.3, -r * 0.2);
+    ctx.lineTo(r * 0.5, -r * 0.15);
+    ctx.moveTo(-r * 0.3, r * 0.2);
+    ctx.lineTo(r * 0.5, r * 0.15);
     ctx.stroke();
 
     // Core eye
@@ -846,8 +907,6 @@ class Enemy {
     ctx.beginPath();
     ctx.arc(1, 0, 3.5, 0, Math.PI * 2);
     ctx.fill();
-
-    // Eye inner
     ctx.fillStyle = COL.red;
     ctx.shadowBlur = 6;
     ctx.beginPath();
@@ -859,28 +918,280 @@ class Enemy {
     ctx.lineWidth = 1;
     ctx.shadowBlur = 0;
     ctx.beginPath();
-    ctx.moveTo(this.radius + 2, 0);
-    ctx.lineTo(this.radius + 8, 0);
+    ctx.moveTo(r + 2, 0);
+    ctx.lineTo(r + 8, 0);
+    ctx.stroke();
+  }
+
+  drawTank(ctx, pulse) {
+    const r = this.radius;
+    const col = '#ff0055';
+    const colA = 'rgba(255, 0, 85,';
+
+    // Pulsing shield aura
+    ctx.strokeStyle = `${colA} ${pulse * 0.15})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 8 + Math.sin(frameCount * 0.06 + this.pulsePhase) * 3, 0, Math.PI * 2);
     ctx.stroke();
 
+    // Shield arcs (4 rotating)
+    ctx.strokeStyle = `${colA} ${pulse * 0.4})`;
+    ctx.lineWidth = 2.5;
+    for (let i = 0; i < 4; i++) {
+      const a = frameCount * 0.02 + this.pulsePhase + (i / 4) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 4, a, a + 0.5);
+      ctx.stroke();
+    }
+
+    ctx.rotate(this.angle);
+
+    // Body glow
+    const bodyGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r + 2);
+    bodyGrad.addColorStop(0, this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.3)' : `${colA} 0.15)`);
+    bodyGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Main body - hexagonal shape
+    ctx.fillStyle = this.damageFlash > 0 ? COL.white : col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
+      const px = Math.cos(a) * r;
+      const py = Math.sin(a) * r;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Edge highlight
+    ctx.strokeStyle = this.damageFlash > 0 ? COL.yellow : 'rgba(255, 100, 150, 0.6)';
+    ctx.lineWidth = 1.5;
     ctx.shadowBlur = 0;
-    ctx.restore();
+    ctx.stroke();
 
-    // HP bar
-    if (this.hp < this.maxHp) {
-      const barW = 26;
-      const barH = 3;
-      const bx = this.x - barW / 2;
-      const by = this.y - this.radius - 10;
-      const ratio = this.hp / this.maxHp;
+    // Inner hex ring
+    ctx.strokeStyle = `${colA} 0.3)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
+      const px = Math.cos(a) * r * 0.6;
+      const py = Math.sin(a) * r * 0.6;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
-      const hpCol = ratio > 0.5 ? COL.green : ratio > 0.25 ? COL.yellow : COL.red;
-      ctx.fillStyle = hpCol;
-      ctx.shadowColor = hpCol;
-      ctx.shadowBlur = 4;
-      ctx.fillRect(bx, by, barW * ratio, barH);
+    // Cross struts
+    ctx.strokeStyle = 'rgba(255, 150, 180, 0.25)';
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.55);
+      ctx.lineTo(Math.cos(a + Math.PI) * r * 0.55, Math.sin(a + Math.PI) * r * 0.55);
+      ctx.stroke();
+    }
+
+    // Core
+    ctx.fillStyle = this.damageFlash > 0 ? col : COL.white;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = col;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Forward spike
+    ctx.fillStyle = `${colA} ${pulse * 0.7})`;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(r + 6, -2);
+    ctx.lineTo(r + 6, 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  drawBoss(ctx, pulse) {
+    const r = this.radius;
+    const col = '#aa00ff';
+    const colA = 'rgba(170, 0, 255,';
+
+    // Massive aura
+    const auraGrad = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r + 20);
+    auraGrad.addColorStop(0, `${colA} 0.08)`);
+    auraGrad.addColorStop(0.7, `${colA} 0.03)`);
+    auraGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = auraGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outer pulsing ring
+    ctx.strokeStyle = `${colA} ${pulse * 0.3})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 12 + Math.sin(frameCount * 0.05 + this.pulsePhase) * 4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Rotating shield segments (6)
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 6; i++) {
+      const a = frameCount * 0.015 + (i / 6) * Math.PI * 2;
+      const alpha = 0.2 + Math.sin(frameCount * 0.04 + i * 1.5) * 0.1;
+      ctx.strokeStyle = `${colA} ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 6, a, a + 0.4);
+      ctx.stroke();
+    }
+
+    // Counter-rotating inner arcs
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i++) {
+      const a = -frameCount * 0.025 + (i / 4) * Math.PI * 2;
+      ctx.strokeStyle = `${colA} ${0.15 + pulse * 0.1})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.7, a, a + 0.6);
+      ctx.stroke();
+    }
+
+    ctx.rotate(this.angle);
+
+    // Main body - octagonal
+    ctx.fillStyle = this.damageFlash > 0 ? COL.white : col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 30;
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+      const px = Math.cos(a) * r;
+      const py = Math.sin(a) * r;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Edge
+    ctx.strokeStyle = this.damageFlash > 0 ? COL.yellow : 'rgba(200, 100, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+
+    // Inner octagon
+    ctx.strokeStyle = `${colA} 0.25)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+      const px = Math.cos(a) * r * 0.6;
+      const py = Math.sin(a) * r * 0.6;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Radial struts
+    ctx.strokeStyle = 'rgba(200, 150, 255, 0.2)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r * 0.35, Math.sin(a) * r * 0.35);
+      ctx.lineTo(Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9);
+      ctx.stroke();
+    }
+
+    // Energy core
+    const coreBreath = 0.6 + Math.sin(frameCount * 0.07) * 0.3;
+    const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 12);
+    coreGrad.addColorStop(0, `rgba(255, 255, 255, ${coreBreath})`);
+    coreGrad.addColorStop(0.3, `${colA} ${coreBreath * 0.8})`);
+    coreGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = coreGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, 12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Core ring
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Hot center
+    ctx.fillStyle = COL.white;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Forward lance
+    ctx.fillStyle = `${colA} ${pulse * 0.6})`;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(r, -4);
+    ctx.lineTo(r + 14, 0);
+    ctx.lineTo(r, 4);
+    ctx.closePath();
+    ctx.fill();
+
+    // Side spikes
+    for (let s = -1; s <= 1; s += 2) {
+      ctx.fillStyle = `${colA} 0.3)`;
+      ctx.beginPath();
+      ctx.moveTo(r * 0.3, s * r);
+      ctx.lineTo(r * 0.6, s * (r + 8));
+      ctx.lineTo(-r * 0.1, s * r);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  drawEnemyHpBar(ctx) {
+    if (this.hp >= this.maxHp) return;
+    const isBoss = this.type === 'boss';
+    const barW = isBoss ? 60 : this.type === 'tank' ? 34 : 26;
+    const barH = isBoss ? 5 : 3;
+    const bx = this.x - barW / 2;
+    const by = this.y - this.radius - 10;
+    const ratio = this.hp / this.maxHp;
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
+    if (isBoss) {
+      ctx.strokeStyle = 'rgba(170, 0, 255, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx - 1, by - 1, barW + 2, barH + 2);
+    }
+    const hpCol = ratio > 0.5 ? COL.green : ratio > 0.25 ? COL.yellow : COL.red;
+    ctx.fillStyle = hpCol;
+    ctx.shadowColor = hpCol;
+    ctx.shadowBlur = 4;
+    ctx.fillRect(bx, by, barW * ratio, barH);
+    ctx.shadowBlur = 0;
+
+    if (isBoss) {
+      ctx.font = '700 9px Orbitron';
+      ctx.fillStyle = '#aa00ff';
+      ctx.shadowColor = '#aa00ff';
+      ctx.shadowBlur = 6;
+      ctx.textAlign = 'center';
+      ctx.fillText('BOSS', this.x, by - 5);
       ctx.shadowBlur = 0;
     }
   }
@@ -1232,6 +1543,16 @@ function checkBulletCollisions() {
 // ── Wave System ──
 function startWave() {
   waveEnemiesTotal = 5 + wave * 3;
+
+  // Tanks from wave 50+
+  waveTanksToSpawn = (wave >= TANK_START_WAVE) ? 1 + Math.floor(Math.random() * 2) : 0;
+  waveTanksSpawned = 0;
+
+  // Boss at wave 100
+  waveBossToSpawn = (wave === BOSS_WAVE) ? 1 : 0;
+  waveBossSpawned = 0;
+
+  waveEnemiesTotal += waveTanksToSpawn + waveBossToSpawn;
   waveEnemiesSpawned = 0;
   waveEnemiesKilled = 0;
   spawnInterval = Math.max(15, 60 - wave * 3);
@@ -1239,7 +1560,7 @@ function startWave() {
   wavePaused = false;
 }
 
-function spawnEnemy() {
+function spawnEnemy(type = 'runner') {
   const side = Math.floor(Math.random() * 4);
   let x, y;
   const margin = 50;
@@ -1251,12 +1572,26 @@ function spawnEnemy() {
     case 3: x = margin + Math.random() * (MAP_W - margin * 2); y = MAP_H - margin; break;
   }
 
-  const hpScale = 1 + (wave - 1) * 0.3;
+  let baseHp, baseSpeed;
+  if (type === 'boss') {
+    baseHp = BOSS_BASE_HP;
+    baseSpeed = BOSS_BASE_SPEED;
+  } else if (type === 'tank') {
+    baseHp = TANK_BASE_HP;
+    baseSpeed = TANK_BASE_SPEED;
+  } else {
+    baseHp = ENEMY_BASE_HP;
+    baseSpeed = ENEMY_BASE_SPEED;
+  }
+
+  const hpMult = type === 'boss' ? 0.1 : 0.3;
+  const hpScale = 1 + (wave - 1) * hpMult;
   const speedScale = 1 + (wave - 1) * 0.08;
 
   enemies.push(new Enemy(x, y,
-    Math.round(ENEMY_BASE_HP * hpScale),
-    ENEMY_BASE_SPEED * speedScale
+    Math.round(baseHp * hpScale),
+    baseSpeed * speedScale,
+    type
   ));
   waveEnemiesSpawned++;
 
@@ -1271,7 +1606,18 @@ function updateWaveSpawning() {
     spawnTimer++;
     if (spawnTimer >= spawnInterval) {
       spawnTimer = 0;
-      spawnEnemy();
+
+      // Spawn boss around midway through the wave
+      if (waveBossSpawned < waveBossToSpawn && waveEnemiesSpawned >= Math.floor(waveEnemiesTotal / 2)) {
+        spawnEnemy('boss');
+        waveBossSpawned++;
+        spawnRewardPopup('WARNING: BOSS INCOMING', '#aa00ff');
+      } else if (waveTanksSpawned < waveTanksToSpawn) {
+        spawnEnemy('tank');
+        waveTanksSpawned++;
+      } else {
+        spawnEnemy('runner');
+      }
     }
   }
 
@@ -1305,8 +1651,23 @@ function updateWaveSpawning() {
       spawnRewardPopup('+1 GEM', '#e040fb');
     }
 
+    // Save progress after every wave
+    saveProgress();
+
+    // Check win condition
+    if (wave >= MAX_WAVES) {
+      gameState = 'victory';
+      saveProgress(true);
+      showOverlay('VICTORY!', `LEVEL ${currentLevel} COMPLETE — SCORE: ${score}`);
+      spawnRewardPopup('LEVEL COMPLETE!', '#00ff66');
+      setTimeout(() => {
+        window.location.href = '/levels.html';
+      }, 4000);
+      return;
+    }
+
     wave++;
-    showOverlay(`WAVE ${wave}`, 'INCOMING...');
+    showOverlay(`WAVE ${wave}`, wave === TANK_START_WAVE ? 'NEW THREAT DETECTED...' : wave === BOSS_WAVE ? 'FINAL WAVE — BOSS INCOMING' : 'INCOMING...');
     waveStartDelay = 210;
   }
 }
@@ -1512,11 +1873,13 @@ function drawMinimap() {
 
   for (const enemy of enemies) {
     if (!enemy.alive) continue;
-    minimapCtx.fillStyle = COL.orange;
-    minimapCtx.shadowColor = COL.orange;
-    minimapCtx.shadowBlur = 3;
+    const eCol = enemy.type === 'boss' ? COL.purple : enemy.type === 'tank' ? COL.red : COL.orange;
+    const eSz = enemy.type === 'boss' ? 5 : enemy.type === 'tank' ? 3 : 2;
+    minimapCtx.fillStyle = eCol;
+    minimapCtx.shadowColor = eCol;
+    minimapCtx.shadowBlur = enemy.type === 'boss' ? 8 : 3;
     minimapCtx.beginPath();
-    minimapCtx.arc(enemy.x * scaleX, enemy.y * scaleY, 2, 0, Math.PI * 2);
+    minimapCtx.arc(enemy.x * scaleX, enemy.y * scaleY, eSz, 0, Math.PI * 2);
     minimapCtx.fill();
   }
   minimapCtx.shadowBlur = 0;
@@ -1562,6 +1925,7 @@ function drawDeathEffect() {
 function updateHUD() {
   document.getElementById('hp-val').textContent = turret ? Math.ceil(turret.hp) : 0;
   document.getElementById('kills-val').textContent = totalKills;
+  document.getElementById('level-val').textContent = currentLevel;
   document.getElementById('wave-val').textContent = wave;
   document.getElementById('enemies-val').textContent = Math.max(0, waveEnemiesTotal - waveEnemiesKilled);
   document.getElementById('score-val').textContent = score;
@@ -1810,6 +2174,29 @@ function hideOverlay() {
   overlay.classList.add('hidden');
 }
 
+// ── Save Progress (localStorage) ──
+function saveProgress(completed = false) {
+  let allProgress = {};
+  try {
+    allProgress = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch (e) {}
+
+  const levelKey = `level${currentLevel}`;
+  const existing = allProgress[levelKey] || { waveReached: 0, completed: false, timePlayed: 0, score: 0 };
+
+  const sessionTime = Math.floor((Date.now() - levelStartTime) / 1000);
+
+  allProgress[levelKey] = {
+    waveReached: Math.max(existing.waveReached, wave),
+    completed: existing.completed || completed,
+    timePlayed: existing.timePlayed + sessionTime,
+    score: Math.max(existing.score, score)
+  };
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(allProgress));
+  levelStartTime = Date.now();
+}
+
 // ── Init ──
 function initGame() {
   turret = new Turret();
@@ -1831,6 +2218,11 @@ function initGame() {
   gems = 0;
   rewardPopups = [];
   upgradesPanelOpen = false;
+  waveTanksToSpawn = 0;
+  waveBossToSpawn = 0;
+  waveTanksSpawned = 0;
+  waveBossSpawned = 0;
+  levelStartTime = Date.now();
   for (const key in upgrades) { upgrades[key].level = 0; upgrades[key].tier = 0; }
 
   camera.x = turret.x - canvas.width / 2;
@@ -1843,7 +2235,12 @@ function initGame() {
 
 // ── Main Game Loop ──
 function gameLoop() {
-  if (gameState !== 'playing') return;
+  if (gameState !== 'playing' && gameState !== 'victory') return;
+  if (gameState === 'victory') {
+    // Keep rendering but no updates, just wait for redirect
+    requestAnimationFrame(gameLoop);
+    return;
+  }
   frameCount++;
 
   // EMP input
@@ -1904,17 +2301,18 @@ function gameLoop() {
   drawUpgradesPanel();
   updateHUD();
 
-  // Game over: go back to menu after delay
+  // Game over: go back to levels after delay
   if (!turret.alive) {
     deathTimer++;
     drawDeathEffect();
 
     if (deathTimer === 1) {
-      showOverlay('SYSTEM OFFLINE', `SCORE: ${score} | GOLD: ${gold} | GEMS: ${gems} — RETURNING TO MENU...`);
+      saveProgress();
+      showOverlay('SYSTEM OFFLINE', `WAVE ${wave} / ${MAX_WAVES} | SCORE: ${score} — RETURNING TO LEVELS...`);
     }
 
     if (deathTimer >= DEATH_RETURN_DELAY) {
-      window.location.href = '/';
+      window.location.href = '/levels.html';
       return;
     }
   }

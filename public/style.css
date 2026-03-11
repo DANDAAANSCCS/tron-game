@@ -227,6 +227,249 @@ body {
   margin: 0 10px;
 }
 
+/* ══════════════════════════════════════ */
+/*  LEVELS PAGE                          */
+/* ══════════════════════════════════════ */
+
+.levels-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 40px;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.levels-header {
+  margin-bottom: 40px;
+}
+
+.levels-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 12px;
+  color: var(--cyan);
+  text-shadow:
+    0 0 10px var(--cyan),
+    0 0 30px var(--cyan),
+    0 0 60px rgba(0, 255, 242, 0.4);
+  user-select: none;
+}
+
+.levels-subtitle {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 8px;
+  color: rgba(0, 255, 242, 0.4);
+  margin-top: 8px;
+}
+
+.levels-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+/* Level Card */
+.level-card {
+  display: flex;
+  gap: 18px;
+  padding: 16px;
+  width: 480px;
+  background: rgba(5, 5, 15, 0.85);
+  border: 1px solid rgba(0, 255, 242, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+}
+
+.level-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, rgba(0, 255, 242, 0.04), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.level-card:hover {
+  border-color: rgba(0, 255, 242, 0.5);
+  box-shadow:
+    0 0 20px rgba(0, 255, 242, 0.1),
+    inset 0 0 30px rgba(0, 255, 242, 0.03);
+  transform: translateY(-2px);
+}
+
+.level-card:hover::before {
+  opacity: 1;
+}
+
+.level-card.completed {
+  border-color: rgba(0, 255, 102, 0.3);
+}
+
+.level-card.completed:hover {
+  border-color: rgba(0, 255, 102, 0.6);
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.15);
+}
+
+.level-card.flash {
+  animation: clickFlash 0.4s ease;
+}
+
+/* Corner accents on card */
+.level-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 20px; height: 20px;
+  border-top: 2px solid var(--cyan);
+  border-right: 2px solid var(--cyan);
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.level-card:hover::after {
+  opacity: 0.7;
+}
+
+.level-thumbnail {
+  flex-shrink: 0;
+  width: 160px;
+  height: 160px;
+  border: 1px solid rgba(0, 255, 242, 0.1);
+}
+
+.level-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.level-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  text-shadow: 0 0 10px var(--cyan);
+}
+
+.level-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: rgba(0, 255, 242, 0.35);
+}
+
+.level-desc {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 2px;
+  color: rgba(255, 102, 0, 0.6);
+  margin-top: 2px;
+}
+
+.level-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.level-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(0, 255, 242, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.level-progress-fill {
+  height: 100%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  transition: width 0.5s ease;
+}
+
+.level-progress-text {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--cyan);
+  min-width: 32px;
+  text-align: right;
+}
+
+.level-stats {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: rgba(0, 255, 242, 0.45);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stat-sep {
+  color: rgba(0, 255, 242, 0.2);
+}
+
+.level-play-hint {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  color: rgba(0, 255, 242, 0.2);
+  margin-top: auto;
+  transition: color 0.3s ease;
+}
+
+.level-card:hover .level-play-hint {
+  color: rgba(0, 255, 242, 0.6);
+}
+
+/* Back button */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 30px;
+  text-decoration: none;
+  color: rgba(0, 255, 242, 0.4);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.9rem;
+  letter-spacing: 4px;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  color: var(--cyan);
+  border-color: rgba(0, 255, 242, 0.2);
+  text-shadow: 0 0 10px var(--cyan);
+}
+
+.back-btn .menu-arrow {
+  opacity: 0.5;
+  transform: none;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover .menu-arrow {
+  opacity: 1;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .logo {
@@ -238,5 +481,22 @@ body {
     width: 280px;
     padding: 12px 25px;
     font-size: 0.9rem;
+  }
+
+  .levels-title {
+    font-size: 1.6rem;
+    letter-spacing: 6px;
+  }
+
+  .level-card {
+    width: 100%;
+    max-width: 360px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .level-thumbnail {
+    width: 120px;
+    height: 120px;
   }
 }
