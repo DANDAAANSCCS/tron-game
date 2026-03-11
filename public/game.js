@@ -765,8 +765,9 @@ class Enemy {
     score += 10;
     totalKills++;
     waveEnemiesKilled++;
-    gold += 1;
-    spawnFloatingText(this.x, this.y - 15, '+1 gold', '#ffd700');
+    const goldPerKill = 1 + Math.floor(wave / 5);
+    gold += goldPerKill;
+    spawnFloatingText(this.x, this.y - 15, `+${goldPerKill} gold`, '#ffd700');
   }
 
   draw(ctx) {
