@@ -134,7 +134,17 @@ const LEVELS = [
     subtitle: 'TRAINING GROUNDS',
     waves: 100,
     colors: { primary: '#00fff2', accent: '#ff6600' },
-    description: '100 WAVES • TANK @ 50 • BOSS @ 100'
+    description: '100 WAVES • TANK @ 50 • BOSS @ 100',
+    requiresLevel: null,
+  },
+  {
+    id: 2,
+    name: 'SECTOR 9-X',
+    subtitle: 'PHANTOM ZONE',
+    waves: 100,
+    colors: { primary: '#0088ff', accent: '#00ffaa' },
+    description: '100 WAVES • TANKS+PHANTOMS • OVERLORD @ 100',
+    requiresLevel: 1,
   }
 ];
 
@@ -247,15 +257,22 @@ function drawThumbnail(cvs, level, progress) {
 }
 
 // ── Build Cards ──
+function isLevelUnlocked(level) {
+  if (!level.requiresLevel) return true;
+  const reqProgress = getProgress(level.requiresLevel);
+  return reqProgress.completed;
+}
+
 function buildLevelCards() {
   const grid = document.getElementById('levels-grid');
 
   for (const level of LEVELS) {
     const progress = getProgress(level.id);
+    const unlocked = isLevelUnlocked(level);
     const pct = progress.completed ? 100 : Math.floor((progress.waveReached / level.waves) * 100);
 
     const card = document.createElement('div');
-    card.className = `level-card${progress.completed ? ' completed' : ''}`;
+    card.className = `level-card${progress.completed ? ' completed' : ''}${!unlocked ? ' locked' : ''}`;
     card.dataset.level = level.id;
 
     card.innerHTML = `
@@ -263,55 +280,103 @@ function buildLevelCards() {
       <div class="level-info">
         <div class="level-name">${level.name}</div>
         <div class="level-sub">${level.subtitle}</div>
-        <div class="level-desc">${level.description}</div>
+        <div class="level-desc">${unlocked ? level.description : 'COMPLETE LEVEL ' + level.requiresLevel + ' TO UNLOCK'}</div>
         <div class="level-progress-wrap">
           <div class="level-progress-bar">
-            <div class="level-progress-fill" style="width:${pct}%;${progress.completed ? 'background:#00ff66;box-shadow:0 0 8px #00ff66;' : ''}"></div>
+            <div class="level-progress-fill" style="width:${unlocked ? pct : 0}%;${progress.completed ? 'background:#00ff66;box-shadow:0 0 8px #00ff66;' : ''}"></div>
           </div>
-          <span class="level-progress-text">${pct}%</span>
+          <span class="level-progress-text">${unlocked ? pct + '%' : 'LOCKED'}</span>
         </div>
         <div class="level-stats">
-          <span class="stat-item">${progress.completed ? 'COMPLETED' : progress.waveReached > 0 ? `WAVE ${progress.waveReached} / ${level.waves}` : 'NOT STARTED'}</span>
-          <span class="stat-sep">|</span>
-          <span class="stat-item">${progress.timePlayed > 0 ? formatTime(progress.timePlayed) : '--:--'}</span>
-          <span class="stat-sep">|</span>
-          <span class="stat-item">SCORE: ${progress.score}</span>
+          ${unlocked ? `
+            <span class="stat-item">${progress.completed ? 'COMPLETED' : progress.waveReached > 0 ? `WAVE ${progress.waveReached} / ${level.waves}` : 'NOT STARTED'}</span>
+            <span class="stat-sep">|</span>
+            <span class="stat-item">${progress.timePlayed > 0 ? formatTime(progress.timePlayed) : '--:--'}</span>
+            <span class="stat-sep">|</span>
+            <span class="stat-item">SCORE: ${progress.score}</span>
+          ` : '<span class="stat-item" style="color:rgba(255,0,85,0.6);">LOCKED</span>'}
         </div>
-        <div class="level-play-hint">[ ENTER / CLICK TO PLAY ]</div>
+        <div class="level-play-hint">${unlocked ? '[ ENTER / CLICK TO PLAY ]' : '[ LOCKED ]'}</div>
       </div>
     `;
 
     // Draw thumbnail
     const thumbCanvas = card.querySelector('.level-thumbnail');
-    drawThumbnail(thumbCanvas, level, progress);
+    if (unlocked) {
+      drawThumbnail(thumbCanvas, level, progress);
+    } else {
+      drawLockedThumbnail(thumbCanvas, level);
+    }
 
     // Events
     card.addEventListener('mouseenter', playHoverSound);
-    card.addEventListener('click', () => {
-      playSelectSound();
-      card.classList.add('flash');
-      setTimeout(() => {
-        window.location.href = `/game.html?level=${level.id}`;
-      }, 400);
-    });
+    if (unlocked) {
+      card.addEventListener('click', () => {
+        playSelectSound();
+        card.classList.add('flash');
+        setTimeout(() => {
+          window.location.href = `/game.html?level=${level.id}`;
+        }, 400);
+      });
+    }
 
     grid.appendChild(card);
   }
 }
 
+function drawLockedThumbnail(cvs, level) {
+  const c = cvs.getContext('2d');
+  const w = cvs.width;
+  const h = cvs.height;
+
+  // Dark background
+  c.fillStyle = '#050508';
+  c.fillRect(0, 0, w, h);
+
+  // Grid (very dim)
+  c.strokeStyle = 'rgba(255, 0, 85, 0.03)';
+  c.lineWidth = 0.5;
+  const gs = 16;
+  for (let x = 0; x <= w; x += gs) {
+    c.beginPath(); c.moveTo(x, 0); c.lineTo(x, h); c.stroke();
+  }
+  for (let y = 0; y <= h; y += gs) {
+    c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke();
+  }
+
+  // Lock icon
+  c.font = '900 28px Orbitron';
+  c.fillStyle = 'rgba(255, 0, 85, 0.3)';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('⊘', w / 2, h / 2);
+
+  // Border
+  c.strokeStyle = 'rgba(255, 0, 85, 0.2)';
+  c.lineWidth = 1;
+  c.strokeRect(0, 0, w, h);
+}
+
 // Keyboard nav
+let selectedCardIndex = 0;
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    const cards = document.querySelectorAll('.level-card');
-    if (cards.length > 0) {
+  const cards = document.querySelectorAll('.level-card:not(.locked)');
+  if (cards.length === 0) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    selectedCardIndex = Math.min(selectedCardIndex + 1, cards.length - 1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    selectedCardIndex = Math.max(selectedCardIndex - 1, 0);
+  } else if (e.key === 'Enter') {
+    const card = cards[selectedCardIndex];
+    if (card) {
       playSelectSound();
-      cards[0].classList.add('flash');
+      card.classList.add('flash');
+      const levelId = card.dataset.level;
       setTimeout(() => {
-        window.location.href = `/game.html?level=1`;
+        window.location.href = `/game.html?level=${levelId}`;
       }, 400);
     }
-  }
-  if (e.key === 'Escape' || e.key === 'Backspace') {
+  } else if (e.key === 'Escape' || e.key === 'Backspace') {
     window.location.href = '/';
   }
 });

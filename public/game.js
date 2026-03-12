@@ -112,10 +112,12 @@ function applyPermBonuses() {
 
 // ═══════════════════════════════════════════
 //  ENEMY TYPES
-//  Enemigo 1: Runner  (wave 1+)
-//  Enemigo 2: Tank    (wave 50+)
-//  Enemigo 3: Boss    (wave 100)
-//  Para agregar Enemigo 4, 5, etc: seguir secuencia
+//  Enemigo 1: Runner   (nivel 1: wave 1+)
+//  Enemigo 2: Tank     (nivel 1: wave 50+ / nivel 2: wave 1+)
+//  Enemigo 3: Boss     (nivel 1: wave 100)
+//  Enemigo 4: Phantom  (nivel 2: wave 71+)
+//  Enemigo 5: Sentinel (nivel 2: mini-boss wave 70)
+//  Enemigo 6: Overlord (nivel 2: boss wave 100)
 // ═══════════════════════════════════════════
 
 // ── Enemigo 1: Runner ──
@@ -137,6 +139,24 @@ const BOSS_BASE_SPEED = 0.4;
 const BOSS_RADIUS = 40;
 const BOSS_DAMAGE = 35;
 
+// ── Enemigo 4: Phantom (nivel 2, wave 71+) ──
+const PHANTOM_BASE_HP = 150;
+const PHANTOM_BASE_SPEED = 1.0;
+const PHANTOM_RADIUS = 14;
+const PHANTOM_DAMAGE = 15;
+
+// ── Enemigo 5: Sentinel (mini-boss nivel 2, wave 70) ──
+const SENTINEL_BASE_HP = 3000;
+const SENTINEL_BASE_SPEED = 0.5;
+const SENTINEL_RADIUS = 32;
+const SENTINEL_DAMAGE = 25;
+
+// ── Enemigo 6: Overlord (boss nivel 2, wave 100) ──
+const OVERLORD_BASE_HP = 8000;
+const OVERLORD_BASE_SPEED = 0.35;
+const OVERLORD_RADIUS = 45;
+const OVERLORD_DAMAGE = 40;
+
 // ── Colors ──
 const COL = {
   cyan: '#00fff2',
@@ -146,6 +166,8 @@ const COL = {
   yellow: '#ffdd00',
   purple: '#aa00ff',
   white: '#ffffff',
+  blue: '#0088ff',
+  teal: '#00ffaa',
 };
 
 // ── State ──
@@ -287,6 +309,12 @@ let waveTanksToSpawn = 0;
 let waveBossToSpawn = 0;
 let waveTanksSpawned = 0;
 let waveBossSpawned = 0;
+let wavePhantomsToSpawn = 0;
+let waveSentinelToSpawn = 0;
+let waveOverlordToSpawn = 0;
+let wavePhantomsSpawned = 0;
+let waveSentinelSpawned = 0;
+let waveOverlordSpawned = 0;
 
 // Death state
 let deathTimer = 0;
@@ -818,7 +846,7 @@ class Enemy {
     this.maxHp = hp;
     this.speed = speed;
     this.type = type;
-    this.radius = type === 'boss' ? BOSS_RADIUS : type === 'tank' ? TANK_RADIUS : ENEMY_RADIUS;
+    this.radius = type === 'overlord' ? OVERLORD_RADIUS : type === 'boss' ? BOSS_RADIUS : type === 'sentinel' ? SENTINEL_RADIUS : type === 'tank' ? TANK_RADIUS : type === 'phantom' ? PHANTOM_RADIUS : ENEMY_RADIUS;
     this.alive = true;
     this.angle = 0;
     this.damageFlash = 0;
@@ -853,7 +881,7 @@ class Enemy {
       if (this.attackTimer >= 60) {
         this.attackTimer = 0;
         if (turret.alive) {
-          const dmg = this.type === 'boss' ? BOSS_DAMAGE : this.type === 'tank' ? TANK_DAMAGE : ENEMY_DAMAGE;
+          const dmg = this.type === 'overlord' ? OVERLORD_DAMAGE : this.type === 'boss' ? BOSS_DAMAGE : this.type === 'sentinel' ? SENTINEL_DAMAGE : this.type === 'tank' ? TANK_DAMAGE : this.type === 'phantom' ? PHANTOM_DAMAGE : ENEMY_DAMAGE;
           turret.takeDamage(dmg);
           spawnFloatingText(turret.x, turret.y - 30, `-${dmg}`, COL.red);
           // Attack flash effect
@@ -872,7 +900,7 @@ class Enemy {
         this.y + Math.sin(backAngle) * this.radius,
         Math.cos(backAngle) * 0.8 + (Math.random() - 0.5) * 0.5,
         Math.sin(backAngle) * 0.8 + (Math.random() - 0.5) * 0.5,
-        this.type === 'boss' ? COL.purple : this.type === 'tank' ? COL.red : COL.orange, 12 + Math.random() * 8, this.type === 'boss' ? 4 : 2);
+        this.type === 'overlord' ? COL.blue : this.type === 'boss' ? COL.purple : this.type === 'sentinel' ? COL.teal : this.type === 'tank' ? COL.red : this.type === 'phantom' ? COL.blue : COL.orange, 12 + Math.random() * 8, (this.type === 'boss' || this.type === 'overlord' || this.type === 'sentinel') ? 4 : 2);
     }
   }
 
@@ -886,33 +914,47 @@ class Enemy {
 
   die() {
     this.alive = false;
-    const isBoss = this.type === 'boss';
+    const isBoss = this.type === 'boss' || this.type === 'overlord';
     const isTank = this.type === 'tank';
-    const baseColor = isBoss ? COL.purple : isTank ? COL.red : COL.orange;
+    const isSentinel = this.type === 'sentinel';
+    const isPhantom = this.type === 'phantom';
+    const isOverlord = this.type === 'overlord';
+    const baseColor = isOverlord ? COL.blue : this.type === 'boss' ? COL.purple : isSentinel ? COL.teal : isTank ? COL.red : isPhantom ? COL.blue : COL.orange;
 
-    spawnExplosion(this.x, this.y, baseColor, isBoss ? 60 : isTank ? 35 : 25);
-    spawnExplosion(this.x, this.y, COL.yellow, isBoss ? 30 : isTank ? 15 : 10);
-    groundDecals.push({ x: this.x, y: this.y, radius: isBoss ? 50 : isTank ? 25 : 18, alpha: 0.2, color: baseColor });
+    const explSize = isBoss ? 60 : isSentinel ? 45 : isTank ? 35 : 25;
+    spawnExplosion(this.x, this.y, baseColor, explSize);
+    spawnExplosion(this.x, this.y, COL.yellow, isBoss ? 30 : isSentinel ? 20 : isTank ? 15 : 10);
+    groundDecals.push({ x: this.x, y: this.y, radius: isBoss ? 50 : isSentinel ? 35 : isTank ? 25 : 18, alpha: 0.2, color: baseColor });
 
-    const scoreGain = isBoss ? 500 : isTank ? 25 : 10;
+    const scoreGain = isOverlord ? 800 : this.type === 'boss' ? 500 : isSentinel ? 300 : isTank ? 25 : isPhantom ? 15 : 10;
     score += scoreGain;
     totalKills++;
     waveEnemiesKilled++;
 
-    const goldMultiplier = isBoss ? 20 : isTank ? 3 : 1;
+    const goldMultiplier = isOverlord ? 25 : this.type === 'boss' ? 20 : isSentinel ? 15 : isTank ? 3 : isPhantom ? 2 : 1;
     const goldPerKill = (1 + Math.floor(wave / 5)) * goldMultiplier;
     gold += goldPerKill;
     spawnFloatingText(this.x, this.y - 15, `+${goldPerKill} gold`, '#ffd700');
 
     if (isBoss) {
+      gems += isOverlord ? 2 : 1;
+      spawnFloatingText(this.x, this.y - 35, isOverlord ? '+2 GEMS' : '+1 GEM', '#e040fb');
+      spawnRewardPopup(isOverlord ? 'OVERLORD DESTROYED!' : 'BOSS DEFEATED!', isOverlord ? COL.blue : '#aa00ff');
+      camera.shakeX = (Math.random() - 0.5) * (isOverlord ? 30 : 20);
+      camera.shakeY = (Math.random() - 0.5) * (isOverlord ? 30 : 20);
+    }
+    if (isSentinel) {
       gems += 1;
       spawnFloatingText(this.x, this.y - 35, '+1 GEM', '#e040fb');
-      spawnRewardPopup('BOSS DEFEATED!', '#aa00ff');
-      camera.shakeX = (Math.random() - 0.5) * 20;
-      camera.shakeY = (Math.random() - 0.5) * 20;
+      spawnRewardPopup('SENTINEL DESTROYED!', COL.teal);
+      camera.shakeX = (Math.random() - 0.5) * 15;
+      camera.shakeY = (Math.random() - 0.5) * 15;
     }
     if (isTank) {
       spawnFloatingText(this.x, this.y - 35, 'TANK DOWN', COL.red);
+    }
+    if (isPhantom) {
+      spawnFloatingText(this.x, this.y - 35, 'PHANTOM DOWN', COL.blue);
     }
   }
 
@@ -927,7 +969,13 @@ class Enemy {
     ctx.scale(scale, scale);
 
     // Seleccionar dibujo segun tipo de enemigo
-    if (this.type === 'boss') {
+    if (this.type === 'overlord') {
+      this.drawOverlord(ctx, pulse);   // Enemigo 6
+    } else if (this.type === 'sentinel') {
+      this.drawSentinel(ctx, pulse);   // Enemigo 5
+    } else if (this.type === 'phantom') {
+      this.drawPhantom(ctx, pulse);    // Enemigo 4
+    } else if (this.type === 'boss') {
       this.drawBoss(ctx, pulse);       // Enemigo 3
     } else if (this.type === 'tank') {
       this.drawTank(ctx, pulse);       // Enemigo 2
@@ -1266,19 +1314,395 @@ class Enemy {
     }
   }
 
+  // ── Enemigo 4: Phantom (dibujo) ──
+  drawPhantom(ctx, pulse) {
+    const r = this.radius;
+    const col = '#0088ff';
+    const colA = 'rgba(0, 136, 255,';
+
+    // Ghostly aura
+    ctx.strokeStyle = `${colA} ${pulse * 0.2})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 6 + Math.sin(frameCount * 0.1 + this.pulsePhase) * 3, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Electric arcs (3 rotating)
+    ctx.strokeStyle = `${colA} ${pulse * 0.5})`;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) {
+      const a = frameCount * 0.04 + this.pulsePhase + (i / 3) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 3, a, a + 0.4);
+      ctx.stroke();
+    }
+
+    ctx.rotate(this.angle);
+
+    // Body glow
+    const bodyGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r + 2);
+    bodyGrad.addColorStop(0, this.damageFlash > 0 ? 'rgba(255, 255, 255, 0.3)' : `${colA} 0.2)`);
+    bodyGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Main body - diamond/rhombus shape
+    ctx.fillStyle = this.damageFlash > 0 ? COL.white : col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(0, -r * 0.7);
+    ctx.lineTo(-r * 0.8, 0);
+    ctx.lineTo(0, r * 0.7);
+    ctx.closePath();
+    ctx.fill();
+
+    // Edge highlight
+    ctx.strokeStyle = this.damageFlash > 0 ? COL.yellow : 'rgba(100, 180, 255, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+
+    // Inner diamond
+    ctx.strokeStyle = `${colA} 0.3)`;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(r * 0.5, 0);
+    ctx.lineTo(0, -r * 0.35);
+    ctx.lineTo(-r * 0.4, 0);
+    ctx.lineTo(0, r * 0.35);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Core
+    ctx.fillStyle = this.damageFlash > 0 ? col : COL.white;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = col;
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Forward spike
+    ctx.fillStyle = `${colA} ${pulse * 0.7})`;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(r + 5, -1.5);
+    ctx.lineTo(r + 5, 1.5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // ── Enemigo 5: Sentinel (mini-boss, dibujo) ──
+  drawSentinel(ctx, pulse) {
+    const r = this.radius;
+    const col = '#00ffaa';
+    const colA = 'rgba(0, 255, 170,';
+
+    // Aura gradient
+    const auraGrad = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r + 15);
+    auraGrad.addColorStop(0, `${colA} 0.06)`);
+    auraGrad.addColorStop(0.7, `${colA} 0.02)`);
+    auraGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = auraGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outer pulsing ring
+    ctx.strokeStyle = `${colA} ${pulse * 0.3})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 10 + Math.sin(frameCount * 0.05 + this.pulsePhase) * 3, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Rotating shield segments (5)
+    ctx.lineWidth = 2.5;
+    for (let i = 0; i < 5; i++) {
+      const a = frameCount * 0.02 + (i / 5) * Math.PI * 2;
+      const alpha = 0.2 + Math.sin(frameCount * 0.04 + i * 1.5) * 0.1;
+      ctx.strokeStyle = `${colA} ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 5, a, a + 0.5);
+      ctx.stroke();
+    }
+
+    // Counter-rotating arcs
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) {
+      const a = -frameCount * 0.03 + (i / 3) * Math.PI * 2;
+      ctx.strokeStyle = `${colA} ${0.15 + pulse * 0.1})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.65, a, a + 0.5);
+      ctx.stroke();
+    }
+
+    ctx.rotate(this.angle);
+
+    // Main body - pentagon
+    ctx.fillStyle = this.damageFlash > 0 ? COL.white : col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 25;
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      const px = Math.cos(a) * r;
+      const py = Math.sin(a) * r;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Edge
+    ctx.strokeStyle = this.damageFlash > 0 ? COL.yellow : 'rgba(100, 255, 200, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+
+    // Inner pentagon
+    ctx.strokeStyle = `${colA} 0.25)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      const px = Math.cos(a) * r * 0.55;
+      const py = Math.sin(a) * r * 0.55;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Radial struts
+    ctx.strokeStyle = 'rgba(150, 255, 220, 0.2)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r * 0.3, Math.sin(a) * r * 0.3);
+      ctx.lineTo(Math.cos(a) * r * 0.85, Math.sin(a) * r * 0.85);
+      ctx.stroke();
+    }
+
+    // Energy core
+    const coreBreath = 0.6 + Math.sin(frameCount * 0.07) * 0.3;
+    const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 10);
+    coreGrad.addColorStop(0, `rgba(255, 255, 255, ${coreBreath})`);
+    coreGrad.addColorStop(0.3, `${colA} ${coreBreath * 0.8})`);
+    coreGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = coreGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Core ring
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Hot center
+    ctx.fillStyle = COL.white;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Forward lance
+    ctx.fillStyle = `${colA} ${pulse * 0.6})`;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(r, -3);
+    ctx.lineTo(r + 10, 0);
+    ctx.lineTo(r, 3);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // ── Enemigo 6: Overlord (boss nivel 2, dibujo) ──
+  drawOverlord(ctx, pulse) {
+    const r = this.radius;
+    const col = '#0055ff';
+    const colA = 'rgba(0, 85, 255,';
+
+    // Massive aura
+    const auraGrad = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r + 25);
+    auraGrad.addColorStop(0, `${colA} 0.1)`);
+    auraGrad.addColorStop(0.7, `${colA} 0.03)`);
+    auraGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = auraGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 25, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outer pulsing ring
+    ctx.strokeStyle = `${colA} ${pulse * 0.35})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, r + 14 + Math.sin(frameCount * 0.04 + this.pulsePhase) * 5, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Rotating shield segments (8)
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 8; i++) {
+      const a = frameCount * 0.012 + (i / 8) * Math.PI * 2;
+      const alpha = 0.2 + Math.sin(frameCount * 0.035 + i * 1.2) * 0.1;
+      ctx.strokeStyle = `${colA} ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 7, a, a + 0.3);
+      ctx.stroke();
+    }
+
+    // Counter-rotating inner arcs
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 5; i++) {
+      const a = -frameCount * 0.02 + (i / 5) * Math.PI * 2;
+      ctx.strokeStyle = `${colA} ${0.15 + pulse * 0.1})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.7, a, a + 0.5);
+      ctx.stroke();
+    }
+
+    // Lightning bolts (3 rotating)
+    ctx.strokeStyle = `rgba(100, 180, 255, ${0.3 + pulse * 0.2})`;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) {
+      const a = frameCount * 0.018 + (i / 3) * Math.PI * 2;
+      const bx = Math.cos(a) * (r + 5);
+      const by = Math.sin(a) * (r + 5);
+      const ex = Math.cos(a) * (r + 18);
+      const ey = Math.sin(a) * (r + 18);
+      const mx = (bx + ex) / 2 + (Math.random() - 0.5) * 6;
+      const my = (by + ey) / 2 + (Math.random() - 0.5) * 6;
+      ctx.beginPath();
+      ctx.moveTo(bx, by);
+      ctx.lineTo(mx, my);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+    }
+
+    ctx.rotate(this.angle);
+
+    // Main body - decagonal
+    ctx.fillStyle = this.damageFlash > 0 ? COL.white : col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 35;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 - Math.PI / 10;
+      const px = Math.cos(a) * r;
+      const py = Math.sin(a) * r;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Edge
+    ctx.strokeStyle = this.damageFlash > 0 ? COL.yellow : 'rgba(100, 150, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+
+    // Inner decagon
+    ctx.strokeStyle = `${colA} 0.25)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 - Math.PI / 10;
+      const px = Math.cos(a) * r * 0.6;
+      const py = Math.sin(a) * r * 0.6;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Radial struts
+    ctx.strokeStyle = 'rgba(150, 180, 255, 0.2)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 - Math.PI / 10;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r * 0.35, Math.sin(a) * r * 0.35);
+      ctx.lineTo(Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9);
+      ctx.stroke();
+    }
+
+    // Energy core (larger, more intense)
+    const coreBreath = 0.7 + Math.sin(frameCount * 0.06) * 0.3;
+    const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 15);
+    coreGrad.addColorStop(0, `rgba(255, 255, 255, ${coreBreath})`);
+    coreGrad.addColorStop(0.3, `${colA} ${coreBreath * 0.8})`);
+    coreGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = coreGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Core ring
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 25;
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Hot center
+    ctx.fillStyle = COL.white;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Forward lance (larger)
+    ctx.fillStyle = `${colA} ${pulse * 0.7})`;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.moveTo(r, -5);
+    ctx.lineTo(r + 18, 0);
+    ctx.lineTo(r, 5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Side spikes (3 each side)
+    for (let s = -1; s <= 1; s += 2) {
+      for (let j = 0; j < 2; j++) {
+        const off = j * 0.25;
+        ctx.fillStyle = `${colA} ${0.25 - j * 0.08})`;
+        ctx.beginPath();
+        ctx.moveTo(r * (0.3 - off), s * r * (0.9 + j * 0.15));
+        ctx.lineTo(r * (0.5 - off), s * (r + 10 + j * 4));
+        ctx.lineTo(-r * (0.1 + off), s * r * (0.9 + j * 0.15));
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  }
+
   drawEnemyHpBar(ctx) {
     if (this.hp >= this.maxHp) return;
-    const isBoss = this.type === 'boss';
-    const barW = isBoss ? 60 : this.type === 'tank' ? 34 : 26;
-    const barH = isBoss ? 5 : 3;
+    const isBigEnemy = this.type === 'boss' || this.type === 'overlord' || this.type === 'sentinel';
+    const barW = this.type === 'overlord' ? 70 : this.type === 'boss' ? 60 : this.type === 'sentinel' ? 50 : this.type === 'tank' ? 34 : 26;
+    const barH = isBigEnemy ? 5 : 3;
     const bx = this.x - barW / 2;
     const by = this.y - this.radius - 10;
     const ratio = this.hp / this.maxHp;
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
-    if (isBoss) {
-      ctx.strokeStyle = 'rgba(170, 0, 255, 0.4)';
+    if (isBigEnemy) {
+      const borderCol = this.type === 'overlord' ? 'rgba(0, 85, 255, 0.4)' : this.type === 'sentinel' ? 'rgba(0, 255, 170, 0.4)' : 'rgba(170, 0, 255, 0.4)';
+      ctx.strokeStyle = borderCol;
       ctx.lineWidth = 1;
       ctx.strokeRect(bx - 1, by - 1, barW + 2, barH + 2);
     }
@@ -1289,13 +1713,15 @@ class Enemy {
     ctx.fillRect(bx, by, barW * ratio, barH);
     ctx.shadowBlur = 0;
 
-    if (isBoss) {
+    if (isBigEnemy) {
+      const label = this.type === 'overlord' ? 'OVERLORD' : this.type === 'sentinel' ? 'SENTINEL' : 'BOSS';
+      const labelCol = this.type === 'overlord' ? '#0055ff' : this.type === 'sentinel' ? '#00ffaa' : '#aa00ff';
       ctx.font = '700 9px Orbitron';
-      ctx.fillStyle = '#aa00ff';
-      ctx.shadowColor = '#aa00ff';
+      ctx.fillStyle = labelCol;
+      ctx.shadowColor = labelCol;
       ctx.shadowBlur = 6;
       ctx.textAlign = 'center';
-      ctx.fillText('BOSS', this.x, by - 5);
+      ctx.fillText(label, this.x, by - 5);
       ctx.shadowBlur = 0;
     }
   }
@@ -1646,17 +2072,68 @@ function checkBulletCollisions() {
 
 // ── Wave System ──
 function startWave() {
-  waveEnemiesTotal = 5 + wave * 3;
-
-  // Enemigo 2 (Tank): desde wave 50+
-  waveTanksToSpawn = (wave >= TANK_START_WAVE) ? 1 + Math.floor(Math.random() * 2) : 0;
   waveTanksSpawned = 0;
-
-  // Enemigo 3 (Boss): wave 100
-  waveBossToSpawn = (wave === BOSS_WAVE) ? 1 : 0;
   waveBossSpawned = 0;
+  wavePhantomsSpawned = 0;
+  waveSentinelSpawned = 0;
+  waveOverlordSpawned = 0;
 
-  waveEnemiesTotal += waveTanksToSpawn + waveBossToSpawn;
+  if (currentLevel === 2) {
+    // ── Level 2 wave composition ──
+    if (wave <= 20) {
+      // Waves 1-20: Runner + Tank (tank less frequent)
+      waveEnemiesTotal = 5 + wave * 3;
+      waveTanksToSpawn = Math.max(0, Math.floor(wave / 4));
+      waveBossToSpawn = 0;
+      wavePhantomsToSpawn = 0;
+      waveSentinelToSpawn = 0;
+      waveOverlordToSpawn = 0;
+    } else if (wave <= 69) {
+      // Waves 21-69: Only tanks
+      waveEnemiesTotal = 4 + wave * 2;
+      waveTanksToSpawn = waveEnemiesTotal;
+      waveBossToSpawn = 0;
+      wavePhantomsToSpawn = 0;
+      waveSentinelToSpawn = 0;
+      waveOverlordToSpawn = 0;
+    } else if (wave === 70) {
+      // Wave 70: Mini-boss (Sentinel) + tanks
+      waveEnemiesTotal = 4 + wave * 2;
+      waveTanksToSpawn = waveEnemiesTotal;
+      waveSentinelToSpawn = 1;
+      waveBossToSpawn = 0;
+      wavePhantomsToSpawn = 0;
+      waveOverlordToSpawn = 0;
+      waveEnemiesTotal += waveSentinelToSpawn;
+    } else if (wave <= 99) {
+      // Waves 71-99: Tanks + Phantoms (gradually more)
+      waveEnemiesTotal = 4 + wave * 2;
+      wavePhantomsToSpawn = Math.min(Math.floor((wave - 70) / 2) + 1, 15);
+      waveTanksToSpawn = waveEnemiesTotal - wavePhantomsToSpawn;
+      waveBossToSpawn = 0;
+      waveSentinelToSpawn = 0;
+      waveOverlordToSpawn = 0;
+    } else {
+      // Wave 100: Overlord boss + tanks + phantoms
+      waveEnemiesTotal = 4 + wave * 2;
+      wavePhantomsToSpawn = 10;
+      waveTanksToSpawn = waveEnemiesTotal - wavePhantomsToSpawn;
+      waveOverlordToSpawn = 1;
+      waveBossToSpawn = 0;
+      waveSentinelToSpawn = 0;
+      waveEnemiesTotal += waveOverlordToSpawn;
+    }
+  } else {
+    // ── Level 1 (original) ──
+    waveEnemiesTotal = 5 + wave * 3;
+    waveTanksToSpawn = (wave >= TANK_START_WAVE) ? 1 + Math.floor(Math.random() * 2) : 0;
+    waveBossToSpawn = (wave === BOSS_WAVE) ? 1 : 0;
+    wavePhantomsToSpawn = 0;
+    waveSentinelToSpawn = 0;
+    waveOverlordToSpawn = 0;
+    waveEnemiesTotal += waveTanksToSpawn + waveBossToSpawn;
+  }
+
   waveEnemiesSpawned = 0;
   waveEnemiesKilled = 0;
   spawnInterval = Math.max(15, 60 - wave * 3);
@@ -1678,18 +2155,27 @@ function spawnEnemy(type = 'runner') {
 
   // Stats base segun tipo de enemigo
   let baseHp, baseSpeed;
-  if (type === 'boss') {           // Enemigo 3
+  if (type === 'overlord') {       // Enemigo 6
+    baseHp = OVERLORD_BASE_HP;
+    baseSpeed = OVERLORD_BASE_SPEED;
+  } else if (type === 'sentinel') { // Enemigo 5
+    baseHp = SENTINEL_BASE_HP;
+    baseSpeed = SENTINEL_BASE_SPEED;
+  } else if (type === 'phantom') {  // Enemigo 4
+    baseHp = PHANTOM_BASE_HP;
+    baseSpeed = PHANTOM_BASE_SPEED;
+  } else if (type === 'boss') {     // Enemigo 3
     baseHp = BOSS_BASE_HP;
     baseSpeed = BOSS_BASE_SPEED;
-  } else if (type === 'tank') {    // Enemigo 2
+  } else if (type === 'tank') {     // Enemigo 2
     baseHp = TANK_BASE_HP;
     baseSpeed = TANK_BASE_SPEED;
-  } else {                         // Enemigo 1
+  } else {                          // Enemigo 1
     baseHp = ENEMY_BASE_HP;
     baseSpeed = ENEMY_BASE_SPEED;
   }
 
-  const hpMult = type === 'boss' ? 0.1 : 0.3;
+  const hpMult = (type === 'boss' || type === 'overlord' || type === 'sentinel') ? 0.1 : 0.3;
   const hpScale = 1 + (wave - 1) * hpMult;
   const speedScale = 1 + (wave - 1) * 0.08;
 
@@ -1701,7 +2187,8 @@ function spawnEnemy(type = 'runner') {
   waveEnemiesSpawned++;
 
   // Spawn flash at location
-  spawnParticle(x, y, 0, 0, COL.orange, 15, 10);
+  const flashCol = type === 'overlord' ? COL.blue : type === 'sentinel' ? COL.teal : type === 'phantom' ? COL.blue : type === 'boss' ? COL.purple : type === 'tank' ? COL.red : COL.orange;
+  spawnParticle(x, y, 0, 0, flashCol, 15, 10);
 }
 
 function updateWaveSpawning() {
@@ -1712,14 +2199,25 @@ function updateWaveSpawning() {
     if (spawnTimer >= spawnInterval) {
       spawnTimer = 0;
 
-      // Spawn por prioridad: Enemigo 3 (Boss) > Enemigo 2 (Tank) > Enemigo 1 (Runner)
-      if (waveBossSpawned < waveBossToSpawn && waveEnemiesSpawned >= Math.floor(waveEnemiesTotal / 2)) {
+      // Spawn por prioridad: Boss/Overlord > Sentinel > Tank > Phantom > Runner
+      if (waveOverlordSpawned < waveOverlordToSpawn && waveEnemiesSpawned >= Math.floor(waveEnemiesTotal / 2)) {
+        spawnEnemy('overlord');    // Enemigo 6
+        waveOverlordSpawned++;
+        spawnRewardPopup('WARNING: OVERLORD INCOMING', '#0055ff');
+      } else if (waveBossSpawned < waveBossToSpawn && waveEnemiesSpawned >= Math.floor(waveEnemiesTotal / 2)) {
         spawnEnemy('boss');        // Enemigo 3
         waveBossSpawned++;
         spawnRewardPopup('WARNING: BOSS INCOMING', '#aa00ff');
+      } else if (waveSentinelSpawned < waveSentinelToSpawn && waveEnemiesSpawned >= Math.floor(waveEnemiesTotal / 3)) {
+        spawnEnemy('sentinel');    // Enemigo 5
+        waveSentinelSpawned++;
+        spawnRewardPopup('WARNING: SENTINEL DETECTED', '#00ffaa');
       } else if (waveTanksSpawned < waveTanksToSpawn) {
         spawnEnemy('tank');        // Enemigo 2
         waveTanksSpawned++;
+      } else if (wavePhantomsSpawned < wavePhantomsToSpawn) {
+        spawnEnemy('phantom');     // Enemigo 4
+        wavePhantomsSpawned++;
       } else {
         spawnEnemy('runner');      // Enemigo 1
       }
@@ -1791,7 +2289,17 @@ function updateWaveSpawning() {
     }
 
     wave++;
-    showOverlay(`WAVE ${wave}`, wave === TANK_START_WAVE ? 'NEW THREAT DETECTED...' : wave === BOSS_WAVE ? 'FINAL WAVE — BOSS INCOMING' : 'INCOMING...');
+    let waveMsg = 'INCOMING...';
+    if (currentLevel === 2) {
+      if (wave === 21) waveMsg = 'TANKS ONLY — BRACE YOURSELF...';
+      else if (wave === 70) waveMsg = 'SENTINEL APPROACHING...';
+      else if (wave === 71) waveMsg = 'NEW THREAT: PHANTOMS DETECTED...';
+      else if (wave === BOSS_WAVE) waveMsg = 'FINAL WAVE — OVERLORD INCOMING';
+    } else {
+      if (wave === TANK_START_WAVE) waveMsg = 'NEW THREAT DETECTED...';
+      else if (wave === BOSS_WAVE) waveMsg = 'FINAL WAVE — BOSS INCOMING';
+    }
+    showOverlay(`WAVE ${wave}`, waveMsg);
     waveStartDelay = 210;
   }
 }
@@ -2021,11 +2529,11 @@ function drawMinimap() {
 
   for (const enemy of enemies) {
     if (!enemy.alive) continue;
-    const eCol = enemy.type === 'boss' ? COL.purple : enemy.type === 'tank' ? COL.red : COL.orange;
-    const eSz = enemy.type === 'boss' ? 5 : enemy.type === 'tank' ? 3 : 2;
+    const eCol = enemy.type === 'overlord' ? COL.blue : enemy.type === 'boss' ? COL.purple : enemy.type === 'sentinel' ? COL.teal : enemy.type === 'tank' ? COL.red : enemy.type === 'phantom' ? COL.blue : COL.orange;
+    const eSz = (enemy.type === 'overlord' || enemy.type === 'boss') ? 5 : enemy.type === 'sentinel' ? 4 : enemy.type === 'tank' ? 3 : 2;
     minimapCtx.fillStyle = eCol;
     minimapCtx.shadowColor = eCol;
-    minimapCtx.shadowBlur = enemy.type === 'boss' ? 8 : 3;
+    minimapCtx.shadowBlur = (enemy.type === 'boss' || enemy.type === 'overlord' || enemy.type === 'sentinel') ? 8 : 3;
     minimapCtx.beginPath();
     minimapCtx.arc(enemy.x * scaleX, enemy.y * scaleY, eSz, 0, Math.PI * 2);
     minimapCtx.fill();
@@ -2397,6 +2905,12 @@ function initGame() {
   waveBossToSpawn = 0;
   waveTanksSpawned = 0;
   waveBossSpawned = 0;
+  wavePhantomsToSpawn = 0;
+  waveSentinelToSpawn = 0;
+  waveOverlordToSpawn = 0;
+  wavePhantomsSpawned = 0;
+  waveSentinelSpawned = 0;
+  waveOverlordSpawned = 0;
   levelStartTime = Date.now();
   gemsbanked = 0;
   for (const key in upgrades) { upgrades[key].level = 0; upgrades[key].tier = 0; }
