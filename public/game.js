@@ -103,11 +103,11 @@ const permBonus = { health: 0, damage: 0, regen: 0, precision: 0, fireRate: 0 };
 
 function applyPermBonuses() {
   const pu = serverGameData.permUpgrades || {};
-  permBonus.health    = (pu.health    || 0) * 0.05;
-  permBonus.damage    = (pu.damage    || 0) * 0.05;
-  permBonus.regen     = (pu.regen     || 0) * 0.05;
-  permBonus.precision = (pu.precision || 0) * 0.05;
-  permBonus.fireRate  = (pu.fireRate  || 0) * 0.05;
+  permBonus.health    = (pu.health    || 0) * 0.10;
+  permBonus.damage    = (pu.damage    || 0) * 0.10;
+  permBonus.regen     = (pu.regen     || 0) * 0.10;
+  permBonus.precision = (pu.precision || 0) * 0.10;
+  permBonus.fireRate  = (pu.fireRate  || 0) * 0.10;
 }
 
 // ═══════════════════════════════════════════
