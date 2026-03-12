@@ -99,10 +99,10 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   const errEl = document.getElementById('login-error');
   errEl.textContent = '';
 
-  const username = document.getElementById('login-user').value.trim();
+  const identifier = document.getElementById('login-identifier').value.trim();
   const password = document.getElementById('login-pass').value;
 
-  if (!username || !password) {
+  if (!identifier || !password) {
     errEl.textContent = 'FILL ALL FIELDS';
     return;
   }
@@ -111,7 +111,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const res = await fetch('/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ identifier, password }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -131,11 +131,18 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
   errEl.textContent = '';
 
   const username = document.getElementById('reg-user').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-pass').value;
   const password2 = document.getElementById('reg-pass2').value;
 
-  if (!username || !password || !password2) {
+  if (!username || !email || !password || !password2) {
     errEl.textContent = 'FILL ALL FIELDS';
+    return;
+  }
+  // Validar formato email en cliente
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    errEl.textContent = 'INVALID EMAIL FORMAT';
     return;
   }
   if (password !== password2) {
@@ -147,7 +154,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     const res = await fetch('/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, email, password }),
     });
     const data = await res.json();
     if (res.ok) {

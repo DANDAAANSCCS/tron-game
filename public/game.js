@@ -52,6 +52,27 @@ async function saveServerGameData(data) {
   } catch (e) {}
 }
 
+// ── Auto-save periodico (cada 30 segundos) ──
+let autoSaveTimer = 0;
+const AUTOSAVE_INTERVAL = 30 * 60; // 30 seg * 60 fps
+
+function doAutoSave() {
+  if (gameState !== 'playing' || !turret || !turret.alive) return;
+  fetch('/api/autosave', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      wave,
+      score,
+      gold,
+      gems,
+      hp: turret.hp,
+      totalKills,
+      level: currentLevel,
+    }),
+  }).catch(() => {});
+}
+
 // ── Permanent upgrades (set after loading from server) ──
 const permBonus = { health: 0, damage: 0, regen: 0, precision: 0, fireRate: 0 };
 
@@ -64,20 +85,28 @@ function applyPermBonuses() {
   permBonus.fireRate  = (pu.fireRate  || 0) * 0.05;
 }
 
-// ── Enemy config (Runner) ──
+// ═══════════════════════════════════════════
+//  ENEMY TYPES
+//  Enemigo 1: Runner  (wave 1+)
+//  Enemigo 2: Tank    (wave 50+)
+//  Enemigo 3: Boss    (wave 100)
+//  Para agregar Enemigo 4, 5, etc: seguir secuencia
+// ═══════════════════════════════════════════
+
+// ── Enemigo 1: Runner ──
 const ENEMY_BASE_HP = 50;
 const ENEMY_BASE_SPEED = 1.2;
 const ENEMY_RADIUS = 12;
 const ENEMY_DAMAGE = 10;
 const ENEMY_ATTACK_RANGE = 40;
 
-// ── Enemy config (Tank) ──
+// ── Enemigo 2: Tank ──
 const TANK_BASE_HP = 300;
 const TANK_BASE_SPEED = 0.6;
 const TANK_RADIUS = 20;
 const TANK_DAMAGE = 20;
 
-// ── Enemy config (Boss) ──
+// ── Enemigo 3: Boss ──
 const BOSS_BASE_HP = 5000;
 const BOSS_BASE_SPEED = 0.4;
 const BOSS_RADIUS = 40;
@@ -752,7 +781,10 @@ class Bullet {
   }
 }
 
-// ── Enemy: Runner ──
+// ═══════════════════════════════════════════
+//  ENEMY CLASS
+//  Contiene: Enemigo 1 (Runner), Enemigo 2 (Tank), Enemigo 3 (Boss)
+// ═══════════════════════════════════════════
 class Enemy {
   constructor(x, y, hp, speed, type = 'runner') {
     this.x = x;
@@ -869,12 +901,13 @@ class Enemy {
     const scale = 1.0 + Math.max(0, this.spawnAnim) * 0.5;
     ctx.scale(scale, scale);
 
+    // Seleccionar dibujo segun tipo de enemigo
     if (this.type === 'boss') {
-      this.drawBoss(ctx, pulse);
+      this.drawBoss(ctx, pulse);       // Enemigo 3
     } else if (this.type === 'tank') {
-      this.drawTank(ctx, pulse);
+      this.drawTank(ctx, pulse);       // Enemigo 2
     } else {
-      this.drawRunner(ctx, pulse);
+      this.drawRunner(ctx, pulse);     // Enemigo 1
     }
 
     ctx.shadowBlur = 0;
@@ -884,6 +917,7 @@ class Enemy {
     this.drawEnemyHpBar(ctx);
   }
 
+  // ── Enemigo 1: Runner (dibujo) ──
   drawRunner(ctx, pulse) {
     const r = this.radius;
     // Threat ring (pulsing)
@@ -966,6 +1000,7 @@ class Enemy {
     ctx.stroke();
   }
 
+  // ── Enemigo 2: Tank (dibujo) ──
   drawTank(ctx, pulse) {
     const r = this.radius;
     const col = '#ff0055';
@@ -1067,6 +1102,7 @@ class Enemy {
     ctx.fill();
   }
 
+  // ── Enemigo 3: Boss (dibujo) ──
   drawBoss(ctx, pulse) {
     const r = this.radius;
     const col = '#aa00ff';
@@ -1587,11 +1623,11 @@ function checkBulletCollisions() {
 function startWave() {
   waveEnemiesTotal = 5 + wave * 3;
 
-  // Tanks from wave 50+
+  // Enemigo 2 (Tank): desde wave 50+
   waveTanksToSpawn = (wave >= TANK_START_WAVE) ? 1 + Math.floor(Math.random() * 2) : 0;
   waveTanksSpawned = 0;
 
-  // Boss at wave 100
+  // Enemigo 3 (Boss): wave 100
   waveBossToSpawn = (wave === BOSS_WAVE) ? 1 : 0;
   waveBossSpawned = 0;
 
@@ -1615,14 +1651,15 @@ function spawnEnemy(type = 'runner') {
     case 3: x = margin + Math.random() * (MAP_W - margin * 2); y = MAP_H - margin; break;
   }
 
+  // Stats base segun tipo de enemigo
   let baseHp, baseSpeed;
-  if (type === 'boss') {
+  if (type === 'boss') {           // Enemigo 3
     baseHp = BOSS_BASE_HP;
     baseSpeed = BOSS_BASE_SPEED;
-  } else if (type === 'tank') {
+  } else if (type === 'tank') {    // Enemigo 2
     baseHp = TANK_BASE_HP;
     baseSpeed = TANK_BASE_SPEED;
-  } else {
+  } else {                         // Enemigo 1
     baseHp = ENEMY_BASE_HP;
     baseSpeed = ENEMY_BASE_SPEED;
   }
@@ -1650,16 +1687,16 @@ function updateWaveSpawning() {
     if (spawnTimer >= spawnInterval) {
       spawnTimer = 0;
 
-      // Spawn boss around midway through the wave
+      // Spawn por prioridad: Enemigo 3 (Boss) > Enemigo 2 (Tank) > Enemigo 1 (Runner)
       if (waveBossSpawned < waveBossToSpawn && waveEnemiesSpawned >= Math.floor(waveEnemiesTotal / 2)) {
-        spawnEnemy('boss');
+        spawnEnemy('boss');        // Enemigo 3
         waveBossSpawned++;
         spawnRewardPopup('WARNING: BOSS INCOMING', '#aa00ff');
       } else if (waveTanksSpawned < waveTanksToSpawn) {
-        spawnEnemy('tank');
+        spawnEnemy('tank');        // Enemigo 2
         waveTanksSpawned++;
       } else {
-        spawnEnemy('runner');
+        spawnEnemy('runner');      // Enemigo 1
       }
     }
   }
@@ -1707,6 +1744,8 @@ function updateWaveSpawning() {
       gems += 25;
       gameState = 'victory';
       saveProgress(true);
+      // Limpiar auto-save al completar nivel
+      fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
       showOverlay('VICTORY!', `LEVEL ${currentLevel} COMPLETE — SCORE: ${score}`);
       spawnRewardPopup('LEVEL COMPLETE!', '#00ff66');
       spawnRewardPopup('+25 GEMS', '#e040fb');
@@ -2307,6 +2346,13 @@ function gameLoop() {
   }
   frameCount++;
 
+  // Auto-save periodico
+  autoSaveTimer++;
+  if (autoSaveTimer >= AUTOSAVE_INTERVAL) {
+    autoSaveTimer = 0;
+    doAutoSave();
+  }
+
   // EMP input
   if (keys.space && empCooldown <= 0) {
     triggerEMP();
@@ -2372,6 +2418,8 @@ function gameLoop() {
 
     if (deathTimer === 1) {
       saveProgress();
+      // Limpiar auto-save al morir (ya se guardo el progreso final)
+      fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
       showOverlay('SYSTEM OFFLINE', `WAVE ${wave} / ${MAX_WAVES} | SCORE: ${score} — RETURNING TO LEVELS...`);
     }
 
@@ -2411,6 +2459,15 @@ function sleep(ms) {
 }
 
 canvas.style.cursor = 'none';
+
+// ── Auto-save al cerrar/salir de la pagina ──
+window.addEventListener('beforeunload', () => {
+  if (gameState === 'playing' && turret && turret.alive) {
+    navigator.sendBeacon('/api/autosave', new Blob([JSON.stringify({
+      wave, score, gold, gems, hp: turret.hp, totalKills, level: currentLevel,
+    })], { type: 'application/json' }));
+  }
+});
 
 // ── Start ──
 startGame();

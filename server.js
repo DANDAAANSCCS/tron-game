@@ -23,7 +23,7 @@ mongoose.connect(MONGO_URI).then(() => {
 // ── User Schema ──
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true, sparse: true },
-  email: { type: String },
+  email: { type: String, unique: true, sparse: true },
   password: { type: String },
   googleId: { type: String, unique: true, sparse: true },
   displayName: { type: String },
@@ -38,6 +38,8 @@ const userSchema = new mongoose.Schema({
       fireRate: { type: Number, default: 0 },
     },
     levelProgress: { type: mongoose.Schema.Types.Mixed, default: {} },
+    // Auto-save: estado de partida en curso
+    sessionState: { type: mongoose.Schema.Types.Mixed, default: null },
   }
 });
 
@@ -70,10 +72,14 @@ if (process.env.TRUST_PROXY === 'true') {
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ── Passport: Local Strategy ──
-passport.use(new LocalStrategy(async (username, password, done) => {
+// ── Passport: Local Strategy (acepta email o username) ──
+passport.use(new LocalStrategy({ usernameField: 'identifier' }, async (identifier, password, done) => {
   try {
-    const user = await User.findOne({ username: username.toLowerCase() });
+    const id = identifier.toLowerCase().trim();
+    // Buscar por email o username
+    const user = await User.findOne({
+      $or: [{ email: id }, { username: id }]
+    });
     if (!user) return done(null, false, { message: 'USER NOT FOUND' });
     if (!user.password) return done(null, false, { message: 'USE GOOGLE LOGIN' });
     const match = await bcrypt.compare(password, user.password);
@@ -133,9 +139,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ── Auth Routes ──
 app.post('/auth/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ error: 'USERNAME AND PASSWORD REQUIRED' });
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'ALL FIELDS REQUIRED' });
     }
     if (username.length < 3) {
       return res.status(400).json({ error: 'USERNAME MIN 3 CHARACTERS' });
@@ -143,15 +149,25 @@ app.post('/auth/register', async (req, res) => {
     if (password.length < 4) {
       return res.status(400).json({ error: 'PASSWORD MIN 4 CHARACTERS' });
     }
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'INVALID EMAIL FORMAT' });
+    }
 
-    const exists = await User.findOne({ username: username.toLowerCase() });
-    if (exists) {
+    const existsUser = await User.findOne({ username: username.toLowerCase() });
+    if (existsUser) {
       return res.status(400).json({ error: 'USERNAME ALREADY EXISTS' });
+    }
+    const existsEmail = await User.findOne({ email: email.toLowerCase() });
+    if (existsEmail) {
+      return res.status(400).json({ error: 'EMAIL ALREADY REGISTERED' });
     }
 
     const hash = await bcrypt.hash(password, 10);
     const user = await User.create({
       username: username.toLowerCase(),
+      email: email.toLowerCase(),
       displayName: username,
       password: hash,
     });
@@ -166,6 +182,10 @@ app.post('/auth/register', async (req, res) => {
 });
 
 app.post('/auth/login', (req, res, next) => {
+  // Aceptar 'identifier' (nuevo) o 'username' (legacy) para login
+  if (req.body.username && !req.body.identifier) {
+    req.body.identifier = req.body.username;
+  }
   passport.authenticate('local', (err, user, info) => {
     if (err) return res.status(500).json({ error: 'SERVER ERROR' });
     if (!user) return res.status(401).json({ error: info?.message || 'LOGIN FAILED' });
@@ -208,6 +228,7 @@ app.get('/api/me', (req, res) => {
   res.json({
     displayName: req.user.displayName,
     username: req.user.username || null,
+    email: req.user.email || null,
     hasGoogle: !!req.user.googleId,
   });
 });
@@ -252,6 +273,39 @@ app.post('/api/gamedata', requireAuth, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'SAVE FAILED' });
+  }
+});
+
+// ── API: Auto-save (estado de partida en curso) ──
+app.post('/api/autosave', requireAuth, async (req, res) => {
+  try {
+    const { wave, score, gold, gems, hp, totalKills, level } = req.body;
+    const sessionState = { wave, score, gold, gems, hp, totalKills, level, savedAt: Date.now() };
+    const update = { 'gameData.sessionState': sessionState };
+
+    // Tambien actualizar gems en el servidor
+    if (gems !== undefined) {
+      update['gameData.gems'] = gems;
+    }
+
+    await User.findByIdAndUpdate(req.user._id, { $set: update });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'AUTOSAVE FAILED' });
+  }
+});
+
+app.get('/api/autosave', requireAuth, (req, res) => {
+  const ss = req.user.gameData?.sessionState || null;
+  res.json({ sessionState: ss });
+});
+
+app.delete('/api/autosave', requireAuth, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { $set: { 'gameData.sessionState': null } });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'CLEAR FAILED' });
   }
 });
 
