@@ -1734,7 +1734,12 @@ function updateWaveSpawning() {
     let goldReward = 5;
     let gemReward = 0;
 
-    // Bonus every 10 waves
+    // Bonus every 5 waves: 15 gold
+    if (completedWave % 5 === 0) {
+      goldReward = 15;
+    }
+
+    // Bonus every 10 waves: +15 gold extra
     if (completedWave % 10 === 0) {
       goldReward += 15;
     }
