@@ -2298,7 +2298,7 @@ function hideOverlay() {
 // ── Save Progress (server API) ──
 let gemsbanked = 0;
 
-function saveProgress(completed = false) {
+async function saveProgress(completed = false) {
   const levelKey = `level${currentLevel}`;
   const existing = (serverGameData.levelProgress || {})[levelKey] || { waveReached: 0, completed: false, timePlayed: 0, score: 0 };
 
@@ -2316,19 +2316,31 @@ function saveProgress(completed = false) {
   serverGameData.levelProgress[levelKey] = levelData;
   levelStartTime = Date.now();
 
-  // Bank gems earned this session
+  // Bank gems: leer gemas actuales del servidor para no sobreescribir
   const newGems = gems - gemsbanked;
-  const totalGems = (serverGameData.gems || 0) + (newGems > 0 ? newGems : 0);
+  let totalGems = serverGameData.gems || 0;
+
   if (newGems > 0) {
+    // Leer gemas frescas del servidor para evitar sobreescribir
+    try {
+      const freshRes = await fetch('/api/gamedata');
+      if (freshRes.ok) {
+        const freshData = await freshRes.json();
+        totalGems = (freshData.gems || 0) + newGems;
+      } else {
+        totalGems = (serverGameData.gems || 0) + newGems;
+      }
+    } catch (e) {
+      totalGems = (serverGameData.gems || 0) + newGems;
+    }
     serverGameData.gems = totalGems;
     gemsbanked = gems;
   }
 
   // Save to server
-  saveServerGameData({
-    gems: totalGems,
-    levelProgress: { [levelKey]: levelData },
-  });
+  const saveData = { levelProgress: { [levelKey]: levelData } };
+  if (newGems > 0) saveData.gems = totalGems;
+  saveServerGameData(saveData);
 }
 
 // ── Init ──

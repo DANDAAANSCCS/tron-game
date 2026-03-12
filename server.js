@@ -368,14 +368,8 @@ app.post('/api/autosave', requireAuth, async (req, res) => {
   try {
     const { wave, score, gold, gems, hp, totalKills, level } = req.body;
     const sessionState = { wave, score, gold, gems, hp, totalKills, level, savedAt: Date.now() };
-    const update = { 'gameData.sessionState': sessionState };
-
-    // Tambien actualizar gems en el servidor
-    if (gems !== undefined) {
-      update['gameData.gems'] = gems;
-    }
-
-    await User.findByIdAndUpdate(req.user._id, { $set: update });
+    // Solo guardar estado de sesion, NO tocar gameData.gems (eso lo hace saveProgress)
+    await User.findByIdAndUpdate(req.user._id, { $set: { 'gameData.sessionState': sessionState } });
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'AUTOSAVE FAILED' });
