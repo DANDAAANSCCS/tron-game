@@ -40,6 +40,8 @@ const userSchema = new mongoose.Schema({
     levelProgress: { type: mongoose.Schema.Types.Mixed, default: {} },
     // Habilidades desbloqueadas (array de ids: ['emp', ...])
     unlockedAbilities: { type: [String], default: [] },
+    // Habilidades equipadas (max 5)
+    equippedAbilities: { type: [String], default: [] },
     // Auto-save: estado de partida en curso
     sessionState: { type: mongoose.Schema.Types.Mixed, default: null },
   }
@@ -250,6 +252,7 @@ app.get('/api/gamedata', requireAuth, (req, res) => {
     permUpgrades: gd.permUpgrades || {},
     levelProgress: gd.levelProgress || {},
     unlockedAbilities: gd.unlockedAbilities || [],
+    equippedAbilities: gd.equippedAbilities || [],
   });
 });
 
@@ -281,7 +284,10 @@ app.post('/api/gamedata', requireAuth, async (req, res) => {
 
 // ── API: Abilities ──
 app.get('/api/abilities', requireAuth, (req, res) => {
-  res.json({ unlockedAbilities: req.user.gameData?.unlockedAbilities || [] });
+  res.json({
+    unlockedAbilities: req.user.gameData?.unlockedAbilities || [],
+    equippedAbilities: req.user.gameData?.equippedAbilities || [],
+  });
 });
 
 app.post('/api/abilities/unlock', requireAuth, async (req, res) => {
@@ -310,6 +316,50 @@ app.post('/api/abilities/unlock', requireAuth, async (req, res) => {
     res.json({ ok: true, gems: gems - cost });
   } catch (err) {
     res.status(500).json({ error: 'UNLOCK FAILED' });
+  }
+});
+
+app.post('/api/abilities/equip', requireAuth, async (req, res) => {
+  try {
+    const { abilityId } = req.body;
+    if (!abilityId) return res.status(400).json({ error: 'MISSING DATA' });
+
+    const user = await User.findById(req.user._id);
+    const unlocked = user.gameData?.unlockedAbilities || [];
+    const equipped = user.gameData?.equippedAbilities || [];
+
+    if (!unlocked.includes(abilityId)) {
+      return res.status(400).json({ error: 'NOT UNLOCKED' });
+    }
+    if (equipped.includes(abilityId)) {
+      return res.status(400).json({ error: 'ALREADY EQUIPPED' });
+    }
+    if (equipped.length >= 5) {
+      return res.status(400).json({ error: 'MAX 5 ABILITIES EQUIPPED' });
+    }
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $push: { 'gameData.equippedAbilities': abilityId },
+    });
+    res.json({ ok: true, equippedAbilities: [...equipped, abilityId] });
+  } catch (err) {
+    res.status(500).json({ error: 'EQUIP FAILED' });
+  }
+});
+
+app.post('/api/abilities/unequip', requireAuth, async (req, res) => {
+  try {
+    const { abilityId } = req.body;
+    if (!abilityId) return res.status(400).json({ error: 'MISSING DATA' });
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $pull: { 'gameData.equippedAbilities': abilityId },
+    });
+
+    const user = await User.findById(req.user._id);
+    res.json({ ok: true, equippedAbilities: user.gameData?.equippedAbilities || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'UNEQUIP FAILED' });
   }
 });
 

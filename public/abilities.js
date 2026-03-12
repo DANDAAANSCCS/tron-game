@@ -104,8 +104,10 @@ const ABILITIES = [
   // { id: 'shield', name: 'ENERGY SHIELD', rarity: 'rare', icon: '...', ... },
 ];
 
+const MAX_EQUIPPED = 5;
 let serverGems = 0;
 let unlockedAbilities = [];
+let equippedAbilities = [];
 
 // ── Load data from server ──
 async function loadData() {
@@ -121,6 +123,7 @@ async function loadData() {
     if (abRes.ok) {
       const ad = await abRes.json();
       unlockedAbilities = ad.unlockedAbilities || [];
+      equippedAbilities = ad.equippedAbilities || [];
     }
   } catch (e) {}
   updateUI();
@@ -128,7 +131,13 @@ async function loadData() {
 
 function updateUI() {
   document.getElementById('gems-count').textContent = serverGems;
+  updateEquipCounter();
   renderAbilities();
+}
+
+function updateEquipCounter() {
+  const el = document.getElementById('equip-counter');
+  if (el) el.textContent = `${equippedAbilities.length} / ${MAX_EQUIPPED}`;
 }
 
 function renderAbilities() {
@@ -138,37 +147,48 @@ function renderAbilities() {
   ABILITIES.forEach(ab => {
     const rarity = RARITY[ab.rarity];
     const isUnlocked = unlockedAbilities.includes(ab.id);
+    const isEquipped = equippedAbilities.includes(ab.id);
     const canBuy = serverGems >= rarity.cost;
+    const canEquip = equippedAbilities.length < MAX_EQUIPPED;
 
     const card = document.createElement('div');
-    card.className = 'ability-card' + (isUnlocked ? ' unlocked' : '');
-    card.style.borderColor = isUnlocked ? rarity.border : 'rgba(255, 255, 255, 0.08)';
+    card.className = 'ability-card' + (isEquipped ? ' equipped' : isUnlocked ? ' unlocked' : '');
+    card.style.borderColor = isEquipped ? rarity.border : isUnlocked ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.08)';
+
+    let actionHTML;
+    if (!isUnlocked) {
+      actionHTML = `<button class="ab-unlock-btn ${canBuy ? 'can-buy' : 'no-buy'}">
+        <span class="ab-cost-val">${rarity.cost}</span>
+        <span class="ab-cost-gem">GEMAS</span>
+      </button>`;
+    } else if (isEquipped) {
+      actionHTML = `<button class="ab-equip-btn ab-unequip">DESEQUIPAR</button>`;
+    } else {
+      actionHTML = `<button class="ab-equip-btn ab-equip ${canEquip ? '' : 'no-buy'}">EQUIPAR</button>`;
+    }
 
     card.innerHTML = `
-      <div class="ab-icon" style="color: ${rarity.color}; text-shadow: 0 0 12px ${rarity.color};">${ab.icon}</div>
+      <div class="ab-icon" style="color: ${isUnlocked ? rarity.color : 'rgba(255,255,255,0.15)'}; text-shadow: 0 0 12px ${isUnlocked ? rarity.color : 'transparent'};">${ab.icon}</div>
       <div class="ab-body">
         <div class="ab-header">
-          <span class="ab-name" style="color: ${rarity.color};">${ab.name}</span>
+          <span class="ab-name" style="color: ${isUnlocked ? rarity.color : 'rgba(255,255,255,0.25)'};">${ab.name}</span>
           <span class="ab-rarity" style="color: ${rarity.color}; border-color: ${rarity.border};">${rarity.label}</span>
+          ${isEquipped ? '<span class="ab-equipped-badge">EQUIPADO</span>' : ''}
         </div>
         <div class="ab-desc">${ab.description}</div>
         <div class="ab-stats">${ab.stats}</div>
         <div class="ab-key">TECLA: [${ab.key}]</div>
       </div>
-      <div class="ab-action">
-        ${isUnlocked
-          ? '<div class="ab-unlocked">DESBLOQUEADO</div>'
-          : `<button class="ab-unlock-btn ${canBuy ? 'can-buy' : 'no-buy'}" data-id="${ab.id}" data-cost="${rarity.cost}">
-              <span class="ab-cost-val">${rarity.cost}</span>
-              <span class="ab-cost-gem">GEMAS</span>
-            </button>`
-        }
-      </div>
+      <div class="ab-action">${actionHTML}</div>
     `;
 
+    // Event listeners
     if (!isUnlocked) {
-      const btn = card.querySelector('.ab-unlock-btn');
-      btn.addEventListener('click', () => unlockAbility(ab.id, rarity.cost, card));
+      card.querySelector('.ab-unlock-btn').addEventListener('click', () => unlockAbility(ab.id, rarity.cost, card));
+    } else if (isEquipped) {
+      card.querySelector('.ab-unequip').addEventListener('click', () => unequipAbility(ab.id));
+    } else {
+      card.querySelector('.ab-equip').addEventListener('click', () => equipAbility(ab.id));
     }
 
     grid.appendChild(card);
@@ -181,7 +201,6 @@ async function unlockAbility(abilityId, cost, cardEl) {
     setTimeout(() => cardEl.classList.remove('deny'), 300);
     return;
   }
-
   try {
     const res = await fetch('/api/abilities/unlock', {
       method: 'POST',
@@ -194,6 +213,37 @@ async function unlockAbility(abilityId, cost, cardEl) {
       unlockedAbilities.push(abilityId);
       cardEl.classList.add('bought');
       setTimeout(() => cardEl.classList.remove('bought'), 400);
+      updateUI();
+    }
+  } catch (e) {}
+}
+
+async function equipAbility(abilityId) {
+  if (equippedAbilities.length >= MAX_EQUIPPED) return;
+  try {
+    const res = await fetch('/api/abilities/equip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ abilityId }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      equippedAbilities = data.equippedAbilities;
+      updateUI();
+    }
+  } catch (e) {}
+}
+
+async function unequipAbility(abilityId) {
+  try {
+    const res = await fetch('/api/abilities/unequip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ abilityId }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      equippedAbilities = data.equippedAbilities;
       updateUI();
     }
   } catch (e) {}

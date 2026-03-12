@@ -33,7 +33,7 @@ const STORAGE_KEY = 'neonDefenseProgress';
 let levelStartTime = Date.now();
 
 // ── Server data (loaded async before game starts) ──
-let serverGameData = { gems: 0, permUpgrades: {}, levelProgress: {}, unlockedAbilities: [] };
+let serverGameData = { gems: 0, permUpgrades: {}, levelProgress: {}, unlockedAbilities: [], equippedAbilities: [] };
 
 async function loadServerGameData() {
   try {
@@ -42,9 +42,29 @@ async function loadServerGameData() {
   } catch (e) {}
 }
 
-// ── Habilidades desbloqueadas ──
+// ── Habilidades equipadas ──
+// Registro de habilidades (para generar ability bar)
+const ABILITY_REGISTRY = {
+  emp: { icon: '\u26A1', key: 'SPACE' },
+};
+
 function hasAbility(id) {
-  return (serverGameData.unlockedAbilities || []).includes(id);
+  return (serverGameData.equippedAbilities || []).includes(id);
+}
+
+function buildAbilityBar() {
+  const bar = document.getElementById('ability-bar');
+  bar.innerHTML = '';
+  const equipped = serverGameData.equippedAbilities || [];
+  equipped.forEach(id => {
+    const info = ABILITY_REGISTRY[id];
+    if (!info) return;
+    const slot = document.createElement('div');
+    slot.className = 'ability-slot ready';
+    slot.id = `ability-${id}`;
+    slot.innerHTML = `<span class="ability-icon">${info.icon}</span><span class="ability-key">${info.key}</span>`;
+    bar.appendChild(slot);
+  });
 }
 
 async function saveServerGameData(data) {
@@ -2039,35 +2059,24 @@ function updateHUD() {
     modeEl.style.color = 'rgba(0, 255, 242, 0.4)';
   }
 
+  // EMP HUD (solo si esta equipado)
   const empSlot = document.getElementById('ability-emp');
-  const cdEl = empSlot.querySelector('.ability-cooldown');
-
-  if (!hasAbility('emp')) {
-    // EMP bloqueado
-    empSlot.classList.remove('ready');
-    empSlot.classList.add('locked');
-    if (!cdEl) {
-      const div = document.createElement('div');
-      div.className = 'ability-cooldown';
-      div.textContent = '\uD83D\uDD12';
-      div.style.fontSize = '1.2rem';
-      empSlot.appendChild(div);
-    }
-  } else if (empCooldown > 0) {
-    empSlot.classList.remove('ready', 'locked');
-    if (!cdEl) {
-      const div = document.createElement('div');
-      div.className = 'ability-cooldown';
-      div.textContent = Math.ceil(empCooldown / 60) + 's';
-      empSlot.appendChild(div);
+  if (empSlot) {
+    const cdEl = empSlot.querySelector('.ability-cooldown');
+    if (empCooldown > 0) {
+      empSlot.classList.remove('ready');
+      if (!cdEl) {
+        const div = document.createElement('div');
+        div.className = 'ability-cooldown';
+        div.textContent = Math.ceil(empCooldown / 60) + 's';
+        empSlot.appendChild(div);
+      } else {
+        cdEl.textContent = Math.ceil(empCooldown / 60) + 's';
+      }
     } else {
-      cdEl.textContent = Math.ceil(empCooldown / 60) + 's';
-      cdEl.style.fontSize = '';
+      empSlot.classList.add('ready');
+      if (cdEl) cdEl.remove();
     }
-  } else {
-    empSlot.classList.remove('locked');
-    empSlot.classList.add('ready');
-    if (cdEl) cdEl.remove();
   }
 }
 
@@ -2452,9 +2461,10 @@ function gameLoop() {
 
 // ── Countdown & Start ──
 async function startGame() {
-  // Load server data (perm upgrades, gems) before starting
+  // Load server data (perm upgrades, gems, abilities) before starting
   await loadServerGameData();
   applyPermBonuses();
+  buildAbilityBar();
 
   initGame();
   gameState = 'countdown';
