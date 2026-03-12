@@ -1989,7 +1989,31 @@ function drawMinimap() {
     minimapCtx.fill();
     minimapCtx.shadowBlur = 0;
 
+    // Direction arrow showing where turret is aiming
+    const tx = turret.x * scaleX;
+    const ty = turret.y * scaleY;
+    const arrowLen = 14;
+    const arrowHead = 5;
+    const ang = turret.angle || 0;
+    const ax = tx + Math.cos(ang) * arrowLen;
+    const ay = ty + Math.sin(ang) * arrowLen;
+    minimapCtx.strokeStyle = 'rgba(0, 255, 242, 0.8)';
+    minimapCtx.lineWidth = 1.5;
+    minimapCtx.beginPath();
+    minimapCtx.moveTo(tx, ty);
+    minimapCtx.lineTo(ax, ay);
+    minimapCtx.stroke();
+    // Arrowhead
+    minimapCtx.fillStyle = 'rgba(0, 255, 242, 0.8)';
+    minimapCtx.beginPath();
+    minimapCtx.moveTo(ax, ay);
+    minimapCtx.lineTo(ax - Math.cos(ang - 0.5) * arrowHead, ay - Math.sin(ang - 0.5) * arrowHead);
+    minimapCtx.lineTo(ax - Math.cos(ang + 0.5) * arrowHead, ay - Math.sin(ang + 0.5) * arrowHead);
+    minimapCtx.closePath();
+    minimapCtx.fill();
+
     minimapCtx.strokeStyle = 'rgba(0, 255, 242, 0.12)';
+    minimapCtx.lineWidth = 1;
     minimapCtx.beginPath();
     minimapCtx.arc(turret.x * scaleX, turret.y * scaleY, TURRET_RANGE * scaleX, 0, Math.PI * 2);
     minimapCtx.stroke();
