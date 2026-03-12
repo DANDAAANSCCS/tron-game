@@ -1733,13 +1733,18 @@ function updateWaveSpawning() {
     const completedWave = wave;
     let goldReward = 5;
     let gemReward = 0;
-    let rewardMsg = '+5 gold';
 
     // Bonus every 10 waves
     if (completedWave % 10 === 0) {
       goldReward += 15;
-      rewardMsg = `+${goldReward} gold`;
     }
+
+    // x2 gold cada 5 y 10 rondas
+    if (completedWave % 5 === 0) {
+      goldReward *= 2;
+    }
+
+    let rewardMsg = `+${goldReward} gold`;
 
     // Gem every 5 waves
     if (completedWave % 5 === 0) {
