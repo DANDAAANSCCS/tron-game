@@ -33,13 +33,18 @@ const STORAGE_KEY = 'neonDefenseProgress';
 let levelStartTime = Date.now();
 
 // ── Server data (loaded async before game starts) ──
-let serverGameData = { gems: 0, permUpgrades: {}, levelProgress: {} };
+let serverGameData = { gems: 0, permUpgrades: {}, levelProgress: {}, unlockedAbilities: [] };
 
 async function loadServerGameData() {
   try {
     const res = await fetch('/api/gamedata');
     if (res.ok) serverGameData = await res.json();
   } catch (e) {}
+}
+
+// ── Habilidades desbloqueadas ──
+function hasAbility(id) {
+  return (serverGameData.unlockedAbilities || []).includes(id);
 }
 
 async function saveServerGameData(data) {
@@ -2037,8 +2042,19 @@ function updateHUD() {
   const empSlot = document.getElementById('ability-emp');
   const cdEl = empSlot.querySelector('.ability-cooldown');
 
-  if (empCooldown > 0) {
+  if (!hasAbility('emp')) {
+    // EMP bloqueado
     empSlot.classList.remove('ready');
+    empSlot.classList.add('locked');
+    if (!cdEl) {
+      const div = document.createElement('div');
+      div.className = 'ability-cooldown';
+      div.textContent = '\uD83D\uDD12';
+      div.style.fontSize = '1.2rem';
+      empSlot.appendChild(div);
+    }
+  } else if (empCooldown > 0) {
+    empSlot.classList.remove('ready', 'locked');
     if (!cdEl) {
       const div = document.createElement('div');
       div.className = 'ability-cooldown';
@@ -2046,8 +2062,10 @@ function updateHUD() {
       empSlot.appendChild(div);
     } else {
       cdEl.textContent = Math.ceil(empCooldown / 60) + 's';
+      cdEl.style.fontSize = '';
     }
   } else {
+    empSlot.classList.remove('locked');
     empSlot.classList.add('ready');
     if (cdEl) cdEl.remove();
   }
@@ -2353,8 +2371,8 @@ function gameLoop() {
     doAutoSave();
   }
 
-  // EMP input
-  if (keys.space && empCooldown <= 0) {
+  // EMP input (solo si esta desbloqueado)
+  if (keys.space && empCooldown <= 0 && hasAbility('emp')) {
     triggerEMP();
   }
   if (empCooldown > 0) empCooldown--;

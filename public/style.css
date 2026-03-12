@@ -699,6 +699,202 @@ body {
 }
 
 /* ══════════════════════════════════════ */
+/*  ABILITIES PAGE                       */
+/* ══════════════════════════════════════ */
+
+.abilities-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 30px 40px;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.abilities-header {
+  margin-bottom: 30px;
+}
+
+.abilities-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.ability-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  width: 560px;
+  background: rgba(5, 5, 15, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  text-align: left;
+}
+
+.ability-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: transparent;
+  transition: background 0.3s ease;
+}
+
+.ability-card.unlocked::before {
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.ability-card:hover {
+  border-color: rgba(0, 255, 242, 0.3);
+  transform: translateX(4px);
+}
+
+.ability-card.bought {
+  animation: upgBought 0.4s ease;
+}
+
+.ability-card.deny {
+  animation: upgDeny 0.3s ease;
+}
+
+.ab-icon {
+  font-size: 2.2rem;
+  width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ab-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ab-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ab-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+}
+
+.ab-rarity {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 3px;
+  padding: 2px 8px;
+  border: 1px solid;
+}
+
+.ab-desc {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.4;
+}
+
+.ab-stats {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  color: rgba(0, 255, 242, 0.5);
+}
+
+.ab-key {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.ab-action {
+  flex-shrink: 0;
+  min-width: 90px;
+  text-align: center;
+}
+
+.ab-unlock-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 16px;
+  border: 1px solid rgba(224, 64, 251, 0.3);
+  background: rgba(224, 64, 251, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.ab-unlock-btn.can-buy {
+  border-color: rgba(224, 64, 251, 0.5);
+  background: rgba(224, 64, 251, 0.08);
+}
+
+.ab-unlock-btn.can-buy:hover {
+  background: rgba(224, 64, 251, 0.15);
+  box-shadow: 0 0 15px rgba(224, 64, 251, 0.2);
+}
+
+.ab-unlock-btn.no-buy {
+  border-color: rgba(255, 255, 255, 0.1);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ab-cost-val {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #e040fb;
+  text-shadow: 0 0 8px rgba(224, 64, 251, 0.5);
+}
+
+.no-buy .ab-cost-val {
+  color: rgba(255, 255, 255, 0.3);
+  text-shadow: none;
+}
+
+.ab-cost-gem {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 2px;
+  color: rgba(224, 64, 251, 0.6);
+}
+
+.ab-unlocked {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #00ff66;
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 255, 102, 0.3);
+}
+
+@media (max-width: 600px) {
+  .ability-card {
+    width: 100%;
+    max-width: 360px;
+    padding: 12px 14px;
+  }
+  .ab-icon { font-size: 1.6rem; width: 40px; }
+}
+
+/* ══════════════════════════════════════ */
 /*  LOGIN PAGE                           */
 /* ══════════════════════════════════════ */
 

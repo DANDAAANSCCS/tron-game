@@ -184,7 +184,7 @@ function selectItem(index) {
   setTimeout(() => item.classList.remove('flash'), 400);
 
   // Handle menu actions
-  const actions = ['start', 'upgrades', 'controls', 'ranking'];
+  const actions = ['start', 'upgrades', 'abilities', 'controls', 'ranking'];
   if (actions[index] === 'start') {
     setTimeout(() => {
       window.location.href = '/levels.html';
@@ -193,6 +193,11 @@ function selectItem(index) {
   if (actions[index] === 'upgrades') {
     setTimeout(() => {
       window.location.href = '/upgrades.html';
+    }, 500);
+  }
+  if (actions[index] === 'abilities') {
+    setTimeout(() => {
+      window.location.href = '/abilities.html';
     }, 500);
   }
 }

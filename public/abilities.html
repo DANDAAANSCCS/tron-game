@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEON DEFENSE — HABILIDADES</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="scanlines"></div>
+
+  <div class="abilities-container">
+    <div class="abilities-header">
+      <h1 class="levels-title">HABILIDADES</h1>
+      <div class="levels-subtitle">COMBAT ABILITIES MODULE</div>
+      <div class="gems-display">
+        <canvas id="gem-icon" width="18" height="18"></canvas>
+        <span id="gems-count">0</span>
+      </div>
+    </div>
+
+    <div class="abilities-grid" id="abilities-grid"></div>
+
+    <a href="/" class="back-btn">
+      <span class="menu-arrow">&lt;</span>
+      RETURN TO GRID
+    </a>
+  </div>
+
+  <script src="auth-check.js"></script>
+  <script src="abilities.js"></script>
+</body>
+</html>

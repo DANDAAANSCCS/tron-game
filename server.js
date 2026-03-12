@@ -38,6 +38,8 @@ const userSchema = new mongoose.Schema({
       fireRate: { type: Number, default: 0 },
     },
     levelProgress: { type: mongoose.Schema.Types.Mixed, default: {} },
+    // Habilidades desbloqueadas (array de ids: ['emp', ...])
+    unlockedAbilities: { type: [String], default: [] },
     // Auto-save: estado de partida en curso
     sessionState: { type: mongoose.Schema.Types.Mixed, default: null },
   }
@@ -247,6 +249,7 @@ app.get('/api/gamedata', requireAuth, (req, res) => {
     gems: gd.gems || 0,
     permUpgrades: gd.permUpgrades || {},
     levelProgress: gd.levelProgress || {},
+    unlockedAbilities: gd.unlockedAbilities || [],
   });
 });
 
@@ -273,6 +276,40 @@ app.post('/api/gamedata', requireAuth, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'SAVE FAILED' });
+  }
+});
+
+// ── API: Abilities ──
+app.get('/api/abilities', requireAuth, (req, res) => {
+  res.json({ unlockedAbilities: req.user.gameData?.unlockedAbilities || [] });
+});
+
+app.post('/api/abilities/unlock', requireAuth, async (req, res) => {
+  try {
+    const { abilityId, cost } = req.body;
+    if (!abilityId || cost === undefined) {
+      return res.status(400).json({ error: 'MISSING DATA' });
+    }
+
+    const user = await User.findById(req.user._id);
+    const gems = user.gameData?.gems || 0;
+    const unlocked = user.gameData?.unlockedAbilities || [];
+
+    if (unlocked.includes(abilityId)) {
+      return res.status(400).json({ error: 'ALREADY UNLOCKED' });
+    }
+    if (gems < cost) {
+      return res.status(400).json({ error: 'NOT ENOUGH GEMS' });
+    }
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $set: { 'gameData.gems': gems - cost },
+      $push: { 'gameData.unlockedAbilities': abilityId },
+    });
+
+    res.json({ ok: true, gems: gems - cost });
+  } catch (err) {
+    res.status(500).json({ error: 'UNLOCK FAILED' });
   }
 });
 
