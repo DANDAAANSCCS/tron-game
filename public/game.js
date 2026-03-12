@@ -203,11 +203,11 @@ const BASE_BULLET_SPREAD = 0.32;
 // ── Upgrades ──
 const PIPS_PER_TIER = 10;
 let upgrades = {
-  damage:    { level: 0, tier: 0, basePerLevel: 0.05, label: 'DAMAGE',      icon: '⚔', descBase: 'DMG',      color: '#ff4444',  baseCost: 5 },
-  fireRate:  { level: 0, tier: 0, basePerLevel: 0.02, label: 'FIRE RATE',   icon: '⚡', descBase: 'SPEED',    color: '#ffdd00',  baseCost: 5 },
-  precision: { level: 0, tier: 0, basePerLevel: 0.05, label: 'PRECISION',   icon: '◎', descBase: 'SPREAD',   color: '#00fff2',  baseCost: 5 },
-  doubleBul: { level: 0, tier: 0, basePerLevel: 0.02, label: 'DOUBLE SHOT', icon: '⟐', descBase: 'CHANCE',  color: '#e040fb',  baseCost: 5, max: 0.65 },
-  health:    { level: 0, tier: 0, basePerLevel: 0.05, label: 'HEALTH',      icon: '♥', descBase: 'HP',       color: '#00ff66',  baseCost: 5 },
+  damage:    { level: 0, tier: 0, basePerLevel: 0.10, label: 'DAMAGE',      icon: '⚔', descBase: 'DMG',      color: '#ff4444',  baseCost: 5 },
+  fireRate:  { level: 0, tier: 0, basePerLevel: 0.04, label: 'FIRE RATE',   icon: '⚡', descBase: 'SPEED',    color: '#ffdd00',  baseCost: 5 },
+  precision: { level: 0, tier: 0, basePerLevel: 0.10, label: 'PRECISION',   icon: '◎', descBase: 'SPREAD',   color: '#00fff2',  baseCost: 5 },
+  doubleBul: { level: 0, tier: 0, basePerLevel: 0.04, label: 'DOUBLE SHOT', icon: '⟐', descBase: 'CHANCE',  color: '#e040fb',  baseCost: 5, max: 0.65 },
+  health:    { level: 0, tier: 0, basePerLevel: 0.10, label: 'HEALTH',      icon: '♥', descBase: 'HP',       color: '#00ff66',  baseCost: 5 },
 };
 const UPGRADE_COST_SCALE = 1.20;
 let upgradesPanelOpen = false;

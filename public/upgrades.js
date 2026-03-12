@@ -210,11 +210,11 @@ function drawGemIcon(cvs) {
 
 // ── Permanent Upgrades Data ──
 const PERM_UPGRADES = [
-  { id: 'health',    label: 'HEALTH',      icon: '♥',  color: '#00ff66', desc: '+5% MAX HP' },
-  { id: 'damage',    label: 'DAMAGE',      icon: '⚔', color: '#ff4444', desc: '+5% BULLET DMG' },
-  { id: 'regen',     label: 'REGEN',       icon: '✚', color: '#44ffaa', desc: '+5% HP REGEN' },
-  { id: 'precision', label: 'PRECISION',   icon: '◎', color: '#00fff2', desc: '+5% ACCURACY' },
-  { id: 'fireRate',  label: 'FIRE RATE',   icon: '⚡', color: '#ffdd00', desc: '+5% FIRE SPEED' },
+  { id: 'health',    label: 'HEALTH',      icon: '♥',  color: '#00ff66', desc: '+10% MAX HP' },
+  { id: 'damage',    label: 'DAMAGE',      icon: '⚔', color: '#ff4444', desc: '+10% BULLET DMG' },
+  { id: 'regen',     label: 'REGEN',       icon: '✚', color: '#44ffaa', desc: '+10% HP REGEN' },
+  { id: 'precision', label: 'PRECISION',   icon: '◎', color: '#00fff2', desc: '+10% ACCURACY' },
+  { id: 'fireRate',  label: 'FIRE RATE',   icon: '⚡', color: '#ffdd00', desc: '+10% FIRE SPEED' },
 ];
 
 const BASE_COST = 5;
