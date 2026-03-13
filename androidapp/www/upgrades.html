@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script src="/app-config.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEON DEFENSE — UPGRADES</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="scanlines"></div>
+
+  <div class="upgrades-container">
+    <div class="upgrades-header">
+      <h1 class="levels-title">
+        <span class="logo-bracket">[</span>
+        UPGRADES
+        <span class="logo-bracket">]</span>
+      </h1>
+      <div class="levels-subtitle">PERMANENT ENHANCEMENTS</div>
+      <div class="gems-display" id="gems-display">
+        <canvas id="gem-icon-cvs" width="24" height="24"></canvas>
+        <span id="gems-count">0</span>
+      </div>
+    </div>
+
+    <div class="upgrades-grid" id="upgrades-grid">
+      <!-- Cards injected by upgrades.js -->
+    </div>
+
+    <a href="/" class="back-btn">
+      <span class="menu-arrow">&lt;</span>
+      <span class="menu-text">VOLVER</span>
+    </a>
+  </div>
+
+  <script src="auth-check.js"></script>
+  <script src="shared/bg-animation.js"></script>
+  <script src="shared/audio.js"></script>
+  <script src="upgrades.js"></script>
+</body>
+</html>

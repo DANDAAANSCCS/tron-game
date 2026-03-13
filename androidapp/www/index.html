@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script src="/app-config.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEON DEFENSE</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="scanlines"></div>
+
+  <div class="menu-container">
+    <div class="logo-container">
+      <h1 class="logo">
+        <span class="logo-bracket">[</span>
+        NEON DEFENSE
+        <span class="logo-bracket">]</span>
+      </h1>
+      <div class="logo-subtitle">DEFENSE GRID ONLINE</div>
+    </div>
+
+    <nav class="menu">
+      <a href="#" class="menu-item active" data-index="0">
+        <span class="menu-arrow">&gt;</span>
+        <span class="menu-text">INICIAR JUEGO</span>
+        <span class="menu-line"></span>
+      </a>
+      <a href="#" class="menu-item" data-index="1">
+        <span class="menu-arrow">&gt;</span>
+        <span class="menu-text">MEJORAS</span>
+        <span class="menu-line"></span>
+      </a>
+      <a href="#" class="menu-item" data-index="2">
+        <span class="menu-arrow">&gt;</span>
+        <span class="menu-text">HABILIDADES</span>
+        <span class="menu-line"></span>
+      </a>
+      <a href="#" class="menu-item" data-index="3">
+        <span class="menu-arrow">&gt;</span>
+        <span class="menu-text">CONTROLES</span>
+        <span class="menu-line"></span>
+      </a>
+      <a href="#" class="menu-item" data-index="4">
+        <span class="menu-arrow">&gt;</span>
+        <span class="menu-text">RANKING</span>
+        <span class="menu-line"></span>
+      </a>
+    </nav>
+
+    <div class="footer-info">
+      <span class="version">v1.0</span>
+      <span class="separator">|</span>
+      <span class="status">CONNECTED TO GRID</span>
+    </div>
+  </div>
+
+  <div class="user-bar" id="user-bar" style="display:none;">
+    <span class="user-name" id="user-display"></span>
+    <button class="logout-btn" id="logout-btn">[LOGOUT]</button>
+  </div>
+  <script src="auth-check.js"></script>
+  <script src="shared/bg-animation.js"></script>
+  <script src="shared/audio.js"></script>
+  <script src="menu.js"></script>
+  <script>
+    // Show user bar once auth is confirmed
+    const _checkUser = setInterval(() => {
+      if (window.currentUser) {
+        clearInterval(_checkUser);
+        document.getElementById('user-display').textContent = window.currentUser.displayName;
+        document.getElementById('user-bar').style.display = '';
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+          await fetch('/auth/logout', { method: 'POST' });
+          window.location.href = '/login.html';
+        });
+      }
+    }, 100);
+  </script>
+</body>
+</html>

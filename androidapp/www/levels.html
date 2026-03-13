@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script src="/app-config.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEON DEFENSE — LEVELS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="scanlines"></div>
+
+  <div class="levels-container">
+    <div class="levels-header">
+      <h1 class="levels-title">
+        <span class="logo-bracket">[</span>
+        SELECT LEVEL
+        <span class="logo-bracket">]</span>
+      </h1>
+      <div class="levels-subtitle">DEFENSE GRID — MISSION SELECT</div>
+    </div>
+
+    <div class="levels-grid" id="levels-grid">
+      <!-- Cards injected by levels.js -->
+    </div>
+
+    <a href="/" class="back-btn">
+      <span class="menu-arrow">&lt;</span>
+      <span class="menu-text">VOLVER</span>
+    </a>
+  </div>
+
+  <script src="auth-check.js"></script>
+  <script src="shared/bg-animation.js"></script>
+  <script src="shared/audio.js"></script>
+  <script src="levels.js"></script>
+</body>
+</html>

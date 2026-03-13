@@ -1,0 +1,16 @@
+{
+  "appId": "com.neondefense.app",
+  "appName": "Neon Defense",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "tron-game-production-888b.up.railway.app"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  }
+}

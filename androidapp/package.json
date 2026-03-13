@@ -1,0 +1,21 @@
+{
+  "name": "androidapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'No build step needed - static files'",
+    "sync": "npx cap sync android",
+    "open": "npx cap open android",
+    "run": "npx cap run android"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0"
+  }
+}

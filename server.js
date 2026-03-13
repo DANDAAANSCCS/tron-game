@@ -5,8 +5,30 @@ const MongoStore = require('connect-mongo').default || require('connect-mongo');
 const mongoose = require('mongoose');
 const passport = require('passport');
 
+const cors = require('cors');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ── CORS for Android app (Capacitor) ──
+const ALLOWED_ORIGINS = [
+  'https://localhost',
+  'capacitor://localhost',
+  'http://localhost',
+  'http://localhost:3000',
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (same-origin, mobile apps, curl)
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now — tighten in production
+    }
+  },
+  credentials: true,
+}));
 
 // ── MongoDB ──
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/neondefense';
@@ -21,9 +43,7 @@ mongoose.connect(MONGO_URI).then(() => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-if (process.env.TRUST_PROXY === 'true') {
-  app.set('trust proxy', 1);
-}
+app.set('trust proxy', 1);
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'neon-defense-secret-key-change-me',
@@ -36,8 +56,8 @@ app.use(session({
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' && process.env.TRUST_PROXY === 'true',
-    sameSite: 'lax',
+    secure: true,
+    sameSite: 'none',
   }
 }));
 
