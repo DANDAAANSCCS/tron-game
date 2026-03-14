@@ -6,13 +6,180 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1">
   <title>NEON DEFENSE</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
     * { margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; }
     #content-frame { position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; background: transparent; }
+
+    /* Update overlay */
+    #update-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    #update-overlay.visible { display: flex; }
+
+    .update-box {
+      width: 280px;
+      background: rgba(5, 5, 18, 0.98);
+      border: 1px solid rgba(0, 255, 242, 0.5);
+      box-shadow: 0 0 40px rgba(0, 255, 242, 0.15);
+      padding: 24px 20px;
+      text-align: center;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .update-title {
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #00fff2;
+      text-shadow: 0 0 12px rgba(0, 255, 242, 0.5);
+      letter-spacing: 4px;
+      margin-bottom: 12px;
+    }
+
+    .update-version {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(0, 255, 242, 0.6);
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .update-notes {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 18px;
+      line-height: 1.5;
+      letter-spacing: 1px;
+    }
+
+    .update-btn {
+      display: block;
+      width: 100%;
+      padding: 12px 0;
+      border: 1px solid rgba(0, 255, 242, 0.5);
+      background: rgba(0, 255, 242, 0.1);
+      color: #00fff2;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      cursor: pointer;
+      text-shadow: 0 0 8px rgba(0, 255, 242, 0.4);
+      margin-bottom: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .update-btn:active {
+      background: rgba(0, 255, 242, 0.2);
+      box-shadow: 0 0 20px rgba(0, 255, 242, 0.3);
+    }
+
+    .update-skip {
+      display: block;
+      width: 100%;
+      padding: 8px 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: transparent;
+      color: rgba(255, 255, 255, 0.35);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .update-skip:active {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .update-progress {
+      display: none;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      color: rgba(0, 255, 242, 0.6);
+      margin-top: 10px;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
   <iframe id="content-frame" src="menu.html" allow="autoplay"></iframe>
+
+  <!-- Update overlay -->
+  <div id="update-overlay">
+    <div class="update-box">
+      <div class="update-title">NUEVA VERSION</div>
+      <div class="update-version" id="update-ver"></div>
+      <div class="update-notes" id="update-notes"></div>
+      <button class="update-btn" id="update-download">DESCARGAR</button>
+      <button class="update-skip" id="update-skip">AHORA NO</button>
+      <div class="update-progress" id="update-progress">DESCARGANDO...</div>
+    </div>
+  </div>
+
   <script src="shared/audio.js"></script>
+  <script>
+    // ── Auto-update system ──
+    const LOCAL_VERSION_CODE = 1; // Increment this with each APK build
+
+    (async function checkForUpdates() {
+      try {
+        const res = await fetch('/api/app-version');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Compare version codes
+        if (data.versionCode <= LOCAL_VERSION_CODE) return;
+
+        // Check if user already skipped this version
+        const skipped = localStorage.getItem('skippedVersion');
+        if (skipped === String(data.versionCode)) return;
+
+        // Show update dialog
+        const overlay = document.getElementById('update-overlay');
+        document.getElementById('update-ver').textContent = 'v' + data.version;
+        document.getElementById('update-notes').textContent = data.releaseNotes || '';
+        overlay.classList.add('visible');
+
+        // Download button
+        document.getElementById('update-download').addEventListener('click', () => {
+          if (!data.apkUrl) return;
+          document.getElementById('update-download').style.display = 'none';
+          document.getElementById('update-skip').style.display = 'none';
+          document.getElementById('update-progress').style.display = 'block';
+
+          // Open in system browser for download
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+            window.Capacitor.Plugins.Browser.open({ url: data.apkUrl });
+          } else {
+            window.open(data.apkUrl, '_blank');
+          }
+          setTimeout(() => {
+            document.getElementById('update-progress').textContent = 'INSTALA EL APK DESCARGADO';
+          }, 2000);
+          setTimeout(() => {
+            overlay.classList.remove('visible');
+          }, 6000);
+        });
+
+        // Skip button
+        document.getElementById('update-skip').addEventListener('click', () => {
+          localStorage.setItem('skippedVersion', String(data.versionCode));
+          overlay.classList.remove('visible');
+        });
+      } catch (e) {
+        // No connection or error — silently continue
+      }
+    })();
+  </script>
 </body>
 </html>

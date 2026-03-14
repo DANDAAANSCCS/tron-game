@@ -74,6 +74,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/auth', require('./server/routes/auth'));
 app.use('/api', require('./server/routes/api'));
 
+// ── App version check (for auto-update) ──
+app.get('/api/app-version', (req, res) => {
+  try {
+    const ver = require('./app-version.json');
+    res.json({
+      version: ver.version,
+      versionCode: ver.versionCode,
+      releaseNotes: ver.releaseNotes || '',
+      apkUrl: `https://github.com/DANDAAANSCCS/tron-game/releases/download/v${ver.version}/neon-defense-${ver.version}.apk`,
+    });
+  } catch (e) {
+    res.json({ version: '1.0.0', versionCode: 1 });
+  }
+});
+
 // ── Fallback: serve index for root ──
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
