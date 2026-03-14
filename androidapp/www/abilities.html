@@ -280,13 +280,72 @@
       margin-top: 4px;
     }
 
+    /* ── Silver display ── */
+    .silver-display {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+    }
+
+    /* ── Upgrade button ── */
+    .ab-upgrade-btn {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 6px 12px;
+      border: 1px solid rgba(192, 192, 192, 0.2);
+      background: rgba(192, 192, 192, 0.04);
+      color: rgba(192, 192, 192, 0.4);
+      cursor: not-allowed;
+      margin-bottom: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      white-space: nowrap;
+    }
+
+    .ab-upgrade-btn.can-upgrade {
+      border-color: rgba(0, 255, 102, 0.4);
+      background: rgba(0, 255, 102, 0.06);
+      color: #00ff66;
+      cursor: pointer;
+      text-shadow: 0 0 8px rgba(0, 255, 102, 0.4);
+      box-shadow: 0 0 8px rgba(0, 255, 102, 0.08);
+    }
+
+    .ab-upgrade-btn.can-upgrade:active {
+      background: rgba(0, 255, 102, 0.15);
+      box-shadow: 0 0 16px rgba(0, 255, 102, 0.2);
+    }
+
+    .ab-upgrade-cost {
+      font-size: 0.55rem;
+      font-family: 'Share Tech Mono', monospace;
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+
+    .ab-upgrade-hint {
+      font-size: 0.4rem;
+      font-family: 'Share Tech Mono', monospace;
+      color: rgba(255, 100, 68, 0.6);
+      letter-spacing: 1px;
+    }
+
     /* ── Action column ── */
     .ab-action-col {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 14px 14px 14px 0;
+      padding: 10px 12px 10px 0;
       flex-shrink: 0;
+      gap: 4px;
     }
 
     .ab-equip-btn {
@@ -403,6 +462,10 @@
           <div class="gems-display">
             <canvas id="gem-icon" width="18" height="18"></canvas>
             <span id="gems-count">0</span>
+          </div>
+          <div class="silver-display">
+            <span style="color:#c0c0c0;font-size:0.85rem;">&#9673;</span>
+            <span id="silver-count" style="color:#c0c0c0;">0</span>
           </div>
           <a href="/shop.html" class="shop-btn">IR A TIENDA</a>
         </div>

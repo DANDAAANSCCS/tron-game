@@ -23,16 +23,20 @@ const CARDS_PER_LEVEL = [
   1, 2, 4, 8, 12, 18, 25, 35, 45, 60, 80, 100, 130, 160, 200, 250, 300, 380, 460
 ];
 
-function getAbilityLevel(cards) {
-  if (!cards || cards <= 0) return 0;
-  let remaining = cards - 1; // 1 card = level 1
-  let level = 1;
-  for (let i = 0; i < CARDS_PER_LEVEL.length; i++) {
-    if (remaining < CARDS_PER_LEVEL[i]) break;
-    remaining -= CARDS_PER_LEVEL[i];
-    level++;
+// Cards required to upgrade FROM level N to level N+1
+// Index 0 = cards to go from 0→1 (unlock), index 1 = 1→2, etc.
+const CARDS_TO_UPGRADE = [1, 2, 4, 8, 12, 18, 25, 35, 45, 60, 80, 100, 130, 160, 200, 250, 300, 380, 460];
+
+// Silver coins cost to upgrade FROM level N to level N+1
+const SILVER_TO_UPGRADE = [0, 50, 100, 200, 400, 600, 1000, 1500, 2000, 3000, 4000, 5000, 7000, 9000, 12000, 15000, 20000, 25000, 35000, 50000];
+
+// Total cards needed to have reached a given level (cumulative)
+function cardsNeededForLevel(level) {
+  let total = 0;
+  for (let i = 0; i < level && i < CARDS_TO_UPGRADE.length; i++) {
+    total += CARDS_TO_UPGRADE[i];
   }
-  return Math.min(level, 20);
+  return total;
 }
 
 // Chest definitions
@@ -126,12 +130,7 @@ router.get('/auth-config', (req, res) => {
 router.get('/gamedata', requireAuth, (req, res) => {
   const gd = req.user.gameData || {};
   const abilityCards = gd.abilityCards || {};
-
-  // Compute levels from cards
-  const abilityLevels = {};
-  for (const [id, cards] of Object.entries(abilityCards)) {
-    abilityLevels[id] = getAbilityLevel(cards);
-  }
+  const abilityLevels = gd.abilityLevels || {};
 
   // Backwards compat: migrate old unlockedAbilities to cards AND persist
   const oldUnlocked = gd.unlockedAbilities || [];
@@ -142,12 +141,25 @@ router.get('/gamedata', requireAuth, (req, res) => {
         abilityCards[id] = 1;
         abilityLevels[id] = 1;
         migrateUpdate[`gameData.abilityCards.${id}`] = 1;
+        migrateUpdate[`gameData.abilityLevels.${id}`] = 1;
       }
     }
     if (Object.keys(migrateUpdate).length > 0) {
       migrateUpdate['gameData.unlockedAbilities'] = [];
       User.findByIdAndUpdate(req.user._id, { $set: migrateUpdate }).catch(() => {});
     }
+  }
+
+  // Auto-unlock: if cards >= 1 but level is 0, set level to 1 (free unlock)
+  const autoUnlockUpdate = {};
+  for (const [id, cards] of Object.entries(abilityCards)) {
+    if (cards >= 1 && (!abilityLevels[id] || abilityLevels[id] < 1)) {
+      abilityLevels[id] = 1;
+      autoUnlockUpdate[`gameData.abilityLevels.${id}`] = 1;
+    }
+  }
+  if (Object.keys(autoUnlockUpdate).length > 0) {
+    User.findByIdAndUpdate(req.user._id, { $set: autoUnlockUpdate }).catch(() => {});
   }
 
   res.json({
@@ -158,6 +170,9 @@ router.get('/gamedata', requireAuth, (req, res) => {
     abilityCards,
     abilityLevels,
     equippedAbilities: gd.equippedAbilities || [],
+    // Send upgrade costs for client display
+    cardsToUpgrade: CARDS_TO_UPGRADE,
+    silverToUpgrade: SILVER_TO_UPGRADE,
   });
 });
 
@@ -201,6 +216,8 @@ router.get('/abilities', requireAuth, (req, res) => {
     abilityCards,
     abilityLevels,
     equippedAbilities: gd.equippedAbilities || [],
+    cardsToUpgrade: CARDS_TO_UPGRADE,
+    silverToUpgrade: SILVER_TO_UPGRADE,
   });
 });
 
@@ -245,6 +262,57 @@ router.post('/abilities/unequip', requireAuth, async (req, res) => {
     res.json({ ok: true, equippedAbilities: user.gameData?.equippedAbilities || [] });
   } catch (err) {
     res.status(500).json({ error: 'UNEQUIP FAILED' });
+  }
+});
+
+// ── Ability upgrade (costs cards + silver) ──
+router.post('/abilities/upgrade', requireAuth, async (req, res) => {
+  try {
+    const { abilityId } = req.body;
+    if (!abilityId) return res.status(400).json({ error: 'MISSING DATA' });
+
+    const user = await User.findById(req.user._id);
+    const cards = user.gameData?.abilityCards || {};
+    const levels = user.gameData?.abilityLevels || {};
+    const silver = user.gameData?.silverCoins || 0;
+
+    const currentLevel = levels[abilityId] || 0;
+    const totalCards = cards[abilityId] || 0;
+
+    if (currentLevel >= 20) return res.status(400).json({ error: 'MAX LEVEL' });
+    if (currentLevel < 1) return res.status(400).json({ error: 'NOT UNLOCKED' });
+
+    // Cards needed: total cards consumed up to next level
+    const cardsNeeded = cardsNeededForLevel(currentLevel + 1);
+    if (totalCards < cardsNeeded) {
+      return res.status(400).json({ error: 'NOT ENOUGH CARDS', cardsNeeded, cardsHave: totalCards });
+    }
+
+    // Silver cost
+    const silverCost = SILVER_TO_UPGRADE[currentLevel] || 0;
+    if (silver < silverCost) {
+      return res.status(400).json({ error: 'NOT ENOUGH SILVER', silverNeeded: silverCost, silverHave: silver });
+    }
+
+    const newLevel = currentLevel + 1;
+    const newSilver = silver - silverCost;
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $set: {
+        [`gameData.abilityLevels.${abilityId}`]: newLevel,
+        'gameData.silverCoins': newSilver,
+      }
+    });
+
+    res.json({
+      ok: true,
+      abilityId,
+      newLevel,
+      silverCoins: newSilver,
+      abilityLevels: { ...levels, [abilityId]: newLevel },
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'UPGRADE FAILED' });
   }
 });
 

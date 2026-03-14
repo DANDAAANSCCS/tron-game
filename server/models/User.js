@@ -18,8 +18,9 @@ const userSchema = new mongoose.Schema({
       fireRate: { type: Number, default: 0 },
     },
     levelProgress: { type: mongoose.Schema.Types.Mixed, default: {} },
-    // Card-based ability system: { abilityId: numberOfCards, ... }
-    abilityCards: { type: mongoose.Schema.Types.Mixed, default: {} },
+    // Card-based ability system
+    abilityCards: { type: mongoose.Schema.Types.Mixed, default: {} },  // { id: totalCards }
+    abilityLevels: { type: mongoose.Schema.Types.Mixed, default: {} }, // { id: currentLevel }
     // Habilidades equipadas (max 5)
     equippedAbilities: { type: [String], default: [] },
     // Auto-save: estado de partida en curso
