@@ -10,14 +10,25 @@ async function loadServerGameData() {
   } catch (e) {}
 }
 
-// ── Habilidades equipadas ──
-// Registro de habilidades (para generar ability bar)
+// ── Ability registry (all 6 abilities, auto-triggered — no key binding) ──
 const ABILITY_REGISTRY = {
-  emp: { icon: '\u26A1', key: 'SPACE' },
+  emp:       { icon: '\u26A1' },
+  shield:    { icon: '\uD83D\uDEE1' },
+  rapidfire: { icon: '\uD83D\uDD25' },
+  chain:     { icon: '\u269B' },
+  freeze:    { icon: '\u2744' },
+  orbital:   { icon: '\u2604' },
 };
 
+// Returns true if the player owns at least 1 card for this ability
 function hasAbility(id) {
-  return (serverGameData.equippedAbilities || []).includes(id);
+  const cards = serverGameData.abilityCards || {};
+  return (cards[id] || 0) > 0;
+}
+
+// Returns the current level of an ability (0 = not leveled / not owned)
+function getAbilityLevel(id) {
+  return (serverGameData.abilityLevels || {})[id] || 0;
 }
 
 function buildAbilityBar() {
@@ -27,11 +38,13 @@ function buildAbilityBar() {
   equipped.forEach(id => {
     const info = ABILITY_REGISTRY[id];
     if (!info) return;
+    const level = getAbilityLevel(id);
     const slot = document.createElement('div');
     slot.className = 'ability-slot ready';
     slot.id = `ability-${id}`;
     slot.dataset.ability = id;
-    slot.innerHTML = `<span class="ability-icon">${info.icon}</span><span class="ability-key">${info.key}</span>`;
+    // Show icon + level number (abilities are auto-triggered, no key label)
+    slot.innerHTML = `<span class="ability-icon">${info.icon}</span><span class="ability-key">Lv${level}</span>`;
     bar.appendChild(slot);
   });
 }

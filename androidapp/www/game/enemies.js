@@ -2,8 +2,11 @@
 //  enemies.js — Enemy class with all draw methods
 //  Enemigo 1: Runner, Enemigo 2: Tank, Enemigo 3: Boss,
 //  Enemigo 4: Phantom, Enemigo 5: Sentinel, Enemigo 6: Overlord
-//  Depends on: config.js, particles.js
+//  Depends on: config.js, particles.js, emp.js (for freezeActive/currentFreezeSlowAmount)
 // ═══════════════════════════════════════════
+
+// ── Death sound throttle: play at most once every 5 frames ──
+let _lastDeathSoundFrame = 0;
 
 // ═══════════════════════════════════════════
 //  ENEMY CLASS
@@ -40,12 +43,17 @@ class Enemy {
     if (this.damageFlash > 0) this.damageFlash--;
     if (this.spawnAnim > 0) this.spawnAnim -= 0.02;
 
+    // Freeze slow: multiply movement speed by (1 - slowAmount) when freeze is active
+    const speedMult = (freezeActive && currentFreezeSlowAmount > 0)
+      ? Math.max(0.05, 1 - currentFreezeSlowAmount)
+      : 1;
+
     // Move towards turret
     if (dist > ENEMY_ATTACK_RANGE) {
       this.wobble += this.wobbleSpeed;
       const wobbleAngle = this.angle + Math.sin(this.wobble) * 0.25;
-      this.x += Math.cos(wobbleAngle) * this.speed;
-      this.y += Math.sin(wobbleAngle) * this.speed;
+      this.x += Math.cos(wobbleAngle) * this.speed * speedMult;
+      this.y += Math.sin(wobbleAngle) * this.speed * speedMult;
     } else {
       // Attack turret
       this.attackTimer++;
@@ -86,8 +94,18 @@ class Enemy {
   die() {
     this.alive = false;
     const isBoss = this.type === 'boss' || this.type === 'overlord';
-    const isTank = this.type === 'tank';
     const isSentinel = this.type === 'sentinel';
+
+    // Play death sound (throttled to avoid audio overload)
+    if (typeof frameCount !== 'undefined' && frameCount - _lastDeathSoundFrame > 5) {
+      _lastDeathSoundFrame = frameCount;
+      if (isBoss || isSentinel) {
+        if (typeof playBossDeathSound === 'function') playBossDeathSound();
+      } else {
+        if (typeof playEnemyDeathSound === 'function') playEnemyDeathSound();
+      }
+    }
+    const isTank = this.type === 'tank';
     const isPhantom = this.type === 'phantom';
     const isOverlord = this.type === 'overlord';
     const baseColor = isOverlord ? COL.blue : this.type === 'boss' ? COL.purple : isSentinel ? COL.teal : isTank ? COL.red : isPhantom ? COL.blue : COL.orange;

@@ -16,13 +16,14 @@ function initGame() {
   wave = 1;
   score = 0;
   totalKills = 0;
-  empCooldown = 0;
+  empCooldown = 0; // kept for backwards compat (deprecated)
   fireTimer = 0;
   deathTimer = 0;
   autoAimTarget = null;
   gold = 0;
   gems = 0;
   rewardPopups = [];
+  screenFlashes = [];
   upgradesPanelOpen = false;
   waveTanksToSpawn = 0;
   waveBossToSpawn = 0;
@@ -37,6 +38,9 @@ function initGame() {
   levelStartTime = Date.now();
   gemsbanked = 0;
   for (const key in upgrades) { upgrades[key].level = 0; upgrades[key].tier = 0; }
+
+  // Reset ability system
+  resetAbilities();
 
   camera.x = turret.x - canvas.width / 2;
   camera.y = turret.y - canvas.height / 2;
@@ -75,11 +79,8 @@ function gameLoop(timestamp) {
     doAutoSave();
   }
 
-  // EMP input (solo si esta desbloqueado)
-  if (keys.space && empCooldown <= 0 && hasAbility('emp')) {
-    triggerEMP();
-  }
-  if (empCooldown > 0) empCooldown--;
+  // Ability system: auto-trigger all equipped abilities based on their individual cooldowns
+  updateAbilities();
 
   // Wave delay
   if (wavePaused) {
@@ -99,6 +100,7 @@ function gameLoop(timestamp) {
 
   checkBulletCollisions();
   updateParticles();
+  updateScreenFlashes();
   updateFloatingTexts();
   updateRewardPopups();
   updateEMPWaves();
@@ -121,11 +123,14 @@ function gameLoop(timestamp) {
   drawParticles(ctx);
   drawFloatingTexts(ctx);
   drawEMPWaves(ctx);
+  drawAbilityEffects(ctx);
 
   ctx.restore();
 
   drawWalls();
   drawVignette();
+  drawScanlines();
+  if (typeof drawScreenFlashes === 'function') drawScreenFlashes(ctx);
   drawCrosshair();
   drawRewardPopups();
   drawMinimap();
@@ -141,6 +146,8 @@ function gameLoop(timestamp) {
     if (deathTimer === 1) {
       saveProgress();
       fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
+      if (typeof stopMusic === 'function') stopMusic();
+      if (typeof playDeathSound === 'function') playDeathSound();
       // Hide touch controls on death
       const upgBtn = document.getElementById('touch-upgrades-btn');
       if (upgBtn) upgBtn.style.display = 'none';
@@ -199,6 +206,7 @@ async function startGame() {
   hideOverlay();
 
   gameState = 'playing';
+  if (typeof startMusic === 'function') startMusic();
   requestAnimationFrame(gameLoop);
 }
 

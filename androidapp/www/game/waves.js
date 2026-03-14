@@ -209,6 +209,7 @@ function updateWaveSpawning() {
     if (wave >= MAX_WAVES) {
       gems += 25;
       gameState = 'victory';
+      if (typeof stopMusic === 'function') stopMusic();
       saveProgress(true);
       fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
       showOverlay('VICTORY!', `LEVEL ${currentLevel} COMPLETE — SCORE: ${score}`);
@@ -261,6 +262,7 @@ function updateWaveSpawning() {
       if (wave === TANK_START_WAVE) waveMsg = 'NEW THREAT DETECTED...';
       else if (wave === BOSS_WAVE) waveMsg = 'FINAL WAVE — BOSS INCOMING';
     }
+    if (typeof playWaveStartSound === 'function') playWaveStartSound();
     showOverlay(`WAVE ${wave}`, waveMsg);
     waveStartDelay = 210;
   }

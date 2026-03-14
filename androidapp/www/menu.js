@@ -48,20 +48,16 @@ function selectItem(index) {
   setTimeout(() => item.classList.remove('flash'), 400);
 
   // Handle menu actions
-  const actions = ['start', 'upgrades', 'abilities', 'controls', 'ranking'];
-  if (actions[index] === 'start') {
+  const actions = ['start', 'upgrades', 'abilities', 'shop', 'controls', 'ranking'];
+  const urls = {
+    start: '/levels.html',
+    upgrades: '/upgrades.html',
+    abilities: '/abilities.html',
+    shop: '/shop.html',
+  };
+  if (urls[actions[index]]) {
     setTimeout(() => {
-      window.location.href = '/levels.html';
-    }, 500);
-  }
-  if (actions[index] === 'upgrades') {
-    setTimeout(() => {
-      window.location.href = '/upgrades.html';
-    }, 500);
-  }
-  if (actions[index] === 'abilities') {
-    setTimeout(() => {
-      window.location.href = '/abilities.html';
+      window.location.href = urls[actions[index]];
     }, 500);
   }
 }

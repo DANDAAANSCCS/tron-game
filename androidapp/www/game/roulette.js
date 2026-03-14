@@ -121,10 +121,6 @@ function drawRoulette() {
   ctx.fillText('SILVER COINS', cx, cy - radius - 40);
   ctx.shadowBlur = 0;
 
-  // Base coins info
-  ctx.font = '600 13px Share Tech Mono';
-  ctx.fillStyle = 'rgba(192, 192, 192, 0.6)';
-  ctx.fillText(`SCORE ${score} \u00F7 4 = ${_rouletteBaseCoins} BASE`, cx, cy - radius - 20);
   ctx.restore();
 
   // Draw wheel

@@ -9,8 +9,8 @@ const minimapCanvas = document.getElementById('minimap');
 const minimapCtx = minimapCanvas.getContext('2d');
 
 // ── Config ──
-const MAP_W = 4000;
-const MAP_H = 4000;
+const MAP_W = 1400;
+const MAP_H = 1400;
 const CENTER_X = MAP_W / 2;
 const CENTER_Y = MAP_H / 2;
 const TURRET_RADIUS = 22;
@@ -19,6 +19,7 @@ const BULLET_SPEED = 14;
 const BULLET_DAMAGE = 25;
 const FIRE_RATE_MANUAL = 8;
 const FIRE_RATE_AUTO = Math.round(FIRE_RATE_MANUAL * 1.4); // 40% slower
+// DEPRECATED: EMP_COOLDOWN, EMP_RADIUS, EMP_DAMAGE are now managed in emp.js ability system
 const EMP_COOLDOWN = 600;
 const EMP_RADIUS = 350;
 const EMP_DAMAGE = 60;
@@ -107,6 +108,7 @@ let particles = [];
 let floatingTexts = [];
 let empWaves = [];
 let groundDecals = [];
+let screenFlashes = [];
 
 let camera = { x: 0, y: 0, shakeX: 0, shakeY: 0 };
 let mouse = { x: 0, y: 0, worldX: CENTER_X, worldY: CENTER_Y };
@@ -114,6 +116,7 @@ let mouseDown = false;
 let keys = {};
 
 let fireTimer = 0;
+// DEPRECATED: empCooldown is kept for backwards compatibility; managed by ability system in emp.js
 let empCooldown = 0;
 let autoAimTarget = null;
 
@@ -160,7 +163,17 @@ let deathTimer = 0;
 const DEATH_RETURN_DELAY = 180; // 3 seconds then go to menu
 
 // ── Server data (loaded async before game starts) ──
-let serverGameData = { gems: 0, permUpgrades: {}, levelProgress: {}, unlockedAbilities: [], equippedAbilities: [] };
+let serverGameData = {
+  gems: 0,
+  permUpgrades: {},
+  levelProgress: {},
+  // New card-based ability system:
+  abilityCards: {},    // { emp: 5, shield: 2, ... }
+  abilityLevels: {},   // { emp: 3, shield: 1, ... }
+  equippedAbilities: [],
+  // Legacy field kept for backwards compatibility:
+  unlockedAbilities: [],
+};
 
 // ── Permanent upgrades (set after loading from server) ──
 const permBonus = { health: 0, damage: 0, regen: 0, precision: 0, fireRate: 0 };
@@ -170,3 +183,6 @@ let autoSaveTimer = 0;
 const AUTOSAVE_INTERVAL = 30 * 60; // 30 seg * 60 fps
 
 let gemsbanked = 0;
+
+// ── Ability visual effects pool (lightning lines, explosions, etc.) ──
+let abilityEffects = [];

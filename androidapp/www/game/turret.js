@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════
 //  turret.js — Turret class and lerpAngle utility
-//  Depends on: config.js, upgrades-panel.js, particles.js
+//  Depends on: config.js, upgrades-panel.js, particles.js, emp.js
 // ═══════════════════════════════════════════
 
 // ── Utility ──
@@ -50,22 +50,22 @@ class Turret {
     autoAimTarget = this.findNearestEnemy();
 
     if (mouseDown) {
-      // Manual mode: aim at mouse, fire at manual rate
+      // Manual mode: aim at mouse, fire at manual rate (boosted by rapidfire if active)
       this.targetAngle = Math.atan2(mouse.worldY - this.y, mouse.worldX - this.x);
       this.angle = lerpAngle(this.angle, this.targetAngle, 0.2);
 
       if (fireTimer <= 0 && this.alive) {
         this.shoot();
-        fireTimer = getCurrentFireRate(FIRE_RATE_MANUAL);
+        fireTimer = this._getEffectiveFireRate(FIRE_RATE_MANUAL);
       }
     } else if (autoAimTarget) {
-      // Auto-aim mode: aim at nearest enemy, fire 40% slower
+      // Auto-aim mode: aim at nearest enemy, fire 40% slower (boosted by rapidfire if active)
       this.targetAngle = Math.atan2(autoAimTarget.y - this.y, autoAimTarget.x - this.x);
       this.angle = lerpAngle(this.angle, this.targetAngle, 0.12);
 
       if (fireTimer <= 0 && this.alive) {
         this.shoot();
-        fireTimer = getCurrentFireRate(FIRE_RATE_AUTO);
+        fireTimer = this._getEffectiveFireRate(FIRE_RATE_AUTO);
       }
     } else {
       // No target: slowly rotate and track mouse
@@ -76,13 +76,34 @@ class Turret {
     if (fireTimer > 0) fireTimer--;
   }
 
+  // Compute fire rate interval, applying upgrade bonuses and rapidfire boost
+  _getEffectiveFireRate(baseRate) {
+    // Start with the base interval from upgrades
+    let rate = getCurrentFireRate(baseRate);
+    // Rapidfire boost: shorten the interval by dividing by (1 + boost)
+    // e.g. boost=0.5 → fire 50% faster → interval becomes rate / 1.5
+    if (rapidfireActive && currentRapidfireBoost > 0) {
+      rate = Math.max(1, Math.round(rate / (1 + currentRapidfireBoost)));
+    }
+    return rate;
+  }
+
   findNearestEnemy() {
     let nearest = null;
-    let nearestDist = TURRET_RANGE;
+    let nearestDist = Infinity;
+
+    // Only target enemies visible on screen
+    const halfW = canvas.width / 2 + 40;
+    const halfH = canvas.height / 2 + 40;
 
     for (const enemy of enemies) {
       if (!enemy.alive) continue;
-      const dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+      // Check if enemy is within screen bounds (rectangular)
+      const dx = Math.abs(enemy.x - this.x);
+      const dy = Math.abs(enemy.y - this.y);
+      if (dx > halfW || dy > halfH) continue;
+
+      const dist = Math.hypot(dx, dy);
       if (dist < nearestDist) {
         nearestDist = dist;
         nearest = enemy;
@@ -92,6 +113,7 @@ class Turret {
   }
 
   shoot() {
+    if (typeof playShootSound === 'function') playShootSound();
     const curSpread = getCurrentSpread();
     const bx = this.x + Math.cos(this.angle) * (this.radius + 12);
     const by = this.y + Math.sin(this.angle) * (this.radius + 12);
@@ -121,6 +143,25 @@ class Turret {
   }
 
   takeDamage(dmg) {
+    // Shield interception: absorb damage before it reaches the turret HP
+    if (shieldActive && shieldHp > 0) {
+      const absorbed = Math.min(dmg, shieldHp);
+      shieldHp -= absorbed;
+      dmg -= absorbed;
+      if (shieldHp <= 0) {
+        shieldActive = false;
+        // Visual feedback: shield break flash
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2;
+          spawnParticle(
+            this.x + Math.cos(a) * 46, this.y + Math.sin(a) * 46,
+            Math.cos(a) * 3, Math.sin(a) * 3,
+            COL.cyan, 15 + Math.random() * 10, 1.5);
+        }
+      }
+      if (dmg <= 0) return; // fully absorbed
+    }
+
     this.hp -= dmg;
     this.damageFlash = 20;
     camera.shakeX = (Math.random() - 0.5) * 10;
@@ -142,15 +183,7 @@ class Turret {
     const pri = dmg ? COL.red : COL.cyan;
     const priA = dmg ? 'rgba(255,0,85,' : 'rgba(0,255,242,';
 
-    // ── Range circle (dashed, pulsing) ──
-    const rangePulse = 0.03 + Math.sin(frameCount * 0.02) * 0.015;
-    ctx.strokeStyle = `${priA}${rangePulse})`;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([8, 14]);
-    ctx.beginPath();
-    ctx.arc(0, 0, TURRET_RANGE, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    // Range indicator removed — turret fires at anything visible on screen
 
     // ── Ambient ground glow ──
     const ambGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, 55);

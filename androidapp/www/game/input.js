@@ -189,6 +189,66 @@ window.addEventListener('keyup', e => {
   if (e.key === ' ') keys.space = false;
 });
 
+// ── Settings button handlers ──────────────────────────────────────────────────
+(function () {
+  const settingsBtn   = document.getElementById('settings-btn');
+  const settingsPanel = document.getElementById('settings-panel');
+  const soundToggle   = document.getElementById('sound-toggle');
+  const settingsClose = document.getElementById('settings-close');
+
+  function openSettings() {
+    settingsPanel.style.display = 'block';
+    // Sync button label with current audio state
+    if (typeof audioEnabled !== 'undefined') {
+      soundToggle.textContent = audioEnabled ? 'ON' : 'OFF';
+      soundToggle.classList.toggle('off', !audioEnabled);
+    }
+  }
+
+  function closeSettings() {
+    settingsPanel.style.display = 'none';
+  }
+
+  settingsBtn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    settingsPanel.style.display === 'none' ? openSettings() : closeSettings();
+  }, { passive: false });
+
+  settingsBtn.addEventListener('click', () => {
+    settingsPanel.style.display === 'none' ? openSettings() : closeSettings();
+  });
+
+  soundToggle.addEventListener('touchstart', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof toggleAudio === 'function') toggleAudio();
+    const on = typeof audioEnabled !== 'undefined' ? audioEnabled : true;
+    soundToggle.textContent = on ? 'ON' : 'OFF';
+    soundToggle.classList.toggle('off', !on);
+  }, { passive: false });
+
+  soundToggle.addEventListener('click', () => {
+    if (typeof toggleAudio === 'function') toggleAudio();
+    const on = typeof audioEnabled !== 'undefined' ? audioEnabled : true;
+    soundToggle.textContent = on ? 'ON' : 'OFF';
+    soundToggle.classList.toggle('off', !on);
+  });
+
+  settingsClose.addEventListener('touchstart', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeSettings();
+  }, { passive: false });
+
+  settingsClose.addEventListener('click', () => closeSettings());
+
+  // Block canvas touches from leaking through the panel
+  settingsPanel.addEventListener('touchstart', e => e.stopPropagation(), { passive: false });
+  settingsPanel.addEventListener('touchmove',  e => e.stopPropagation(), { passive: false });
+  settingsPanel.addEventListener('touchend',   e => e.stopPropagation(), { passive: false });
+})();
+
 // ── Collision: Bullets vs Enemies ─────────────────────────────────────────────
 function checkBulletCollisions() {
   for (const bullet of bullets) {

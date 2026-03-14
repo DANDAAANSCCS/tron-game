@@ -16,6 +16,118 @@ function spawnExplosion(x, y, color, count) {
     const s = 1 + Math.random() * 6;
     spawnParticle(x, y, Math.cos(a) * s, Math.sin(a) * s, color, 25 + Math.random() * 35, 2 + Math.random() * 3);
   }
+
+  // Screen-space glow flash at explosion origin
+  screenFlashes.push({
+    x,
+    y,
+    radius: 60 + count * 1.5,
+    alpha: 0.45,
+    color,
+    life: 12,
+    maxLife: 12,
+  });
+}
+
+// ── Trail Particles ──
+// Smaller, shorter-lived particles for bullet trails. No initial velocity.
+function spawnTrailParticle(x, y, color) {
+  if (particles.length > 800) return;
+  const size = 1 + Math.random();           // 1–2
+  const life = 5 + Math.floor(Math.random() * 4); // 5–8
+  particles.push({ x, y, vx: 0, vy: 0, color, life, maxLife: life, size });
+}
+
+// ── Death Explosion ──
+// Dramatic burst: outward particles + a ring of evenly-spaced particles + center flash.
+// count defaults to 30 for normal enemies; pass 60 for bosses.
+function spawnDeathExplosion(x, y, color, count) {
+  const n = (count !== undefined) ? count : 30;
+
+  // Burst particles — random directions, varying speeds
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 2 + Math.random() * 8;
+    const sz = 1.5 + Math.random() * 3.5;
+    const life = 30 + Math.random() * 40;
+    spawnParticle(x, y, Math.cos(a) * s, Math.sin(a) * s, color, life, sz);
+  }
+
+  // Evenly-spaced ring of particles
+  const ringCount = Math.min(16, Math.floor(n / 2));
+  for (let i = 0; i < ringCount; i++) {
+    const a = (i / ringCount) * Math.PI * 2;
+    const s = 3 + Math.random() * 3;
+    spawnParticle(x, y, Math.cos(a) * s, Math.sin(a) * s, color, 20 + Math.random() * 20, 2);
+  }
+
+  // Center flash — large, very short-lived glow
+  screenFlashes.push({
+    x,
+    y,
+    radius: 40 + n,
+    alpha: 0.6,
+    color,
+    life: 10,
+    maxLife: 10,
+  });
+
+  // Secondary smaller flash for depth
+  screenFlashes.push({
+    x,
+    y,
+    radius: 20,
+    alpha: 0.9,
+    color: '#ffffff',
+    life: 6,
+    maxLife: 6,
+  });
+}
+
+// ── Heal Particle ──
+// Small green particle that floats upward, used for regeneration visuals.
+function spawnHealParticle(x, y) {
+  const offsetX = (Math.random() - 0.5) * 20;
+  const vx = (Math.random() - 0.5) * 0.6;
+  const vy = -(0.8 + Math.random() * 0.8); // always floats up
+  const size = 1.5 + Math.random() * 1.5;
+  const life = 35 + Math.random() * 25;
+  spawnParticle(x + offsetX, y, vx, vy, '#00e676', life, size);
+}
+
+// ── Screen Flashes (screen-space glow effects) ──
+// screenFlashes array must be declared in game state (e.g., main.js or state.js)
+// as: let screenFlashes = [];
+
+function updateScreenFlashes() {
+  for (let i = screenFlashes.length - 1; i >= 0; i--) {
+    screenFlashes[i].life--;
+    if (screenFlashes[i].life <= 0) screenFlashes.splice(i, 1);
+  }
+}
+
+function drawScreenFlashes(ctx) {
+  if (!screenFlashes || screenFlashes.length === 0) return;
+
+  ctx.save();
+  for (const f of screenFlashes) {
+    const t = f.life / f.maxLife;           // 1 → 0 as it fades
+    const currentAlpha = f.alpha * t * t;   // ease-out fade
+    const currentRadius = f.radius * (1.4 - t * 0.4); // slight expansion
+
+    const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, currentRadius);
+    grad.addColorStop(0, f.color);
+    grad.addColorStop(0.4, f.color);
+    grad.addColorStop(1, 'transparent');
+
+    ctx.globalAlpha = currentAlpha;
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, currentRadius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 function updateParticles() {
@@ -67,8 +179,9 @@ function drawGroundDecals(ctx) {
 }
 
 // ── Floating Text ──
+// Scale animation: spawns larger (1.5x) and eases down to 1x over first ~15 frames.
 function spawnFloatingText(x, y, text, color) {
-  floatingTexts.push({ x, y, text, color, life: 55, scale: 1.3 });
+  floatingTexts.push({ x, y, text, color, life: 55, maxLife: 55, scale: 1.5 });
 }
 
 function updateFloatingTexts() {
@@ -76,7 +189,15 @@ function updateFloatingTexts() {
     const ft = floatingTexts[i];
     ft.life--;
     ft.y -= 0.7;
-    ft.scale = Math.max(1, ft.scale - 0.02);
+
+    // Ease scale from spawn value (1.5) down to 1.0 over first 15 frames
+    const elapsed = ft.maxLife - ft.life;
+    if (elapsed < 15) {
+      ft.scale = 1.5 - (elapsed / 15) * 0.5; // 1.5 → 1.0
+    } else {
+      ft.scale = 1.0;
+    }
+
     if (ft.life <= 0) floatingTexts.splice(i, 1);
   }
 }

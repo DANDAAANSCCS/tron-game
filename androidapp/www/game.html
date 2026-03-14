@@ -232,6 +232,120 @@
       margin-top: 12px;
       text-align: center;
     }
+
+    /* ─── SETTINGS BUTTON ────────────────────────────────── */
+    #settings-btn {
+      position: fixed;
+      top: calc(75px + env(safe-area-inset-top));
+      left: calc(10px + env(safe-area-inset-left));
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(0, 255, 242, 0.35);
+      background: rgba(5, 5, 15, 0.82);
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: rgba(0, 255, 242, 0.75);
+      text-shadow: 0 0 8px rgba(0, 255, 242, 0.4);
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    #settings-btn:active {
+      border-color: #00fff2;
+      background: rgba(0, 255, 242, 0.1);
+      box-shadow: 0 0 16px rgba(0, 255, 242, 0.45);
+      color: #00fff2;
+    }
+
+    /* ─── SETTINGS PANEL ─────────────────────────────────── */
+    #settings-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 220px;
+      background: rgba(5, 5, 18, 0.96);
+      border: 1px solid rgba(0, 255, 242, 0.45);
+      box-shadow: 0 0 30px rgba(0, 255, 242, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.6);
+      padding: 20px 18px 16px;
+      z-index: 30;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .settings-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(0, 255, 242, 0.9);
+      text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+      letter-spacing: 4px;
+      text-align: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(0, 255, 242, 0.15);
+      padding-bottom: 10px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(0, 255, 242, 0.6);
+      letter-spacing: 2px;
+    }
+
+    .settings-toggle {
+      background: rgba(0, 255, 242, 0.12);
+      border: 1px solid rgba(0, 255, 242, 0.4);
+      color: #00fff2;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 5px 12px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .settings-toggle:active {
+      background: rgba(0, 255, 242, 0.25);
+      box-shadow: 0 0 12px rgba(0, 255, 242, 0.4);
+    }
+
+    .settings-toggle.off {
+      border-color: rgba(255, 102, 0, 0.5);
+      color: rgba(255, 102, 0, 0.8);
+      background: rgba(255, 102, 0, 0.08);
+    }
+
+    .settings-close-btn {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: 1px solid rgba(0, 255, 242, 0.25);
+      color: rgba(0, 255, 242, 0.5);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      padding: 7px 0;
+      cursor: pointer;
+      margin-top: 4px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .settings-close-btn:active {
+      background: rgba(0, 255, 242, 0.08);
+      color: rgba(0, 255, 242, 0.8);
+    }
   </style>
 </head>
 <body>
@@ -262,12 +376,23 @@
 
   <div id="touch-upgrades-btn">UP</div>
 
+  <div id="settings-btn">&#9881;</div>
+  <div id="settings-panel" style="display:none;">
+    <div class="settings-title">CONFIG</div>
+    <div class="settings-row">
+      <span>SOUND</span>
+      <button id="sound-toggle" class="settings-toggle">ON</button>
+    </div>
+    <button id="settings-close" class="settings-close-btn">CERRAR</button>
+  </div>
+
   <div id="overlay">
     <div id="overlay-text">WAVE 1</div>
     <div id="overlay-sub"></div>
   </div>
 
   <script src="auth-check.js"></script>
+  <script src="shared/audio.js"></script>
   <script src="game/config.js"></script>
   <script src="game/server-data.js"></script>
   <script src="game/particles.js"></script>

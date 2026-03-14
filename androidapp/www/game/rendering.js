@@ -151,6 +151,24 @@ function drawCrosshair() {
   ctx.shadowColor = color;
   ctx.shadowBlur = 10;
 
+  // Faint guide line from turret screen position to crosshair (only when touching)
+  if (mouseDown && turret) {
+    const turretScreenX = turret.x - camera.x - camera.shakeX;
+    const turretScreenY = turret.y - camera.y - camera.shakeY;
+    ctx.save();
+    ctx.globalAlpha = 0.05;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 0;
+    ctx.setLineDash([6, 10]);
+    ctx.beginPath();
+    ctx.moveTo(turretScreenX, turretScreenY);
+    ctx.lineTo(mx, my);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
   // Pulsing outer circle
   const pulseRadius = 28 + Math.sin(frameCount * 0.05) * 4;
   ctx.globalAlpha = 0.35 + Math.sin(frameCount * 0.05) * 0.15;
@@ -239,11 +257,6 @@ function drawMinimap() {
     minimapCtx.closePath();
     minimapCtx.fill();
 
-    minimapCtx.strokeStyle = 'rgba(0, 255, 242, 0.12)';
-    minimapCtx.lineWidth = 1;
-    minimapCtx.beginPath();
-    minimapCtx.arc(turret.x * scaleX, turret.y * scaleY, TURRET_RANGE * scaleX, 0, Math.PI * 2);
-    minimapCtx.stroke();
   }
 
   for (const enemy of enemies) {
@@ -275,6 +288,20 @@ function drawVignette() {
   grad.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+// ── Scanlines ──
+// Draws a very faint horizontal scanline every 3rd row for a CRT/Tron feel.
+// Alpha is kept at 0.03 to remain completely unobtrusive on mobile screens.
+function drawScanlines() {
+  ctx.save();
+  ctx.globalAlpha = 0.03;
+  ctx.fillStyle = '#000000';
+  for (let y = 0; y < canvas.height; y += 3) {
+    ctx.fillRect(0, y, canvas.width, 1);
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 // ── Death screen effect ──
@@ -361,21 +388,8 @@ function updateHUD() {
   }
 }
 
-// ── HUD Currency Icons (drawn on canvas for fanciness) ──
-function drawHUDIcons() {
-  // Gold coin icon next to gold counter
-  const goldEl = document.getElementById('gold-val');
-  if (goldEl) {
-    const rect = goldEl.getBoundingClientRect();
-    drawCoinIcon(rect.left - 14, rect.top + rect.height / 2, 16, ctx);
-  }
-  // Gem icon next to gem counter
-  const gemEl = document.getElementById('gems-val');
-  if (gemEl) {
-    const rect = gemEl.getBoundingClientRect();
-    drawGemIcon(rect.left - 14, rect.top + rect.height / 2, 16, ctx);
-  }
-}
+// ── HUD Currency Icons — disabled on mobile, icons are in HTML ──
+function drawHUDIcons() {}
 
 // ── Overlay ──
 const overlay = document.getElementById('overlay');
