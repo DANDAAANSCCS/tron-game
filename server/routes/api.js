@@ -133,12 +133,20 @@ router.get('/gamedata', requireAuth, (req, res) => {
     abilityLevels[id] = getAbilityLevel(cards);
   }
 
-  // Backwards compat: migrate old unlockedAbilities to cards
+  // Backwards compat: migrate old unlockedAbilities to cards AND persist
   const oldUnlocked = gd.unlockedAbilities || [];
-  for (const id of oldUnlocked) {
-    if (!abilityCards[id]) {
-      abilityCards[id] = 1;
-      abilityLevels[id] = 1;
+  if (oldUnlocked.length > 0) {
+    const migrateUpdate = {};
+    for (const id of oldUnlocked) {
+      if (!abilityCards[id]) {
+        abilityCards[id] = 1;
+        abilityLevels[id] = 1;
+        migrateUpdate[`gameData.abilityCards.${id}`] = 1;
+      }
+    }
+    if (Object.keys(migrateUpdate).length > 0) {
+      migrateUpdate['gameData.unlockedAbilities'] = [];
+      User.findByIdAndUpdate(req.user._id, { $set: migrateUpdate }).catch(() => {});
     }
   }
 
