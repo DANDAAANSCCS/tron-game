@@ -498,22 +498,22 @@ function playShootSound() {
   if (!sfxEnabled) return; ensureContext();
   const t = audioCtx.currentTime;
 
-  // Soft sine sweep: 1800Hz → 600Hz over 35ms, low volume
+  // Gentle low-pitched thump: 800Hz → 300Hz over 25ms, very quiet
   const o = audioCtx.createOscillator(), g = audioCtx.createGain();
   o.connect(g); g.connect(sfxBus); o.type = 'sine';
-  o.frequency.setValueAtTime(jitter(1800, 0.05), t);
-  o.frequency.exponentialRampToValueAtTime(jitter(600, 0.05), t + 0.035);
-  g.gain.setValueAtTime(0.04, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
-  o.start(t); o.stop(t + 0.04);
+  o.frequency.setValueAtTime(jitter(800, 0.06), t);
+  o.frequency.exponentialRampToValueAtTime(jitter(300, 0.06), t + 0.025);
+  g.gain.setValueAtTime(0.022, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+  o.start(t); o.stop(t + 0.03);
 
-  // Very soft high-frequency noise layer for texture
-  const noiseDur = 0.02;
+  // Whisper-quiet noise texture
+  const noiseDur = 0.015;
   const noiseBuf = createNoiseBuffer(noiseDur + 0.01);
   const ns = audioCtx.createBufferSource(); ns.buffer = noiseBuf;
-  const hp = audioCtx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 6000;
+  const hp = audioCtx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
   const ng = audioCtx.createGain();
-  ng.gain.setValueAtTime(0.015, t);
+  ng.gain.setValueAtTime(0.008, t);
   ng.gain.exponentialRampToValueAtTime(0.001, t + noiseDur);
   ns.connect(hp); hp.connect(ng); ng.connect(sfxBus);
   ns.start(t); ns.stop(t + noiseDur + 0.01);
