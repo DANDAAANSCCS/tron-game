@@ -9,13 +9,20 @@
   <style>
     /* ── Card collection overrides ── */
     .abilities-container {
-      padding: 24px 20px;
-      max-width: 680px;
-      margin: 0 auto;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
     }
 
     .abilities-header {
-      margin-bottom: 24px;
+      flex-shrink: 0;
+      padding: 24px 20px 12px;
+      position: relative;
+      z-index: 2;
     }
 
     .header-top-row {
@@ -69,11 +76,27 @@
 
     /* ── Card layout ── */
     .abilities-grid {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 20px 12px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       align-items: center;
-      margin-bottom: 30px;
+    }
+
+    .abilities-grid::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .abilities-grid::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .abilities-grid::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 242, 0.2);
+      border-radius: 2px;
     }
 
     .ability-card {
@@ -320,15 +343,26 @@
 
     /* ── Bottom nav ── */
     .abilities-footer {
+      flex-shrink: 0;
       display: flex;
       justify-content: center;
-      padding-bottom: 20px;
+      padding: 12px 20px 20px;
+      position: relative;
+      z-index: 2;
     }
 
     /* ── Responsive ── */
     @media (max-width: 480px) {
-      .abilities-container {
-        padding: 16px 12px;
+      .abilities-header {
+        padding: 16px 12px 10px;
+      }
+
+      .abilities-grid {
+        padding: 0 12px 10px;
+      }
+
+      .abilities-footer {
+        padding: 10px 12px 16px;
       }
 
       .ability-card {
