@@ -99,18 +99,48 @@ const RARITY = {
   legendary: { label: 'LEGENDARIO', color: '#ffaa00', border: 'rgba(255, 170, 0, 0.3)'  },
 };
 
-// Cards required to advance from level N to level N+1.
-// Index 0 = cards needed to reach level 1 (unlock).
-// Index 1 = cards needed to go from level 1 to level 2, etc.
-// 19 entries cover levels 1-20 (index 0..18).
 const CARDS_PER_LEVEL = [1, 2, 4, 8, 12, 18, 25, 35, 45, 60, 80, 100, 130, 160, 200, 250, 300, 380, 460];
 
 const MAX_EQUIPPED = 5;
 const MAX_LEVEL = 20;
 
-// Silver cost: base per rarity * 1.25^(level-1)
 let SILVER_BASE = { common: 1500, rare: 3000, epic: 5000, legendary: 8000 };
 let SILVER_SCALE = 1.25;
+
+// ── Stat definitions per ability ──
+const ABILITY_STATS = {
+  emp: {
+    damage:   { label: 'DAÑO',       base: 60,  perLvl: 8,   unit: ''  },
+    radius:   { label: 'RADIO',      base: 350, perLvl: 15,  unit: 'px' },
+    cooldown: { label: 'COOLDOWN',   base: 600, perLvl: -15, unit: 'f', display: 's', divisor: 60 },
+  },
+  shield: {
+    absorb:   { label: 'ABSORBE',    base: 50,  perLvl: 10,  unit: ''  },
+    duration: { label: 'DURACIÓN',   base: 300, perLvl: 10,  unit: 'f', display: 's', divisor: 60 },
+    cooldown: { label: 'COOLDOWN',   base: 900, perLvl: -20, unit: 'f', display: 's', divisor: 60 },
+  },
+  rapidfire: {
+    boost:    { label: 'BOOST',      base: 50,  perLvl: 3,   unit: '%' },
+    duration: { label: 'DURACIÓN',   base: 240, perLvl: 8,   unit: 'f', display: 's', divisor: 60 },
+    cooldown: { label: 'COOLDOWN',   base: 1200,perLvl: -25, unit: 'f', display: 's', divisor: 60 },
+  },
+  chain: {
+    damage:   { label: 'DAÑO',       base: 40,  perLvl: 6,   unit: ''  },
+    bounces:  { label: 'REBOTES',    base: 3,   perLvl: 0.5, unit: '', floor: true },
+    cooldown: { label: 'COOLDOWN',   base: 720, perLvl: -15, unit: 'f', display: 's', divisor: 60 },
+  },
+  freeze: {
+    slow:     { label: 'SLOW',       base: 50,  perLvl: 1.5, unit: '%' },
+    duration: { label: 'DURACIÓN',   base: 180, perLvl: 8,   unit: 'f', display: 's', divisor: 60 },
+    radius:   { label: 'RADIO',      base: 400, perLvl: 15,  unit: 'px' },
+    cooldown: { label: 'COOLDOWN',   base: 1500,perLvl: -30, unit: 'f', display: 's', divisor: 60 },
+  },
+  orbital: {
+    damage:   { label: 'DAÑO',       base: 300, perLvl: 25,  unit: ''  },
+    radius:   { label: 'RADIO',      base: 500, perLvl: 20,  unit: 'px' },
+    cooldown: { label: 'COOLDOWN',   base: 2700,perLvl: -50, unit: 'f', display: 's', divisor: 60 },
+  },
+};
 
 function getSilverCost(rarity, level) {
   if (level < 1) return 0;
@@ -121,41 +151,29 @@ function getSilverCost(rarity, level) {
 // ── State ──
 let serverGems = 0;
 let serverSilver = 0;
-let abilityCards = {};    // { [id]: cardCount }
-let abilityLevels = {};   // { [id]: level }
+let abilityCards = {};
+let abilityLevels = {};
 let equippedAbilities = [];
 
 // ── Helpers ──
 
-/**
- * Given total cards accumulated, compute the current level.
- * Level 1 is granted when totalCards >= CARDS_PER_LEVEL[0] (i.e., >= 1).
- */
 function computeLevel(totalCards) {
   let cardsConsumed = 0;
   for (let lvl = 0; lvl < CARDS_PER_LEVEL.length; lvl++) {
     cardsConsumed += CARDS_PER_LEVEL[lvl];
-    if (totalCards < cardsConsumed) return lvl; // lvl = number of thresholds cleared
+    if (totalCards < cardsConsumed) return lvl;
   }
   return MAX_LEVEL;
 }
 
-/**
- * Cards consumed to reach a given level (sum of CARDS_PER_LEVEL[0..level-1]).
- */
 function cardsForLevel(level) {
   let sum = 0;
   for (let i = 0; i < level; i++) sum += CARDS_PER_LEVEL[i];
   return sum;
 }
 
-/**
- * Returns progress info for an ability given its total card count and stored level.
- * We use the stored level from the server if provided, otherwise derive from cards.
- */
 function getProgressInfo(id) {
   const totalCards = abilityCards[id] || 0;
-  // Use server-provided level if available, otherwise derive from card count.
   let level = (abilityLevels[id] !== undefined) ? abilityLevels[id] : computeLevel(totalCards);
 
   if (level === 0 && totalCards === 0) {
@@ -168,10 +186,25 @@ function getProgressInfo(id) {
 
   const consumed = cardsForLevel(level);
   const cardsTowardNext = totalCards - consumed;
-  const cardsNeeded = CARDS_PER_LEVEL[level]; // cost to go from current level to next
+  const cardsNeeded = CARDS_PER_LEVEL[level];
   const pct = cardsNeeded > 0 ? Math.min(cardsTowardNext / cardsNeeded, 1) : 1;
 
   return { level, totalCards, cardsTowardNext, cardsNeeded, pct };
+}
+
+// ── Stat value calculator ──
+function getStatValue(statDef, level) {
+  // level 0 = base stats (no levels applied)
+  const rawLevel = Math.max(0, level);
+  let val = statDef.base + statDef.perLvl * rawLevel;
+  if (statDef.floor) val = Math.floor(val);
+  if (statDef.display === 's' && statDef.divisor) {
+    return (val / statDef.divisor).toFixed(1) + 's';
+  }
+  if (statDef.unit && statDef.unit !== 'f' && statDef.unit !== '') {
+    return val + statDef.unit;
+  }
+  return statDef.floor ? val : (Number.isInteger(val) ? val : Math.round(val * 10) / 10);
 }
 
 // ── Data loading ──
@@ -191,8 +224,8 @@ async function loadData() {
     }
     if (abRes.ok) {
       const ad = await abRes.json();
-      abilityCards    = ad.abilityCards    || {};
-      abilityLevels   = ad.abilityLevels   || {};
+      abilityCards      = ad.abilityCards      || {};
+      abilityLevels     = ad.abilityLevels     || {};
       equippedAbilities = ad.equippedAbilities || [];
     }
   } catch (e) {
@@ -215,7 +248,418 @@ function updateEquipCounter() {
   if (el) el.textContent = `${equippedAbilities.length} / ${MAX_EQUIPPED}`;
 }
 
-// ── Render ──
+// ═══════════════════════════════════════════
+//  DETAIL MODAL
+// ═══════════════════════════════════════════
+
+function buildStatsTableHTML(ab, info) {
+  const statDefs = ABILITY_STATS[ab.id];
+  if (!statDefs) return '';
+
+  const rarity = RARITY[ab.rarity];
+  const level = info.level;
+  const isMax = level >= MAX_LEVEL;
+
+  let rows = '';
+  for (const key of Object.keys(statDefs)) {
+    const def = statDefs[key];
+    const currentVal = getStatValue(def, level);
+    let nextCell;
+
+    if (isMax) {
+      nextCell = `<span style="color:#ffaa00;font-size:0.55rem;letter-spacing:2px;">MAX</span>`;
+    } else {
+      const nextVal = getStatValue(def, level + 1);
+      const improved = def.perLvl > 0 || (def.display === 's'); // cooldown goes down = improvement
+      // For cooldown, smaller is better; detect by perLvl sign
+      const isImprovement = def.perLvl < 0
+        ? (parseFloat(String(nextVal)) < parseFloat(String(currentVal)))
+        : (parseFloat(String(nextVal)) > parseFloat(String(currentVal)));
+      const arrowColor = isImprovement ? '#00fff2' : '#ff6644';
+      const valColor = isImprovement ? '#00ff66' : '#ff6644';
+      nextCell = `
+        <span style="color:${arrowColor};margin:0 4px;">&#8594;</span>
+        <span style="color:${valColor};">${nextVal}</span>
+      `;
+    }
+
+    rows += `
+      <div style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:5px 0;
+        border-bottom:1px solid rgba(255,255,255,0.06);
+        font-family:'Share Tech Mono',monospace;
+        font-size:0.6rem;
+        letter-spacing:1px;
+      ">
+        <span style="color:rgba(255,255,255,0.45);min-width:90px;">${def.label}</span>
+        <span style="display:flex;align-items:center;gap:2px;">
+          <span style="color:#fff;">${currentVal}</span>
+          ${nextCell}
+        </span>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="margin:10px 0 4px;">
+      <div style="
+        font-family:'Share Tech Mono',monospace;
+        font-size:0.5rem;
+        letter-spacing:3px;
+        color:rgba(255,255,255,0.25);
+        margin-bottom:6px;
+      ">ESTADISTICAS</div>
+      ${rows}
+    </div>
+  `;
+}
+
+function openModal(ab) {
+  if (typeof playSelectSound === 'function') playSelectSound();
+
+  const rarity = RARITY[ab.rarity];
+  const info = getProgressInfo(ab.id);
+  const isEquipped = equippedAbilities.includes(ab.id);
+  const hasCards = info.level >= 1;
+  const slotsAvailable = equippedAbilities.length < MAX_EQUIPPED;
+  const isMax = info.level >= MAX_LEVEL;
+
+  // ── Progress bar ──
+  const progressPct = Math.round(info.pct * 100);
+  const progressBarHTML = `
+    <div style="
+      width:100%;
+      height:4px;
+      background:rgba(255,255,255,0.08);
+      border-radius:2px;
+      overflow:hidden;
+      margin:6px 0 3px;
+    ">
+      <div style="
+        width:${progressPct}%;
+        height:100%;
+        background:${rarity.color};
+        box-shadow:0 0 6px ${rarity.color};
+        border-radius:2px;
+        transition:width 0.4s ease;
+      "></div>
+    </div>
+  `;
+
+  // ── Level label ──
+  let levelLabel;
+  if (info.level === 0) {
+    levelLabel = `<span style="color:rgba(255,255,255,0.25);font-size:0.6rem;letter-spacing:2px;">SIN CARTAS</span>`;
+  } else if (isMax) {
+    levelLabel = `<span style="color:#ffaa00;text-shadow:0 0 8px rgba(255,170,0,0.6);font-size:0.65rem;letter-spacing:2px;">LVL MAX</span>`;
+  } else {
+    levelLabel = `<span style="color:${rarity.color};text-shadow:0 0 6px ${rarity.color};font-size:0.65rem;letter-spacing:2px;">LVL ${info.level}</span>`;
+  }
+
+  // ── Upgrade section ──
+  let upgradeHTML = '';
+  if (hasCards && !isMax) {
+    const silverCost = getSilverCost(ab.rarity, info.level);
+    const cardsReady = info.cardsTowardNext >= info.cardsNeeded;
+    const silverReady = serverSilver >= silverCost;
+    const canUpgrade = cardsReady && silverReady;
+    const cardsMissing = Math.max(0, info.cardsNeeded - info.cardsTowardNext);
+
+    let hintHTML = '';
+    if (!cardsReady) {
+      hintHTML = `<div style="
+        font-family:'Share Tech Mono',monospace;
+        font-size:0.5rem;
+        color:rgba(255,100,68,0.7);
+        letter-spacing:1px;
+        margin-top:4px;
+      ">FALTAN ${cardsMissing} CARTAS</div>`;
+    } else if (!silverReady) {
+      hintHTML = `<div style="
+        font-family:'Share Tech Mono',monospace;
+        font-size:0.5rem;
+        color:rgba(255,100,68,0.7);
+        letter-spacing:1px;
+        margin-top:4px;
+      ">FALTA PLATA</div>`;
+    }
+
+    upgradeHTML = `
+      <div style="margin-top:14px;">
+        <button id="modal-upgrade-btn" style="
+          font-family:'Orbitron',sans-serif;
+          font-size:0.6rem;
+          font-weight:700;
+          letter-spacing:2px;
+          padding:10px 20px;
+          width:100%;
+          border:1px solid ${canUpgrade ? 'rgba(0,255,102,0.45)' : 'rgba(192,192,192,0.2)'};
+          background:${canUpgrade ? 'rgba(0,255,102,0.07)' : 'rgba(192,192,192,0.04)'};
+          color:${canUpgrade ? '#00ff66' : 'rgba(192,192,192,0.35)'};
+          cursor:${canUpgrade ? 'pointer' : 'not-allowed'};
+          text-shadow:${canUpgrade ? '0 0 8px rgba(0,255,102,0.4)' : 'none'};
+          box-shadow:${canUpgrade ? '0 0 8px rgba(0,255,102,0.08)' : 'none'};
+          transition:all 0.2s ease;
+        " ${canUpgrade ? '' : 'disabled'}>
+          MEJORAR
+          <span style="
+            display:block;
+            font-family:'Share Tech Mono',monospace;
+            font-size:0.55rem;
+            letter-spacing:1px;
+            opacity:0.75;
+            margin-top:2px;
+          ">${silverCost.toLocaleString()} <span style="color:#c0c0c0;">SLV</span></span>
+        </button>
+        ${hintHTML}
+      </div>
+    `;
+  }
+
+  // ── Equip / Unequip button ──
+  let equipHTML = '';
+  if (hasCards) {
+    if (isEquipped) {
+      equipHTML = `
+        <button id="modal-equip-btn" style="
+          font-family:'Orbitron',sans-serif;
+          font-size:0.6rem;
+          font-weight:700;
+          letter-spacing:2px;
+          padding:10px 20px;
+          width:100%;
+          margin-top:8px;
+          border:1px solid rgba(255,102,68,0.4);
+          background:rgba(255,68,34,0.07);
+          color:#ff6644;
+          cursor:pointer;
+          text-shadow:0 0 8px rgba(255,102,68,0.4);
+          box-shadow:0 0 8px rgba(255,68,34,0.08);
+          transition:all 0.2s ease;
+        ">DESEQUIPAR</button>
+      `;
+    } else {
+      const noSlots = !slotsAvailable;
+      equipHTML = `
+        <button id="modal-equip-btn" style="
+          font-family:'Orbitron',sans-serif;
+          font-size:0.6rem;
+          font-weight:700;
+          letter-spacing:2px;
+          padding:10px 20px;
+          width:100%;
+          margin-top:8px;
+          border:1px solid ${noSlots ? 'rgba(255,255,255,0.1)' : 'rgba(0,255,242,0.4)'};
+          background:${noSlots ? 'transparent' : 'rgba(0,255,242,0.07)'};
+          color:${noSlots ? 'rgba(255,255,255,0.22)' : '#00fff2'};
+          cursor:${noSlots ? 'not-allowed' : 'pointer'};
+          text-shadow:${noSlots ? 'none' : '0 0 8px rgba(0,255,242,0.4)'};
+          box-shadow:${noSlots ? 'none' : '0 0 8px rgba(0,255,242,0.08)'};
+          transition:all 0.2s ease;
+        " ${noSlots ? 'disabled' : ''}>EQUIPAR</button>
+      `;
+    }
+  }
+
+  // ── Stats table ──
+  const statsTableHTML = buildStatsTableHTML(ab, info);
+
+  // ── Assemble modal ──
+  const overlay = document.createElement('div');
+  overlay.id = 'ability-modal-overlay';
+  overlay.style.cssText = `
+    position:fixed;
+    top:0;left:0;right:0;bottom:0;
+    background:rgba(0,0,5,0.92);
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    box-sizing:border-box;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      background:rgba(4,4,18,0.98);
+      border:1px solid ${rarity.border};
+      box-shadow:0 0 30px ${rarity.color}22, inset 0 0 30px rgba(0,0,0,0.5);
+      max-width:340px;
+      width:100%;
+      max-height:90vh;
+      overflow-y:auto;
+      padding:20px;
+      box-sizing:border-box;
+      position:relative;
+    ">
+
+      <!-- HEADER -->
+      <div style="
+        display:flex;
+        align-items:center;
+        gap:14px;
+        padding-bottom:14px;
+        border-bottom:1px solid rgba(255,255,255,0.07);
+        margin-bottom:14px;
+      ">
+        <div style="
+          font-size:2.4rem;
+          color:${rarity.color};
+          text-shadow:0 0 20px ${rarity.color}, 0 0 40px ${rarity.color}66;
+          flex-shrink:0;
+        ">${ab.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="
+            font-family:'Orbitron',sans-serif;
+            font-size:0.9rem;
+            font-weight:900;
+            letter-spacing:3px;
+            color:${rarity.color};
+            text-shadow:0 0 8px ${rarity.color}88;
+            margin-bottom:5px;
+          ">${ab.name}</div>
+          <span style="
+            font-family:'Share Tech Mono',monospace;
+            font-size:0.5rem;
+            letter-spacing:3px;
+            padding:2px 7px;
+            border:1px solid ${rarity.border};
+            color:${rarity.color};
+          ">${rarity.label}</span>
+          ${isEquipped ? `<span style="
+            font-family:'Share Tech Mono',monospace;
+            font-size:0.48rem;
+            letter-spacing:2px;
+            color:#00ff66;
+            padding:1px 6px;
+            border:1px solid rgba(0,255,102,0.35);
+            background:rgba(0,255,102,0.08);
+            margin-left:6px;
+          ">EQUIPADO</span>` : ''}
+        </div>
+      </div>
+
+      <!-- DESCRIPTION -->
+      <div style="
+        font-family:'Share Tech Mono',monospace;
+        font-size:0.63rem;
+        letter-spacing:1px;
+        color:rgba(255,255,255,0.45);
+        line-height:1.5;
+        margin-bottom:14px;
+      ">${ab.description}</div>
+
+      <!-- LEVEL + PROGRESS -->
+      <div style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom:2px;
+      ">
+        ${levelLabel}
+        <span style="
+          font-family:'Share Tech Mono',monospace;
+          font-size:0.52rem;
+          letter-spacing:1px;
+          color:rgba(255,255,255,0.3);
+        ">${info.level > 0 && !isMax ? info.cardsTowardNext + ' / ' + info.cardsNeeded + ' CARTAS' : ''}</span>
+      </div>
+      ${!isMax ? progressBarHTML : ''}
+
+      <!-- STATS TABLE -->
+      ${statsTableHTML}
+
+      <!-- UPGRADE -->
+      ${upgradeHTML}
+
+      <!-- EQUIP / UNEQUIP -->
+      ${equipHTML}
+
+      <!-- CLOSE -->
+      <button id="modal-close-btn" style="
+        font-family:'Orbitron',sans-serif;
+        font-size:0.55rem;
+        font-weight:700;
+        letter-spacing:3px;
+        padding:10px 20px;
+        width:100%;
+        margin-top:12px;
+        border:1px solid rgba(255,255,255,0.12);
+        background:rgba(255,255,255,0.03);
+        color:rgba(255,255,255,0.4);
+        cursor:pointer;
+        transition:all 0.2s ease;
+      ">CERRAR</button>
+
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // ── Wire modal buttons ──
+  const closeBtn = document.getElementById('modal-close-btn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeModal);
+    closeBtn.addEventListener('mouseenter', () => {
+      closeBtn.style.background = 'rgba(255,255,255,0.07)';
+      closeBtn.style.borderColor = 'rgba(255,255,255,0.25)';
+    });
+    closeBtn.addEventListener('mouseleave', () => {
+      closeBtn.style.background = 'rgba(255,255,255,0.03)';
+      closeBtn.style.borderColor = 'rgba(255,255,255,0.12)';
+    });
+  }
+
+  const upgradeBtn = document.getElementById('modal-upgrade-btn');
+  if (upgradeBtn && !upgradeBtn.disabled) {
+    upgradeBtn.addEventListener('click', async () => {
+      await upgradeAbility(ab.id);
+      closeModal(false);
+      openModal(ab);
+    });
+    upgradeBtn.addEventListener('mouseenter', () => {
+      upgradeBtn.style.background = 'rgba(0,255,102,0.13)';
+      upgradeBtn.style.borderColor = 'rgba(0,255,102,0.65)';
+    });
+    upgradeBtn.addEventListener('mouseleave', () => {
+      upgradeBtn.style.background = 'rgba(0,255,102,0.07)';
+      upgradeBtn.style.borderColor = 'rgba(0,255,102,0.45)';
+    });
+  }
+
+  const equipBtn = document.getElementById('modal-equip-btn');
+  if (equipBtn && !equipBtn.disabled) {
+    equipBtn.addEventListener('click', async () => {
+      if (typeof playSelectSound === 'function') playSelectSound();
+      if (isEquipped) {
+        await unequipAbility(ab.id);
+      } else {
+        await equipAbility(ab.id);
+      }
+      closeModal(false);
+      openModal(ab);
+    });
+  }
+
+  // Close on overlay backdrop click
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+}
+
+function closeModal(playSound = true) {
+  if (playSound && typeof playSelectSound === 'function') playSelectSound();
+  const overlay = document.getElementById('ability-modal-overlay');
+  if (overlay) overlay.remove();
+}
+
+// ═══════════════════════════════════════════
+//  RENDER — Simplified grid cards
+// ═══════════════════════════════════════════
+
 function renderAbilities() {
   const grid = document.getElementById('abilities-grid');
   grid.innerHTML = '';
@@ -225,7 +669,16 @@ function renderAbilities() {
     const info = getProgressInfo(ab.id);
     const isEquipped = equippedAbilities.includes(ab.id);
     const hasCards = info.level >= 1;
-    const slotsAvailable = equippedAbilities.length < MAX_EQUIPPED;
+    const isMax = info.level >= MAX_LEVEL;
+
+    // Upgrade available indicator
+    let canUpgrade = false;
+    if (hasCards && !isMax) {
+      const silverCost = getSilverCost(ab.rarity, info.level);
+      const cardsReady = info.cardsTowardNext >= info.cardsNeeded;
+      const silverReady = serverSilver >= silverCost;
+      canUpgrade = cardsReady && silverReady;
+    }
 
     const card = document.createElement('div');
     card.className = [
@@ -233,127 +686,118 @@ function renderAbilities() {
       hasCards ? 'has-cards' : '',
       isEquipped ? 'equipped' : '',
     ].filter(Boolean).join(' ');
-
-    // CSS custom property for the left-border rarity glow
     card.style.setProperty('--rarity-color', rarity.color);
+    card.style.cursor = 'pointer';
+    card.style.userSelect = 'none';
 
-    // ── Icon column ──
     const iconColor = hasCards ? rarity.color : 'rgba(255,255,255,0.14)';
     const iconGlow  = hasCards ? `0 0 14px ${rarity.color}` : 'none';
 
-    // ── Level / progress section ──
-    let levelHTML;
-    if (info.level === 0) {
-      levelHTML = `
-        <div class="ab-no-cards-label">SIN CARTAS &mdash; <a class="shop-link" href="/shop.html">IR A TIENDA</a></div>
-      `;
-    } else if (info.level >= MAX_LEVEL) {
-      levelHTML = `
-        <div class="ab-level-row">
-          <span class="ab-lvl-badge max-level">LVL MAX</span>
-        </div>
-      `;
+    // LVL badge
+    let lvlBadgeHTML;
+    if (!hasCards) {
+      lvlBadgeHTML = `<span style="
+        font-family:'Orbitron',sans-serif;
+        font-size:0.48rem;
+        letter-spacing:2px;
+        color:rgba(255,255,255,0.18);
+      ">SIN CARTAS</span>`;
+    } else if (isMax) {
+      lvlBadgeHTML = `<span style="
+        font-family:'Orbitron',sans-serif;
+        font-size:0.52rem;
+        font-weight:700;
+        letter-spacing:2px;
+        color:#ffaa00;
+        text-shadow:0 0 6px rgba(255,170,0,0.6);
+      ">LVL MAX</span>`;
     } else {
-      const fillColor = rarity.color;
-      levelHTML = `
-        <div class="ab-level-row">
-          <span class="ab-lvl-badge" style="color: ${rarity.color}; text-shadow: 0 0 6px ${rarity.color};">LVL ${info.level}</span>
-          <div class="ab-progress-wrap">
-            <div class="ab-progress-bar-track">
-              <div class="ab-progress-bar-fill" style="width: ${Math.round(info.pct * 100)}%; background: ${fillColor}; box-shadow: 0 0 6px ${fillColor};"></div>
-            </div>
-            <div class="ab-progress-label">${info.cardsTowardNext} / ${info.cardsNeeded} CARTAS</div>
-          </div>
-        </div>
-      `;
+      lvlBadgeHTML = `<span style="
+        font-family:'Orbitron',sans-serif;
+        font-size:0.52rem;
+        font-weight:700;
+        letter-spacing:2px;
+        color:${rarity.color};
+        text-shadow:0 0 5px ${rarity.color};
+      ">LVL ${info.level}</span>`;
     }
 
-    // ── Upgrade button (needs cards + silver) ──
-    let upgradeHTML = '';
-    if (hasCards && info.level > 0 && info.level < MAX_LEVEL) {
-      const silverCost = getSilverCost(ab.rarity, info.level);
-      const cardsReady = info.cardsTowardNext >= info.cardsNeeded;
-      const silverReady = serverSilver >= silverCost;
-      const canUpgrade = cardsReady && silverReady;
-      const cardsMissing = Math.max(0, info.cardsNeeded - info.cardsTowardNext);
+    // Upgrade arrow indicator (top-right)
+    const upgradeArrow = canUpgrade ? `
+      <div style="
+        position:absolute;
+        top:6px;
+        right:8px;
+        color:#00ff66;
+        font-size:0.75rem;
+        text-shadow:0 0 8px #00ff66;
+        line-height:1;
+      ">&#11014;</div>
+    ` : '';
 
-      upgradeHTML = `
-        <button class="ab-upgrade-btn ${canUpgrade ? 'can-upgrade' : ''}" ${canUpgrade ? '' : 'disabled'} data-id="${ab.id}">
-          MEJORAR
-          <span class="ab-upgrade-cost">${silverCost.toLocaleString()} <span style="color:#c0c0c0;">SLV</span></span>
-          ${!cardsReady ? `<span class="ab-upgrade-hint">FALTAN ${cardsMissing} CARTAS</span>` : (!silverReady ? '<span class="ab-upgrade-hint">FALTA PLATA</span>' : '')}
-        </button>
-      `;
-    }
-
-    // ── Equip / unequip button ──
-    let actionHTML = '';
-    if (hasCards) {
-      if (isEquipped) {
-        actionHTML = `<button class="ab-equip-btn ab-unequip">DESEQUIPAR</button>`;
-      } else {
-        const noSlots = !slotsAvailable;
-        actionHTML = `<button class="ab-equip-btn ab-equip${noSlots ? ' no-slots' : ''}" ${noSlots ? 'disabled' : ''}>EQUIPAR</button>`;
-      }
-    }
+    // Equipped dot indicator
+    const equippedDot = isEquipped ? `
+      <div style="
+        width:7px;
+        height:7px;
+        border-radius:50%;
+        background:#00ff66;
+        box-shadow:0 0 6px #00ff66;
+        flex-shrink:0;
+      "></div>
+    ` : '';
 
     card.innerHTML = `
-      <div class="ab-icon-col" style="color: ${iconColor}; text-shadow: ${iconGlow};">${ab.icon}</div>
-      <div class="ab-body">
-        <div class="ab-header">
-          <span class="ab-name" style="color: ${hasCards ? rarity.color : 'rgba(255,255,255,0.22)'};">${ab.name}</span>
-          <span class="ab-rarity" style="color: ${rarity.color}; border-color: ${rarity.border};">${rarity.label}</span>
-          ${isEquipped ? '<span class="ab-equipped-badge">EQUIPADO</span>' : ''}
+      ${upgradeArrow}
+
+      <!-- Icon -->
+      <div class="ab-icon-col" style="color:${iconColor};text-shadow:${iconGlow};">${ab.icon}</div>
+
+      <!-- Center body -->
+      <div style="
+        flex:1;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        gap:5px;
+        padding:14px 10px 14px 0;
+        min-width:0;
+      ">
+        <!-- Name row -->
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+          <span style="
+            font-family:'Orbitron',sans-serif;
+            font-size:0.82rem;
+            font-weight:900;
+            letter-spacing:2px;
+            color:${hasCards ? rarity.color : 'rgba(255,255,255,0.22)'};
+          ">${ab.name}</span>
+          <span style="
+            font-family:'Share Tech Mono',monospace;
+            font-size:0.48rem;
+            letter-spacing:2px;
+            padding:2px 6px;
+            border:1px solid ${rarity.border};
+            color:${rarity.color};
+            opacity:${hasCards ? 1 : 0.4};
+          ">${rarity.label}</span>
         </div>
-        <div class="ab-desc">${ab.description}</div>
-        <div class="ab-stats">${ab.baseStats}</div>
-        ${levelHTML}
-      </div>
-      <div class="ab-action-col">
-        ${upgradeHTML}
-        ${actionHTML}
+
+        <!-- Level + equipped dot -->
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${lvlBadgeHTML}
+          ${equippedDot}
+        </div>
       </div>
     `;
 
-    // ── Event listeners ──
-    // Upgrade button
-    const upgradeBtn = card.querySelector('.ab-upgrade-btn');
-    if (upgradeBtn && !upgradeBtn.disabled) {
-      upgradeBtn.addEventListener('click', () => {
-        if (typeof playSelectSound === 'function') playSelectSound();
-        upgradeAbility(ab.id);
-      });
-    }
-
-    if (hasCards) {
-      if (isEquipped) {
-        card.querySelector('.ab-unequip').addEventListener('click', () => {
-          if (typeof playSelectSound === 'function') playSelectSound();
-          unequipAbility(ab.id);
-        });
-      } else {
-        const btn = card.querySelector('.ab-equip');
-        if (btn && !btn.disabled) {
-          btn.addEventListener('click', () => {
-            if (typeof playSelectSound === 'function') playSelectSound();
-            equipAbility(ab.id);
-          });
-        }
-      }
-    }
-
-    // ── "IR A TIENDA" link sound ──
-    const shopLink = card.querySelector('.shop-link');
-    if (shopLink) {
-      shopLink.addEventListener('click', () => {
-        if (typeof playSelectSound === 'function') playSelectSound();
-      });
-    }
+    // Tap to open detail modal
+    card.addEventListener('click', () => openModal(ab));
 
     grid.appendChild(card);
   });
 
-  // ── Back button sound (wired once after render) ──
+  // ── Back button sound (wired once) ──
   const backBtn = document.querySelector('.back-btn');
   if (backBtn && !backBtn._soundBound) {
     backBtn._soundBound = true;
