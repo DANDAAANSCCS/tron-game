@@ -306,7 +306,7 @@ function initBackButton() {
 
   backBtn.addEventListener('click', () => {
     if (typeof playSelectSound === 'function') playSelectSound();
-    setTimeout(() => { window.location.href = '/'; }, 280);
+    window.location.href = '/menu.html';
   });
 }
 
@@ -319,7 +319,7 @@ document.addEventListener('keydown', (e) => {
 
   if (e.key === 'Escape' || e.key === 'Backspace') {
     if (typeof playSelectSound === 'function') playSelectSound();
-    setTimeout(() => { window.location.href = '/'; }, 300);
+    window.location.href = '/menu.html';
   }
 });
 

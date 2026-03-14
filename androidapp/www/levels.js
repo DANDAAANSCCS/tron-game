@@ -257,7 +257,7 @@ document.addEventListener('keydown', (e) => {
     }
   } else if (e.key === 'Escape' || e.key === 'Backspace') {
     if (typeof playSelectSound === 'function') playSelectSound();
-    setTimeout(() => { window.location.href = '/'; }, 300);
+    window.location.href = '/menu.html';
   }
 });
 
@@ -268,7 +268,7 @@ if (backBtn) {
   backBtn.addEventListener('click', (e) => {
     e.preventDefault();
     playSelectSound();
-    setTimeout(() => { window.location.href = '/'; }, 300);
+    window.location.href = '/menu.html';
   });
 }
 

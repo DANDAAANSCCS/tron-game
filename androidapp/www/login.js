@@ -5,7 +5,7 @@
 
 // ── Check if already logged in ──
 fetch('/api/me').then(r => {
-  if (r.ok) window.location.href = '/';
+  if (r.ok) window.location.href = '/menu.html';
 });
 
 // ── Check Google OAuth availability ──
@@ -54,7 +54,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const data = await res.json();
     if (res.ok) {
       if (typeof playSelectSound === 'function') playSelectSound();
-      setTimeout(() => { window.location.href = '/'; }, 300);
+      window.location.href = '/menu.html';
     } else {
       errEl.textContent = data.error || 'LOGIN FAILED';
       if (typeof playDenySound === 'function') playDenySound();
@@ -103,7 +103,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     const data = await res.json();
     if (res.ok) {
       if (typeof playSelectSound === 'function') playSelectSound();
-      setTimeout(() => { window.location.href = '/'; }, 300);
+      window.location.href = '/menu.html';
     } else {
       errEl.textContent = data.error || 'REGISTER FAILED';
       if (typeof playDenySound === 'function') playDenySound();

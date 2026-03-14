@@ -1,32 +1,60 @@
 // =============================================================================
 // NEON DEFENSE — Audio System
 // Procedural synthesis. No audio files.
+// When running inside an iframe, all calls proxy to the parent window
+// so the AudioContext persists across page navigations.
 // =============================================================================
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// ── Iframe proxy mode ──
+// If running inside an iframe where the parent already has the audio system,
+// proxy all audio calls to the parent and skip creating a second AudioContext.
+const _isAudioProxy = (window.parent !== window && window.parent._neonAudioReady);
 
-// ── State (persisted) ──
-let sfxEnabled   = localStorage.getItem('neonDefenseSFX')   !== 'false';
-let musicEnabled = localStorage.getItem('neonDefenseMusic') !== 'false';
-// Legacy compat
-let audioEnabled = sfxEnabled;
+if (_isAudioProxy) {
+  [
+    'playHoverSound','playSelectSound','playBuySound','playDenySound',
+    'playShootSound','playEnemyHitSound','playEnemyDeathSound','playBossDeathSound',
+    'playEMPSound','playShieldSound','playFreezeSound','playChainSound','playOrbitalSound',
+    'playWaveStartSound','playDeathSound','playLevelUpSound','playChestOpenSound',
+    'playRouletteTickSound','playRouletteStopSound','playRouletteRewardSound',
+    'startMusic','stopMusic','toggleMusic','toggleSFX','toggleAudio','ensureContext',
+  ].forEach(name => {
+    window[name] = function() { return window.parent[name]?.apply(window.parent, arguments); };
+  });
+  Object.defineProperty(window, 'sfxEnabled', { get() { return window.parent.sfxEnabled; }, set(v) { window.parent.sfxEnabled = v; } });
+  Object.defineProperty(window, 'musicEnabled', { get() { return window.parent.musicEnabled; }, set(v) { window.parent.musicEnabled = v; } });
+  Object.defineProperty(window, 'audioEnabled', { get() { return window.parent.audioEnabled; }, set(v) { window.parent.audioEnabled = v; } });
+}
+
+// Mark this window as the real audio host
+if (!_isAudioProxy) window._neonAudioReady = true;
+
+const audioCtx = !_isAudioProxy ? new (window.AudioContext || window.webkitAudioContext)() : null;
+
+// If we're a proxy, everything is set up — skip the rest
+if (!_isAudioProxy) {
+
+// ── State (persisted) — use var for global scope inside if block ──
+var sfxEnabled   = localStorage.getItem('neonDefenseSFX')   !== 'false';
+var musicEnabled = localStorage.getItem('neonDefenseMusic') !== 'false';
+var audioEnabled = sfxEnabled;
 
 // ── Gain buses ──
-const masterGain = audioCtx.createGain();
+var masterGain = audioCtx.createGain();
 masterGain.gain.value = 1.0;
 masterGain.connect(audioCtx.destination);
 
-const sfxBus = audioCtx.createGain();
+var sfxBus = audioCtx.createGain();
 sfxBus.gain.value = 1.0;
 sfxBus.connect(masterGain);
 
-const musicBus = audioCtx.createGain();
+var musicBus = audioCtx.createGain();
 musicBus.gain.value = 0.5;
 musicBus.connect(masterGain);
 
 // ── Music state ──
-let musicNodes = null;
-let musicRunning = false;
+var musicNodes = null;
+var musicRunning = false;
 
 // ── Helpers ──
 function jitter(center, spread = 0.05) {
@@ -85,10 +113,6 @@ function startMusic() {
   musicRunning = true;
 
   const now = audioCtx.currentTime;
-
-  // Fade-in the music bus so page transitions aren't jarring
-  musicBus.gain.setValueAtTime(0, now);
-  musicBus.gain.linearRampToValueAtTime(0.5, now + 1.5);
 
   // ── Pad: C2 + G2 fifth drone with filter movement ──
   const padFreqs = [65.41, 98.0]; // C2, G2
@@ -591,8 +615,4 @@ function playRouletteRewardSound() {
   document.addEventListener('keydown', unlock);
 })();
 
-// ── Navigate with delay so sounds finish playing ──
-function navigateTo(url, delay) {
-  delay = delay || 350;
-  setTimeout(() => { window.location.href = url; }, delay);
-}
+} // end if (!_isAudioProxy)
