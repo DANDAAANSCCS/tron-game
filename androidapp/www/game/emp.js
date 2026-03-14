@@ -7,35 +7,35 @@
 // ── Ability definitions with per-level scaling (levels 1–20) ──
 const ABILITY_DEFS = {
   emp: {
-    baseDamage: 60,     dmgPerLevel: 8,      // lv1→60  lv20→212
-    baseRadius: 350,    radiusPerLevel: 15,   // lv1→350 lv20→635
-    baseCooldown: 600,  cdPerLevel: -15,      // lv1→600 lv20→315 frames
+    baseDamage: 60,     damagePerLevel: 8,
+    baseRadius: 350,    radiusPerLevel: 15,
+    baseCooldown: 600,  cooldownPerLevel: -15,
   },
   shield: {
-    baseAbsorb: 50,     absorbPerLevel: 10,   // lv1→50  lv20→240
-    baseDuration: 300,  durPerLevel: 10,      // lv1→300 lv20→490 frames
-    baseCooldown: 900,  cdPerLevel: -20,      // lv1→900 lv20→520 frames
+    baseAbsorb: 50,     absorbPerLevel: 10,
+    baseDuration: 300,  durationPerLevel: 10,
+    baseCooldown: 900,  cooldownPerLevel: -20,
   },
   rapidfire: {
-    baseBoost: 0.5,     boostPerLevel: 0.03,  // lv1→0.50 lv20→1.07
-    baseDuration: 240,  durPerLevel: 8,       // lv1→240 lv20→392 frames
-    baseCooldown: 1200, cdPerLevel: -25,      // lv1→1200 lv20→725 frames
+    baseBoost: 0.5,     boostPerLevel: 0.03,
+    baseDuration: 240,  durationPerLevel: 8,
+    baseCooldown: 1200, cooldownPerLevel: -25,
   },
   chain: {
-    baseDamage: 40,     dmgPerLevel: 6,       // lv1→40  lv20→154
-    baseBounces: 3,     bouncesPerLevel: 0.5, // lv1→3   lv20→12 (floored)
-    baseCooldown: 720,  cdPerLevel: -15,      // lv1→720 lv20→435 frames
+    baseDamage: 40,     damagePerLevel: 6,
+    baseBounces: 3,     bouncesPerLevel: 0.5,
+    baseCooldown: 720,  cooldownPerLevel: -15,
   },
   freeze: {
-    baseSlow: 0.5,      slowPerLevel: 0.015,  // lv1→0.50 lv20→0.785 slow fraction
-    baseDuration: 180,  durPerLevel: 8,       // lv1→180 lv20→332 frames
-    baseCooldown: 1500, cdPerLevel: -30,      // lv1→1500 lv20→930 frames
-    baseRadius: 400,    radiusPerLevel: 15,   // lv1→400 lv20→685
+    baseSlow: 0.5,      slowPerLevel: 0.015,
+    baseDuration: 180,  durationPerLevel: 8,
+    baseCooldown: 1500, cooldownPerLevel: -30,
+    baseRadius: 400,    radiusPerLevel: 15,
   },
   orbital: {
-    baseDamage: 300,    dmgPerLevel: 25,      // lv1→300 lv20→775
-    baseRadius: 500,    radiusPerLevel: 20,   // lv1→500 lv20→880
-    baseCooldown: 2700, cdPerLevel: -50,      // lv1→2700 lv20→1750 frames
+    baseDamage: 300,    damagePerLevel: 25,
+    baseRadius: 500,    radiusPerLevel: 20,
+    baseCooldown: 2700, cooldownPerLevel: -50,
   },
 };
 
