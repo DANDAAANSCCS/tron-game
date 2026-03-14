@@ -367,22 +367,25 @@ function updateHUD() {
     }
   }
 
-  // EMP HUD (solo si esta equipado)
-  const empSlot = document.getElementById('ability-emp');
-  if (empSlot) {
-    const cdEl = empSlot.querySelector('.ability-cooldown');
-    if (empCooldown > 0) {
-      empSlot.classList.remove('ready');
+  // Ability cooldown HUD — works for all equipped abilities
+  const equipped = (serverGameData && serverGameData.equippedAbilities) || [];
+  for (const id of equipped) {
+    const slot = document.getElementById('ability-' + id);
+    if (!slot) continue;
+    const cd = (typeof abilityCooldowns !== 'undefined' && abilityCooldowns[id]) || 0;
+    const cdEl = slot.querySelector('.ability-cooldown');
+    if (cd > 0) {
+      slot.classList.remove('ready');
       if (!cdEl) {
         const div = document.createElement('div');
         div.className = 'ability-cooldown';
-        div.textContent = Math.ceil(empCooldown / 60) + 's';
-        empSlot.appendChild(div);
+        div.textContent = Math.ceil(cd / 60) + 's';
+        slot.appendChild(div);
       } else {
-        cdEl.textContent = Math.ceil(empCooldown / 60) + 's';
+        cdEl.textContent = Math.ceil(cd / 60) + 's';
       }
     } else {
-      empSlot.classList.add('ready');
+      slot.classList.add('ready');
       if (cdEl) cdEl.remove();
     }
   }
