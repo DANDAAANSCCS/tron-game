@@ -344,14 +344,24 @@ router.post('/chest/open', requireAuth, async (req, res) => {
 
     await User.findByIdAndUpdate(req.user._id, { $set: update });
 
-    // Compute new levels for response
+    // Read stored levels for response
     const updatedCards = { ...currentCards };
     for (const [id, count] of Object.entries(drop.results)) {
       updatedCards[id] = (updatedCards[id] || 0) + count;
     }
-    const abilityLevels = {};
+    const storedLevels = user.gameData?.abilityLevels || {};
+    const abilityLevels = { ...storedLevels };
+
+    // Auto-unlock: if any ability now has >= 1 card and level 0, set to level 1
+    const autoUnlock = {};
     for (const [id, cards] of Object.entries(updatedCards)) {
-      abilityLevels[id] = getAbilityLevel(cards);
+      if (cards >= 1 && (!abilityLevels[id] || abilityLevels[id] < 1)) {
+        abilityLevels[id] = 1;
+        autoUnlock[`gameData.abilityLevels.${id}`] = 1;
+      }
+    }
+    if (Object.keys(autoUnlock).length > 0) {
+      await User.findByIdAndUpdate(req.user._id, { $set: autoUnlock });
     }
 
     res.json({
