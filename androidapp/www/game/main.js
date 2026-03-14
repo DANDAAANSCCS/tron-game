@@ -46,14 +46,26 @@ function initGame() {
   startWave();
 }
 
+// ── Frame rate limiter (lock to 60fps on high-refresh-rate screens) ──
+const TARGET_FPS = 60;
+const FRAME_INTERVAL = 1000 / TARGET_FPS;
+let _lastFrameTime = 0;
+
 // ── Main Game Loop ──
-function gameLoop() {
+function gameLoop(timestamp) {
   if (gameState !== 'playing' && gameState !== 'victory') return;
   if (gameState === 'victory') {
-    // Keep rendering but no updates, just wait for redirect
     requestAnimationFrame(gameLoop);
     return;
   }
+
+  // Skip frame if not enough time has passed (keeps ~60fps on 90/120Hz screens)
+  if (timestamp - _lastFrameTime < FRAME_INTERVAL * 0.9) {
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+  _lastFrameTime = timestamp;
+
   frameCount++;
 
   // Auto-save periodico
@@ -121,21 +133,42 @@ function gameLoop() {
   drawUpgradesPanel();
   updateHUD();
 
-  // Game over: go back to levels after delay
+  // Game over: show roulette then go to levels
   if (!turret.alive) {
     deathTimer++;
     drawDeathEffect();
 
     if (deathTimer === 1) {
       saveProgress();
-      // Limpiar auto-save al morir (ya se guardo el progreso final)
       fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
-      showOverlay('SYSTEM OFFLINE', `WAVE ${wave} / ${MAX_WAVES} | SCORE: ${score} — RETURNING TO LEVELS...`);
+      // Hide touch controls on death
+      const upgBtn = document.getElementById('touch-upgrades-btn');
+      if (upgBtn) upgBtn.style.display = 'none';
+      // Show death message briefly, then start roulette
+      showOverlay('SYSTEM OFFLINE', `WAVE ${wave} / ${MAX_WAVES} | SCORE: ${score}`);
     }
 
-    if (deathTimer >= DEATH_RETURN_DELAY) {
+    // After 2 seconds of death screen, start roulette
+    if (deathTimer === 120 && !_rouletteActive && score > 0) {
+      hideOverlay();
+      startRoulette(score, (coins) => {
+        saveSilverCoins(coins);
+        setTimeout(() => {
+          window.location.href = '/levels.html';
+        }, 500);
+      });
+    }
+
+    // If score is 0, skip roulette
+    if (deathTimer >= DEATH_RETURN_DELAY && score === 0) {
       window.location.href = '/levels.html';
       return;
+    }
+
+    // Draw roulette if active
+    if (_rouletteActive) {
+      updateRoulette();
+      drawRoulette();
     }
   }
 
@@ -151,6 +184,10 @@ async function startGame() {
 
   initGame();
   gameState = 'countdown';
+
+  // Show touch controls
+  const upgBtn = document.getElementById('touch-upgrades-btn');
+  if (upgBtn) upgBtn.style.display = 'flex';
 
   for (let i = 3; i >= 1; i--) {
     showOverlay(i.toString(), 'INITIALIZING DEFENSE GRID...');
@@ -169,14 +206,24 @@ function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
 }
 
-canvas.style.cursor = 'none';
-
 // ── Auto-save al cerrar/salir de la pagina ──
-window.addEventListener('beforeunload', () => {
+function doBeaconSave() {
   if (gameState === 'playing' && turret && turret.alive) {
     navigator.sendBeacon('/api/autosave', new Blob([JSON.stringify({
       wave, score, gold, gems, hp: turret.hp, totalKills, level: currentLevel,
     })], { type: 'application/json' }));
+  }
+}
+
+window.addEventListener('beforeunload', doBeaconSave);
+
+// Backup for mobile/Capacitor where beforeunload may not fire reliably
+window.addEventListener('pagehide', doBeaconSave);
+
+// Auto-save when the app is backgrounded on mobile
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    doBeaconSave();
   }
 });
 

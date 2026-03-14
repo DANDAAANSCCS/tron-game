@@ -135,10 +135,13 @@ function drawWalls() {
 }
 
 function drawCrosshair() {
+  // On mobile only draw the reticle when there is active touch or auto-aim
+  if (!mouseDown && !autoAimTarget) return;
+
   const mx = mouse.x;
   const my = mouse.y;
-  const size = 14;
-  const innerGap = 5;
+  const size = 20;
+  const innerGap = 8;
   const isAuto = !mouseDown && autoAimTarget;
 
   ctx.save();
@@ -147,6 +150,14 @@ function drawCrosshair() {
   ctx.lineWidth = 1.5;
   ctx.shadowColor = color;
   ctx.shadowBlur = 10;
+
+  // Pulsing outer circle
+  const pulseRadius = 28 + Math.sin(frameCount * 0.05) * 4;
+  ctx.globalAlpha = 0.35 + Math.sin(frameCount * 0.05) * 0.15;
+  ctx.beginPath();
+  ctx.arc(mx, my, pulseRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
 
   // Rotating outer ring
   const rot = frameCount * 0.02;
@@ -171,12 +182,12 @@ function drawCrosshair() {
   ctx.arc(mx, my, 2, 0, Math.PI * 2);
   ctx.fill();
 
-  // Mode indicator text
-  ctx.font = '600 9px Share Tech Mono';
+  // Mode indicator text (larger for mobile readability)
+  ctx.font = '600 12px Share Tech Mono';
   ctx.fillStyle = isAuto ? 'rgba(255, 102, 0, 0.5)' : 'rgba(0, 255, 242, 0.4)';
   ctx.textAlign = 'center';
   ctx.shadowBlur = 4;
-  ctx.fillText(isAuto ? 'AUTO' : 'MANUAL', mx, my + size + 14);
+  ctx.fillText(isAuto ? 'AUTO' : 'MANUAL', mx, my + size + 18);
 
   ctx.shadowBlur = 0;
   ctx.restore();
@@ -287,26 +298,46 @@ function drawDeathEffect() {
 
 // ── HUD ──
 function updateHUD() {
-  document.getElementById('hp-val').textContent = turret ? Math.ceil(turret.hp) : 0;
-  document.getElementById('kills-val').textContent = totalKills;
-  document.getElementById('level-val').textContent = currentLevel;
-  document.getElementById('wave-val').textContent = wave;
-  document.getElementById('enemies-val').textContent = Math.max(0, waveEnemiesTotal - waveEnemiesKilled);
-  document.getElementById('score-val').textContent = score;
-  document.getElementById('gold-val').textContent = gold;
-  document.getElementById('gems-val').textContent = gems;
+  const hpEl = document.getElementById('hp-val');
+  if (hpEl) hpEl.textContent = turret ? Math.ceil(turret.hp) : 0;
+
+  const killsEl = document.getElementById('kills-val');
+  if (killsEl) killsEl.textContent = totalKills;
+
+  const levelEl = document.getElementById('level-val');
+  if (levelEl) levelEl.textContent = currentLevel;
+
+  const waveEl = document.getElementById('wave-val');
+  if (waveEl) waveEl.textContent = wave;
+
+  const enemiesEl = document.getElementById('enemies-val');
+  if (enemiesEl) enemiesEl.textContent = Math.max(0, waveEnemiesTotal - waveEnemiesKilled);
+
+  const scoreEl = document.getElementById('score-val');
+  if (scoreEl) scoreEl.textContent = score;
+
+  const goldEl = document.getElementById('gold-val');
+  if (goldEl) goldEl.textContent = gold;
+
+  const gemsEl = document.getElementById('gems-val');
+  if (gemsEl) gemsEl.textContent = gems;
+
+  const silverEl = document.getElementById('silver-val');
+  if (silverEl) silverEl.textContent = serverGameData.silverCoins || 0;
 
   // Fire mode indicator
   const modeEl = document.getElementById('mode-val');
-  if (mouseDown) {
-    modeEl.textContent = 'MANUAL';
-    modeEl.style.color = COL.cyan;
-  } else if (autoAimTarget) {
-    modeEl.textContent = 'AUTO';
-    modeEl.style.color = COL.orange;
-  } else {
-    modeEl.textContent = 'IDLE';
-    modeEl.style.color = 'rgba(0, 255, 242, 0.4)';
+  if (modeEl) {
+    if (mouseDown) {
+      modeEl.textContent = 'MANUAL';
+      modeEl.style.color = COL.cyan;
+    } else if (autoAimTarget) {
+      modeEl.textContent = 'AUTO';
+      modeEl.style.color = COL.orange;
+    } else {
+      modeEl.textContent = 'IDLE';
+      modeEl.style.color = 'rgba(0, 255, 242, 0.4)';
+    }
   }
 
   // EMP HUD (solo si esta equipado)

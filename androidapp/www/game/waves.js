@@ -210,14 +210,43 @@ function updateWaveSpawning() {
       gems += 25;
       gameState = 'victory';
       saveProgress(true);
-      // Limpiar auto-save al completar nivel
       fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
       showOverlay('VICTORY!', `LEVEL ${currentLevel} COMPLETE — SCORE: ${score}`);
       spawnRewardPopup('LEVEL COMPLETE!', '#00ff66');
       spawnRewardPopup('+25 GEMS', '#e040fb');
+      // Hide touch controls
+      const upgBtn = document.getElementById('touch-upgrades-btn');
+      if (upgBtn) upgBtn.style.display = 'none';
+      // Start roulette after 3 seconds
       setTimeout(() => {
-        window.location.href = '/levels.html';
-      }, 4000);
+        hideOverlay();
+        startRoulette(score, (coins) => {
+          saveSilverCoins(coins);
+          setTimeout(() => {
+            window.location.href = '/levels.html';
+          }, 500);
+        });
+        // Render loop for roulette during victory
+        function victoryRouletteLoop() {
+          if (!_rouletteActive) return;
+          updateRoulette();
+          // Redraw scene + roulette on top
+          drawBackground();
+          ctx.save();
+          ctx.translate(-camera.x - camera.shakeX, -camera.y - camera.shakeY);
+          drawGroundDecals(ctx);
+          turret.draw(ctx);
+          for (const enemy of enemies) enemy.draw(ctx);
+          drawParticles(ctx);
+          drawFloatingTexts(ctx);
+          ctx.restore();
+          drawWalls();
+          drawVignette();
+          drawRoulette();
+          requestAnimationFrame(victoryRouletteLoop);
+        }
+        requestAnimationFrame(victoryRouletteLoop);
+      }, 3000);
       return;
     }
 

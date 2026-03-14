@@ -30,6 +30,7 @@ function buildAbilityBar() {
     const slot = document.createElement('div');
     slot.className = 'ability-slot ready';
     slot.id = `ability-${id}`;
+    slot.dataset.ability = id;
     slot.innerHTML = `<span class="ability-icon">${info.icon}</span><span class="ability-key">${info.key}</span>`;
     bar.appendChild(slot);
   });
@@ -116,4 +117,25 @@ async function saveProgress(completed = false) {
   const saveData = { levelProgress: { [levelKey]: levelData } };
   if (newGems > 0) saveData.gems = totalGems;
   saveServerGameData(saveData);
+}
+
+// ── Save silver coins (called after roulette) ──
+async function saveSilverCoins(amount) {
+  if (amount <= 0) return;
+  try {
+    const freshRes = await fetch('/api/gamedata');
+    let total = 0;
+    if (freshRes.ok) {
+      const freshData = await freshRes.json();
+      total = (freshData.silverCoins || 0) + amount;
+    } else {
+      total = (serverGameData.silverCoins || 0) + amount;
+    }
+    serverGameData.silverCoins = total;
+    saveServerGameData({ silverCoins: total });
+  } catch (e) {
+    const total = (serverGameData.silverCoins || 0) + amount;
+    serverGameData.silverCoins = total;
+    saveServerGameData({ silverCoins: total });
+  }
 }

@@ -29,6 +29,7 @@ router.get('/gamedata', requireAuth, (req, res) => {
   const gd = req.user.gameData || {};
   res.json({
     gems: gd.gems || 0,
+    silverCoins: gd.silverCoins || 0,
     permUpgrades: gd.permUpgrades || {},
     levelProgress: gd.levelProgress || {},
     unlockedAbilities: gd.unlockedAbilities || [],
@@ -38,10 +39,11 @@ router.get('/gamedata', requireAuth, (req, res) => {
 
 router.post('/gamedata', requireAuth, async (req, res) => {
   try {
-    const { gems, permUpgrades, levelProgress } = req.body;
+    const { gems, silverCoins, permUpgrades, levelProgress } = req.body;
     const update = {};
 
     if (gems !== undefined) update['gameData.gems'] = gems;
+    if (silverCoins !== undefined) update['gameData.silverCoins'] = silverCoins;
     if (permUpgrades) {
       for (const key of ['health', 'damage', 'regen', 'precision', 'fireRate']) {
         if (permUpgrades[key] !== undefined) {

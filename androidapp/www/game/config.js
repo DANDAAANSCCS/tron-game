@@ -120,6 +120,7 @@ let autoAimTarget = null;
 // ── Currency ──
 let gold = 0;
 let gems = 0;
+let silverCoins = 0;
 let rewardPopups = [];
 const BASE_BULLET_SPREAD = 0.32;
 

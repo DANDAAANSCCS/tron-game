@@ -72,7 +72,7 @@ const PERM_UPGRADES = [
 
 const BASE_COST = 5;
 const COST_SCALE = 1.10;
-const BONUS_PER_LEVEL = 0.05;
+const BONUS_PER_LEVEL = 0.10;
 
 // Server-backed data
 let serverGems = 0;

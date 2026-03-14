@@ -914,13 +914,20 @@ body {
 
 .ab-equip-btn.ab-equip {
   color: #00fff2;
-  border-color: rgba(0, 255, 242, 0.3);
+  border-color: rgba(0, 255, 242, 0.35);
+  background: rgba(0, 255, 242, 0.06);
+  text-shadow: 0 0 8px rgba(0, 255, 242, 0.4);
+  box-shadow: 0 0 8px rgba(0, 255, 242, 0.08), inset 0 0 12px rgba(0, 255, 242, 0.04);
+  padding: 10px 20px;
 }
 
-.ab-equip-btn.ab-equip:hover {
-  background: rgba(0, 255, 242, 0.1);
+.ab-equip-btn.ab-equip:hover,
+.ab-equip-btn.ab-equip:active {
+  color: #44ffff;
+  background: rgba(0, 255, 242, 0.12);
   border-color: rgba(0, 255, 242, 0.6);
-  box-shadow: 0 0 12px rgba(0, 255, 242, 0.15);
+  box-shadow: 0 0 18px rgba(0, 255, 242, 0.2), inset 0 0 15px rgba(0, 255, 242, 0.06);
+  text-shadow: 0 0 12px rgba(0, 255, 242, 0.6);
 }
 
 .ab-equip-btn.ab-equip.no-buy {
@@ -930,14 +937,21 @@ body {
 }
 
 .ab-equip-btn.ab-unequip {
-  color: #ff0055;
-  border-color: rgba(255, 0, 85, 0.3);
+  color: #ff6644;
+  border-color: rgba(255, 102, 68, 0.35);
+  background: rgba(255, 68, 34, 0.06);
+  text-shadow: 0 0 8px rgba(255, 102, 68, 0.4);
+  box-shadow: 0 0 8px rgba(255, 68, 34, 0.08), inset 0 0 12px rgba(255, 68, 34, 0.04);
+  padding: 10px 20px;
 }
 
-.ab-equip-btn.ab-unequip:hover {
-  background: rgba(255, 0, 85, 0.1);
-  border-color: rgba(255, 0, 85, 0.6);
-  box-shadow: 0 0 12px rgba(255, 0, 85, 0.15);
+.ab-equip-btn.ab-unequip:hover,
+.ab-equip-btn.ab-unequip:active {
+  color: #ff8866;
+  background: rgba(255, 68, 34, 0.12);
+  border-color: rgba(255, 102, 68, 0.6);
+  box-shadow: 0 0 18px rgba(255, 68, 34, 0.2), inset 0 0 15px rgba(255, 68, 34, 0.06);
+  text-shadow: 0 0 12px rgba(255, 102, 68, 0.6);
 }
 
 .ability-card.equipped {

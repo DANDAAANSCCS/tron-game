@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   gameData: {
     gems: { type: Number, default: 0 },
+    silverCoins: { type: Number, default: 0 },
     permUpgrades: {
       health: { type: Number, default: 0 },
       damage: { type: Number, default: 0 },

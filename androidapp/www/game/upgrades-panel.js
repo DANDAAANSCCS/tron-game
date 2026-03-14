@@ -91,17 +91,12 @@ function buyUpgrade(key) {
 // ── Upgrades Panel ──
 function drawUpgradesPanel() {
   if (!upgradesPanelOpen) {
-    ctx.save();
-    ctx.font = '600 10px Share Tech Mono';
-    ctx.fillStyle = 'rgba(0, 255, 242, 0.3)';
-    ctx.textAlign = 'center';
-    ctx.fillText('[B] UPGRADES', canvas.width / 2, canvas.height - 85);
-    ctx.restore();
+    // HTML button #touch-upgrades-btn handles the toggle on mobile — nothing to draw here
     return;
   }
 
   const upgradeKeys = ['damage', 'fireRate', 'precision', 'doubleBul', 'health'];
-  const panelW = 440;
+  const panelW = Math.min(440, canvas.width - 40);
   const rowH = 50;
   const panelH = 80 + upgradeKeys.length * rowH + 25;
   const px = (canvas.width - panelW) / 2;
@@ -130,6 +125,21 @@ function drawUpgradesPanel() {
   ctx.beginPath(); ctx.moveTo(px + panelW - cs, py + panelH); ctx.lineTo(px + panelW, py + panelH); ctx.lineTo(px + panelW, py + panelH - cs); ctx.stroke();
   ctx.shadowBlur = 0;
 
+  // Close button (X) — top-right corner, detected by touch in input.js
+  const closeBtnX = px + panelW - 30;
+  const closeBtnY = py + 10;
+  const closeBtnSize = 20;
+  ctx.strokeStyle = COL.cyan;
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = COL.cyan;
+  ctx.shadowBlur = 6;
+  ctx.strokeRect(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize);
+  ctx.font = '700 12px Share Tech Mono';
+  ctx.fillStyle = COL.cyan;
+  ctx.textAlign = 'center';
+  ctx.fillText('X', closeBtnX + closeBtnSize / 2, closeBtnY + 14);
+  ctx.shadowBlur = 0;
+
   // Title
   ctx.font = '900 18px Orbitron';
   ctx.fillStyle = COL.cyan;
@@ -154,6 +164,7 @@ function drawUpgradesPanel() {
 
   // Rows
   const startY = py + 70;
+  const pipStartX = px + Math.min(268, panelW * 0.6);
 
   for (let i = 0; i < upgradeKeys.length; i++) {
     const key = upgradeKeys[i];
@@ -186,7 +197,7 @@ function drawUpgradesPanel() {
     ctx.fillText(upg.icon, px + 58, ry + 28);
 
     // Label + tier badge
-    ctx.font = '700 11px Orbitron';
+    ctx.font = '700 12px Orbitron';
     ctx.fillStyle = canBuy ? '#fff' : 'rgba(255, 255, 255, 0.3)';
     ctx.textAlign = 'left';
     ctx.fillText(upg.label, px + 80, ry + 18);
@@ -212,7 +223,7 @@ function drawUpgradesPanel() {
     }
 
     // Description (dynamic)
-    ctx.font = '600 9px Share Tech Mono';
+    ctx.font = '600 10px Share Tech Mono';
     ctx.fillStyle = canBuy ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.15)';
     ctx.textAlign = 'left';
     const desc = getUpgradeDesc(upg);
@@ -223,7 +234,6 @@ function drawUpgradesPanel() {
     const maxPips = PIPS_PER_TIER;
     const pipW = 7;
     const pipH = 4;
-    const pipStartX = px + 268;
     for (let p = 0; p < maxPips; p++) {
       const filled = p < pipLvl;
       ctx.fillStyle = filled ? upg.color : 'rgba(255, 255, 255, 0.06)';
@@ -262,7 +272,7 @@ function drawUpgradesPanel() {
   ctx.font = '600 10px Share Tech Mono';
   ctx.fillStyle = 'rgba(0, 255, 242, 0.4)';
   ctx.textAlign = 'center';
-  ctx.fillText('[B] CLOSE    [1-5] BUY', px + panelW / 2, py + panelH - 10);
+  ctx.fillText('TAP UPGRADE TO BUY | TAP X TO CLOSE', px + panelW / 2, py + panelH - 10);
 
   ctx.restore();
 }

@@ -3,7 +3,7 @@
 <head>
   <script src="/app-config.js"></script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1, viewport-fit=cover">
   <title>NEON DEFENSE</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
@@ -18,86 +18,118 @@
       justify-content: center;
       align-items: center;
       font-family: 'Orbitron', monospace;
+      /* Safe area for notch/cutout — don't put content behind system UI */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
     }
 
-    canvas { display: block; }
+    canvas#game {
+      display: block;
+      touch-action: none;
+    }
 
+    /* ─── HUD ─────────────────────────────────────────────── */
     #hud {
       position: fixed;
       top: 0; left: 0;
       width: 100%;
-      padding: 12px 25px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      padding: calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: start;
       z-index: 10;
       pointer-events: none;
     }
 
-    .hud-section {
+    /* Left column: HP / Gold / Gems stacked */
+    .hud-left {
       display: flex;
-      gap: 25px;
-      align-items: center;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    /* Center column: Level + Wave */
+    .hud-center {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: rgba(0, 255, 242, 0.9);
+      text-shadow: 0 0 12px rgba(0, 255, 242, 0.5);
+      letter-spacing: 3px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .hud-center .hud-lvl {
+      display: block;
+      font-size: 0.65rem;
+      opacity: 0.6;
+      letter-spacing: 2px;
+      margin-bottom: 1px;
+    }
+
+    /* Right column: Score / Kills stacked */
+    .hud-right {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      align-items: flex-end;
     }
 
     .hud-item {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 0.75rem;
-      letter-spacing: 2px;
-      color: rgba(0, 255, 242, 0.6);
-      text-shadow: 0 0 8px rgba(0, 255, 242, 0.3);
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+      color: rgba(0, 255, 242, 0.55);
+      text-shadow: 0 0 6px rgba(0, 255, 242, 0.25);
     }
 
-    .hud-item .val { color: #00fff2; font-weight: 700; }
-    .hud-item .val-hp { color: #00ff66; }
-    .hud-item .val-wave { color: #ff6600; }
-    .hud-item .val-score { color: #ffdd00; }
+    .hud-item .val       { color: #00fff2; font-size: 0.85rem; font-weight: 700; }
+    .hud-item .val-hp    { color: #00ff66; font-size: 0.85rem; font-weight: 700; }
+    .hud-item .val-wave  { color: #ff6600; font-size: 0.85rem; font-weight: 700; }
+    .hud-item .val-score { color: #ffdd00; font-size: 0.85rem; font-weight: 700; }
 
-    .hud-center {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: rgba(0, 255, 242, 0.85);
-      text-shadow: 0 0 12px rgba(0, 255, 242, 0.5);
-      letter-spacing: 4px;
-    }
-
-    /* Ability bar */
+    /* ─── ABILITY BAR ─────────────────────────────────────── */
     #ability-bar {
       position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      left: calc(15px + env(safe-area-inset-left));
       display: flex;
-      gap: 12px;
+      gap: 10px;
       z-index: 10;
-      pointer-events: none;
+      pointer-events: auto;
     }
 
     .ability-slot {
-      width: 60px; height: 60px;
+      width: 70px; height: 70px;
       border: 2px solid rgba(0, 255, 242, 0.3);
-      background: rgba(5, 5, 15, 0.8);
+      background: rgba(5, 5, 15, 0.85);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       position: relative;
       font-family: 'Share Tech Mono', monospace;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .ability-slot:active {
+      border-color: rgba(0, 255, 242, 0.9);
+      box-shadow: 0 0 20px rgba(0, 255, 242, 0.5), inset 0 0 10px rgba(0, 255, 242, 0.15);
     }
 
     .ability-slot .ability-icon {
-      font-size: 1.4rem;
+      font-size: 1.6rem;
       color: #00fff2;
       text-shadow: 0 0 10px #00fff2;
     }
 
+    /* ability-key intentionally hidden on mobile */
     .ability-slot .ability-key {
-      font-size: 0.55rem;
-      color: rgba(0, 255, 242, 0.5);
-      position: absolute;
-      bottom: 2px;
-      letter-spacing: 1px;
+      display: none;
     }
 
     .ability-slot .ability-cooldown {
@@ -108,13 +140,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
-      color: rgba(255, 102, 0, 0.8);
+      font-size: 0.85rem;
+      color: rgba(255, 102, 0, 0.85);
     }
 
     .ability-slot.ready {
       border-color: rgba(0, 255, 242, 0.7);
-      box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+      box-shadow: 0 0 15px rgba(0, 255, 242, 0.25);
     }
 
     .ability-slot.locked {
@@ -126,7 +158,48 @@
       opacity: 0.2;
     }
 
-    /* Overlay */
+    /* ─── TOUCH CONTROLS ──────────────────────────────────── */
+    #touch-upgrades-btn {
+      position: fixed;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      right: calc(20px + env(safe-area-inset-right));
+      width: 50px; height: 50px;
+      border: 2px solid rgba(0, 255, 242, 0.4);
+      background: rgba(5, 5, 15, 0.8);
+      z-index: 15;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: rgba(0, 255, 242, 0.8);
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px rgba(0, 255, 242, 0.4);
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    #touch-upgrades-btn:active {
+      border-color: #00fff2;
+      background: rgba(0, 255, 242, 0.12);
+      box-shadow: 0 0 20px rgba(0, 255, 242, 0.5);
+      color: #00fff2;
+    }
+
+    /* ─── MINIMAP ─────────────────────────────────────────── */
+    #minimap {
+      position: fixed;
+      bottom: calc(80px + env(safe-area-inset-bottom));
+      right: calc(20px + env(safe-area-inset-right));
+      border: 1px solid rgba(0, 255, 242, 0.2);
+      z-index: 10;
+      background: rgba(5, 5, 8, 0.7);
+      pointer-events: none;
+    }
+
+    /* ─── OVERLAY ─────────────────────────────────────────── */
     #overlay {
       position: fixed;
       top: 0; left: 0;
@@ -143,52 +216,51 @@
 
     #overlay-text {
       font-family: 'Orbitron', sans-serif;
-      font-size: 4rem;
+      font-size: 2.5rem;
       font-weight: 900;
       color: #00fff2;
       text-shadow: 0 0 20px #00fff2, 0 0 60px #00fff2;
-      letter-spacing: 8px;
+      letter-spacing: 6px;
+      text-align: center;
     }
 
     #overlay-sub {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       color: rgba(0, 255, 242, 0.5);
-      letter-spacing: 4px;
-      margin-top: 15px;
-    }
-
-    /* Minimap */
-    #minimap {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      border: 1px solid rgba(0, 255, 242, 0.2);
-      z-index: 10;
-      background: rgba(5, 5, 8, 0.7);
+      letter-spacing: 3px;
+      margin-top: 12px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
-  <canvas id="minimap" width="180" height="180"></canvas>
+  <canvas id="minimap" width="120" height="120"></canvas>
 
   <div id="hud">
-    <div class="hud-section">
-      <div class="hud-item">HP: <span class="val val-hp" id="hp-val">100</span></div>
-      <div class="hud-item">KILLS: <span class="val val-score" id="kills-val">0</span></div>
-      <div class="hud-item hud-gold">&nbsp;&nbsp;&nbsp;<span class="val" id="gold-val" style="color:#ffd700">0</span></div>
-      <div class="hud-item hud-gem">&nbsp;&nbsp;&nbsp;<span class="val" id="gems-val" style="color:#e040fb">0</span></div>
+    <div class="hud-left">
+      <div class="hud-item">HP <span class="val val-hp" id="hp-val">100</span></div>
+      <div class="hud-item"><span style="color:#ffd700;font-size:0.75rem;">&#9670;</span> <span class="val" id="gold-val" style="color:#ffd700">0</span></div>
+      <div class="hud-item"><span style="color:#e040fb;font-size:0.75rem;">&#9670;</span> <span class="val" id="gems-val" style="color:#e040fb">0</span></div>
+      <div class="hud-item"><span style="color:#c0c0c0;font-size:0.75rem;">&#9673;</span> <span class="val" id="silver-val" style="color:#c0c0c0">0</span></div>
     </div>
-    <div class="hud-center"><span style="font-size:0.7rem;opacity:0.6;">LVL <span id="level-val">1</span></span> WAVE <span id="wave-val">1</span><span style="font-size:0.65rem;opacity:0.5;"> / 100</span></div>
-    <div class="hud-section">
-      <div class="hud-item">MODE: <span class="val" id="mode-val">AUTO</span></div>
-      <div class="hud-item">ENEMIES: <span class="val val-wave" id="enemies-val">0</span></div>
-      <div class="hud-item">SCORE: <span class="val val-score" id="score-val">0</span></div>
+
+    <div class="hud-center">
+      <span class="hud-lvl">LVL <span id="level-val">1</span></span>
+      WAVE <span id="wave-val">1</span><span style="font-size:0.6rem;opacity:0.45;"> /100</span>
+    </div>
+
+    <div class="hud-right">
+      <div class="hud-item">SCORE <span class="val val-score" id="score-val">0</span></div>
+      <div class="hud-item">KILLS <span class="val val-score" id="kills-val">0</span></div>
+      <div class="hud-item">ENE <span class="val val-wave" id="enemies-val">0</span></div>
     </div>
   </div>
 
   <div id="ability-bar"></div>
+
+  <div id="touch-upgrades-btn">UP</div>
 
   <div id="overlay">
     <div id="overlay-text">WAVE 1</div>
@@ -206,6 +278,7 @@
   <script src="game/waves.js"></script>
   <script src="game/emp.js"></script>
   <script src="game/rendering.js"></script>
+  <script src="game/roulette.js"></script>
   <script src="game/input.js"></script>
   <script src="game/main.js"></script>
 </body>
