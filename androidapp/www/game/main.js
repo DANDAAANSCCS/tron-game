@@ -190,21 +190,42 @@ async function startGame() {
   buildAbilityBar();
 
   initGame();
+
+  // Check for saved session to restore
+  let restored = false;
+  try {
+    const ssRes = await fetch('/api/autosave');
+    if (ssRes.ok) {
+      const ssData = await ssRes.json();
+      if (ssData.sessionState && restoreSession(ssData.sessionState)) {
+        restored = true;
+        // Re-start wave with restored wave number
+        startWave();
+        // Clear the autosave now that we've loaded it
+        fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
+      }
+    }
+  } catch (e) {}
+
   gameState = 'countdown';
 
   // Show touch controls
   const upgBtn = document.getElementById('touch-upgrades-btn');
   if (upgBtn) upgBtn.style.display = 'flex';
 
-  for (let i = 3; i >= 1; i--) {
-    showOverlay(i.toString(), 'INITIALIZING DEFENSE GRID...');
-    await sleep(700);
+  if (restored) {
+    showOverlay(`WAVE ${wave}`, 'SESSION RESTORED — RESUMING...');
+    await sleep(1500);
+  } else {
+    for (let i = 3; i >= 1; i--) {
+      showOverlay(i.toString(), 'INITIALIZING DEFENSE GRID...');
+      await sleep(700);
+    }
+    showOverlay('DEFEND!', '');
+    await sleep(500);
   }
 
-  showOverlay('DEFEND!', '');
-  await sleep(500);
   hideOverlay();
-
   gameState = 'playing';
   if (typeof startMusic === 'function') startMusic();
   requestAnimationFrame(gameLoop);

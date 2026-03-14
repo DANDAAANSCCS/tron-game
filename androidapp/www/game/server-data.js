@@ -61,7 +61,12 @@ async function saveServerGameData(data) {
 
 // ── Auto-save periodico (cada 30 segundos) ──
 function doAutoSave() {
-  if (gameState !== 'playing' || !turret || !turret.alive) return;
+  if (!turret) return;
+  // Save current upgrades state
+  const upgradeState = {};
+  for (const key in upgrades) {
+    upgradeState[key] = { level: upgrades[key].level, tier: upgrades[key].tier };
+  }
   fetch('/api/autosave', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -71,10 +76,41 @@ function doAutoSave() {
       gold,
       gems,
       hp: turret.hp,
+      maxHp: turret.maxHp,
       totalKills,
       level: currentLevel,
+      upgrades: upgradeState,
     }),
   }).catch(() => {});
+}
+
+// ── Restore session from auto-save ──
+function restoreSession(session) {
+  if (!session || session.level !== currentLevel) return false;
+  wave = session.wave || 1;
+  score = session.score || 0;
+  gold = session.gold || 0;
+  gems = session.gems || 0;
+  totalKills = session.totalKills || 0;
+  if (turret) {
+    turret.hp = session.hp || turret.maxHp;
+    if (session.maxHp) turret.maxHp = session.maxHp;
+  }
+  // Restore in-game upgrades
+  if (session.upgrades) {
+    for (const key in session.upgrades) {
+      if (upgrades[key]) {
+        upgrades[key].level = session.upgrades[key].level || 0;
+        upgrades[key].tier = session.upgrades[key].tier || 0;
+      }
+    }
+    // Re-apply health upgrade
+    if (turret) {
+      turret.maxHp = getCurrentMaxHp();
+      turret.hp = Math.min(turret.hp, turret.maxHp);
+    }
+  }
+  return true;
 }
 
 function applyPermBonuses() {

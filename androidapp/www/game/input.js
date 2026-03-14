@@ -257,12 +257,13 @@ window.addEventListener('keyup', e => {
     if (typeof playSelectSound === 'function') playSelectSound();
   });
 
-  // Save & Quit
+  // Save & Quit — saves full game state (wave, score, upgrades, etc.)
   addTap(btnSaveQuit, () => {
     if (typeof playSelectSound === 'function') playSelectSound();
+    if (typeof saveProgress === 'function') saveProgress();
     if (typeof doAutoSave === 'function') doAutoSave();
     if (typeof stopMusic === 'function') stopMusic();
-    window.location.href = '/levels.html';
+    setTimeout(() => { window.location.href = '/levels.html'; }, 300);
   });
 
   // Restart

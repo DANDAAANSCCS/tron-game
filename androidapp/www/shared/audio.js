@@ -569,12 +569,14 @@ function playRouletteRewardSound() {
   cn.start(chingStart); cn.stop(chingStart + chingDur + 0.01);
 }
 
-// ── Auto-start ──
+// ── Auto-unlock AudioContext on first user interaction ──
+// Music is NOT auto-started here — it's started by game/main.js only during gameplay.
 (function() {
-  if (musicEnabled) {
-    startMusic();
-    const unlock = () => { ensureContext(); startMusic(); document.removeEventListener('pointerdown', unlock); document.removeEventListener('keydown', unlock); };
-    document.addEventListener('pointerdown', unlock);
-    document.addEventListener('keydown', unlock);
-  }
+  const unlock = () => {
+    ensureContext();
+    document.removeEventListener('pointerdown', unlock);
+    document.removeEventListener('keydown', unlock);
+  };
+  document.addEventListener('pointerdown', unlock);
+  document.addEventListener('keydown', unlock);
 })();

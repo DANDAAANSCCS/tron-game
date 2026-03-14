@@ -294,8 +294,8 @@ router.post('/chest/open', requireAuth, async (req, res) => {
 // ── Auto-save ──
 router.post('/autosave', requireAuth, async (req, res) => {
   try {
-    const { wave, score, gold, gems, hp, totalKills, level } = req.body;
-    const sessionState = { wave, score, gold, gems, hp, totalKills, level, savedAt: Date.now() };
+    const { wave, score, gold, gems, hp, maxHp, totalKills, level, upgrades } = req.body;
+    const sessionState = { wave, score, gold, gems, hp, maxHp, totalKills, level, upgrades, savedAt: Date.now() };
     await User.findByIdAndUpdate(req.user._id, { $set: { 'gameData.sessionState': sessionState } });
     res.json({ ok: true });
   } catch (err) {
