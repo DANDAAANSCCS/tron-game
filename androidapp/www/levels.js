@@ -241,8 +241,10 @@ document.addEventListener('keydown', (e) => {
   if (cards.length === 0) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
     selectedCardIndex = Math.min(selectedCardIndex + 1, cards.length - 1);
+    if (typeof playHoverSound === 'function') playHoverSound();
   } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
     selectedCardIndex = Math.max(selectedCardIndex - 1, 0);
+    if (typeof playHoverSound === 'function') playHoverSound();
   } else if (e.key === 'Enter') {
     const card = cards[selectedCardIndex];
     if (card) {
@@ -254,6 +256,7 @@ document.addEventListener('keydown', (e) => {
       }, 400);
     }
   } else if (e.key === 'Escape' || e.key === 'Backspace') {
+    if (typeof playSelectSound === 'function') playSelectSound();
     window.location.href = '/';
   }
 });

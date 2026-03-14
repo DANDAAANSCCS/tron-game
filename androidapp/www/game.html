@@ -346,6 +346,43 @@
       background: rgba(0, 255, 242, 0.08);
       color: rgba(0, 255, 242, 0.8);
     }
+
+    .settings-divider {
+      border-top: 1px solid rgba(0, 255, 242, 0.1);
+      margin: 10px 0;
+    }
+
+    .settings-action-btn {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: 1px solid rgba(0, 255, 242, 0.2);
+      color: rgba(0, 255, 242, 0.6);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 8px 0;
+      cursor: pointer;
+      margin-bottom: 6px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .settings-action-btn:active {
+      background: rgba(0, 255, 242, 0.06);
+      color: rgba(0, 255, 242, 0.9);
+    }
+
+    .settings-action-btn.warn {
+      border-color: rgba(255, 68, 34, 0.3);
+      color: rgba(255, 68, 34, 0.6);
+    }
+
+    .settings-action-btn.warn:active {
+      background: rgba(255, 68, 34, 0.08);
+      color: rgba(255, 68, 34, 0.9);
+    }
   </style>
 </head>
 <body>
@@ -380,10 +417,17 @@
   <div id="settings-panel" style="display:none;">
     <div class="settings-title">CONFIG</div>
     <div class="settings-row">
-      <span>SOUND</span>
-      <button id="sound-toggle" class="settings-toggle">ON</button>
+      <span>MUSICA</span>
+      <button id="music-toggle" class="settings-toggle">ON</button>
     </div>
-    <button id="settings-close" class="settings-close-btn">CERRAR</button>
+    <div class="settings-row">
+      <span>EFECTOS</span>
+      <button id="sfx-toggle" class="settings-toggle">ON</button>
+    </div>
+    <div class="settings-divider"></div>
+    <button id="btn-save-quit" class="settings-action-btn">GUARDAR Y SALIR</button>
+    <button id="btn-restart" class="settings-action-btn warn">REINICIAR</button>
+    <button id="settings-close" class="settings-close-btn">CONTINUAR</button>
   </div>
 
   <div id="overlay">

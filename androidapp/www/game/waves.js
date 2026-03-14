@@ -210,6 +210,7 @@ function updateWaveSpawning() {
       gems += 25;
       gameState = 'victory';
       if (typeof stopMusic === 'function') stopMusic();
+      if (typeof playLevelUpSound === 'function') playLevelUpSound();
       saveProgress(true);
       fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
       showOverlay('VICTORY!', `LEVEL ${currentLevel} COMPLETE — SCORE: ${score}`);

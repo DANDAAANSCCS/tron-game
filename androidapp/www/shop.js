@@ -158,7 +158,9 @@ async function openChest(chestType, card) {
     card.classList.add('opening');
     card.addEventListener('animationend', () => card.classList.remove('opening'), { once: true });
 
-    if (typeof playBuySound === 'function') playBuySound();
+    // Play chest open sound on successful purchase
+    if (typeof playChestOpenSound === 'function') playChestOpenSound();
+    else if (typeof playBuySound === 'function') playBuySound();
 
     // Show reveal overlay
     showRevealOverlay(data);
@@ -247,7 +249,10 @@ function initOverlay() {
   const overlay = document.getElementById('reveal-overlay');
   if (overlay) {
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) hideRevealOverlay();
+      if (e.target === overlay) {
+        hideRevealOverlay();
+        if (typeof playSelectSound === 'function') playSelectSound();
+      }
     });
   }
 
@@ -257,6 +262,7 @@ function initOverlay() {
       const overlay = document.getElementById('reveal-overlay');
       if (overlay && overlay.classList.contains('visible')) {
         hideRevealOverlay();
+        if (typeof playSelectSound === 'function') playSelectSound();
       }
     }
   });
@@ -312,6 +318,7 @@ document.addEventListener('keydown', (e) => {
   if (overlayOpen) return; // handled separately above
 
   if (e.key === 'Escape' || e.key === 'Backspace') {
+    if (typeof playSelectSound === 'function') playSelectSound();
     window.location.href = '/';
   }
 });

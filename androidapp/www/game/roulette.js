@@ -37,6 +37,11 @@ let _rouletteDoneTimer = 0;
 let _rouletteTargetAngle = 0;   // where we want to stop
 let _rouletteCallback = null;   // called when roulette finishes
 
+// ── Tick tracking for segment boundary detection ──
+let _rouletteLastTickSeg = -1;  // which segment was last ticked
+let _rouletteStopSoundPlayed = false;
+let _rouletteRewardSoundPlayed = false;
+
 function startRoulette(finalScore, callback) {
   _rouletteActive = true;
   _roulettePhase = 'spinning';
@@ -45,6 +50,11 @@ function startRoulette(finalScore, callback) {
   _rouletteBaseCoins = Math.floor(finalScore / 4);
   _rouletteDoneTimer = 0;
   _rouletteCallback = callback;
+
+  // Reset tick/sound state
+  _rouletteLastTickSeg = -1;
+  _rouletteStopSoundPlayed = false;
+  _rouletteRewardSoundPlayed = false;
 
   // Pre-pick the result
   _rouletteResult = _pickRouletteResult();
@@ -65,8 +75,18 @@ function startRoulette(finalScore, callback) {
 function updateRoulette() {
   if (!_rouletteActive) return;
 
+  const segCount = ROULETTE_SEGMENTS.length;
+  const segAngle = (Math.PI * 2) / segCount;
+
   if (_roulettePhase === 'spinning') {
     _rouletteAngle += _rouletteSpeed;
+
+    // Tick sound: detect segment boundary crossings
+    const currentSeg = Math.floor((_rouletteAngle % (Math.PI * 2)) / segAngle) % segCount;
+    if (currentSeg !== _rouletteLastTickSeg) {
+      _rouletteLastTickSeg = currentSeg;
+      if (typeof playRouletteTickSound === 'function') playRouletteTickSound();
+    }
 
     // Decelerate as we approach target
     const remaining = _rouletteTargetAngle - _rouletteAngle;
@@ -81,15 +101,33 @@ function updateRoulette() {
     _rouletteSpeed = Math.max(0.003, remaining * 0.02);
     _rouletteAngle += _rouletteSpeed;
 
+    // Tick sound: detect segment boundary crossings during slowdown
+    const currentSeg = Math.floor((_rouletteAngle % (Math.PI * 2)) / segAngle) % segCount;
+    if (currentSeg !== _rouletteLastTickSeg) {
+      _rouletteLastTickSeg = currentSeg;
+      if (typeof playRouletteTickSound === 'function') playRouletteTickSound();
+    }
+
     if (remaining <= 0.01) {
       _rouletteAngle = _rouletteTargetAngle;
       _roulettePhase = 'done';
       _rouletteDoneTimer = 0;
+
+      // Stop sound when roulette settles
+      if (typeof playRouletteStopSound === 'function') playRouletteStopSound();
+      _rouletteStopSoundPlayed = true;
     }
   }
 
   if (_roulettePhase === 'done') {
     _rouletteDoneTimer++;
+
+    // Reward sound ~0.5s after stopping (frame 30), when result text becomes visible
+    if (_rouletteDoneTimer === 30 && !_rouletteRewardSoundPlayed) {
+      if (typeof playRouletteRewardSound === 'function') playRouletteRewardSound();
+      _rouletteRewardSoundPlayed = true;
+    }
+
     // After 3 seconds, finish
     if (_rouletteDoneTimer >= 180) {
       _rouletteActive = false;

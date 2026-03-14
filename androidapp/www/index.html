@@ -71,6 +71,21 @@
     <span class="user-name" id="user-display"></span>
     <button class="logout-btn" id="logout-btn">[LOGOUT]</button>
   </div>
+
+  <!-- Settings overlay for menu -->
+  <div id="menu-settings-btn" style="position:fixed;bottom:20px;right:20px;width:44px;height:44px;border:1px solid rgba(0,255,242,0.3);background:rgba(5,5,15,0.8);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:rgba(0,255,242,0.7);cursor:pointer;z-index:50;-webkit-tap-highlight-color:transparent;">&#9881;</div>
+  <div id="menu-settings-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;background:rgba(5,5,18,0.96);border:1px solid rgba(0,255,242,0.45);box-shadow:0 0 30px rgba(0,255,242,0.15);padding:20px 18px 16px;z-index:60;font-family:'Orbitron',sans-serif;">
+    <div style="font-size:0.75rem;font-weight:700;color:rgba(0,255,242,0.9);text-shadow:0 0 10px rgba(0,255,242,0.5);letter-spacing:4px;text-align:center;margin-bottom:16px;border-bottom:1px solid rgba(0,255,242,0.15);padding-bottom:10px;">CONFIG</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:rgba(0,255,242,0.6);letter-spacing:2px;">
+      <span>MUSICA</span>
+      <button id="menu-music-toggle" style="background:rgba(0,255,242,0.12);border:1px solid rgba(0,255,242,0.4);color:#00fff2;font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:2px;padding:5px 12px;cursor:pointer;">ON</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:rgba(0,255,242,0.6);letter-spacing:2px;">
+      <span>EFECTOS</span>
+      <button id="menu-sfx-toggle" style="background:rgba(0,255,242,0.12);border:1px solid rgba(0,255,242,0.4);color:#00fff2;font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:2px;padding:5px 12px;cursor:pointer;">ON</button>
+    </div>
+    <button id="menu-settings-close" style="display:block;width:100%;background:transparent;border:1px solid rgba(0,255,242,0.25);color:rgba(0,255,242,0.5);font-family:'Orbitron',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:3px;padding:7px 0;cursor:pointer;">CERRAR</button>
+  </div>
   <script src="auth-check.js"></script>
   <script src="shared/bg-animation.js"></script>
   <script src="shared/audio.js"></script>
@@ -95,6 +110,34 @@
         }).catch(() => {});
       }
     }, 100);
+
+    // Menu settings panel
+    (function() {
+      const btn = document.getElementById('menu-settings-btn');
+      const panel = document.getElementById('menu-settings-panel');
+      const mt = document.getElementById('menu-music-toggle');
+      const st = document.getElementById('menu-sfx-toggle');
+      const cl = document.getElementById('menu-settings-close');
+
+      function sync() {
+        const mOn = typeof musicEnabled !== 'undefined' ? musicEnabled : true;
+        const sOn = typeof sfxEnabled !== 'undefined' ? sfxEnabled : true;
+        mt.textContent = mOn ? 'ON' : 'OFF';
+        mt.style.color = mOn ? '#00fff2' : '#ff6644';
+        mt.style.borderColor = mOn ? 'rgba(0,255,242,0.4)' : 'rgba(255,102,68,0.4)';
+        st.textContent = sOn ? 'ON' : 'OFF';
+        st.style.color = sOn ? '#00fff2' : '#ff6644';
+        st.style.borderColor = sOn ? 'rgba(0,255,242,0.4)' : 'rgba(255,102,68,0.4)';
+      }
+
+      btn.addEventListener('click', () => {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        sync();
+      });
+      mt.addEventListener('click', () => { if (typeof toggleMusic === 'function') toggleMusic(); sync(); });
+      st.addEventListener('click', () => { if (typeof toggleSFX === 'function') toggleSFX(); sync(); });
+      cl.addEventListener('click', () => { panel.style.display = 'none'; });
+    })();
   </script>
 </body>
 </html>

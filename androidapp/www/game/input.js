@@ -26,7 +26,12 @@ function _tryBuyUpgradeAtScreenPos(sx, sy) {
   if (relY < 0) return false;
   const row = Math.floor(relY / PANEL_ROW_H);
   if (row >= 0 && row < UPGRADE_KEYS.length) {
-    buyUpgrade(UPGRADE_KEYS[row]);
+    const purchased = buyUpgrade(UPGRADE_KEYS[row]);
+    if (purchased) {
+      if (typeof playBuySound === 'function') playBuySound();
+    } else {
+      if (typeof playDenySound === 'function') playDenySound();
+    }
     return true;
   }
   return false;
@@ -67,6 +72,7 @@ canvas.addEventListener('touchstart', e => {
         if (mouse.x >= closeBtnX && mouse.x <= closeBtnX + 20 &&
             mouse.y >= closeBtnY && mouse.y <= closeBtnY + 20) {
           upgradesPanelOpen = false;
+          if (typeof playSelectSound === 'function') playSelectSound();
         } else {
           _tryBuyUpgradeAtScreenPos(mouse.x, mouse.y);
         }
@@ -110,6 +116,7 @@ _upgradesBtn.addEventListener('touchstart', e => {
   e.stopPropagation();
   if (gameState === 'playing') {
     upgradesPanelOpen = !upgradesPanelOpen;
+    if (typeof playSelectSound === 'function') playSelectSound();
   }
 }, { passive: false });
 
@@ -117,6 +124,7 @@ _upgradesBtn.addEventListener('touchstart', e => {
 _upgradesBtn.addEventListener('click', () => {
   if (gameState === 'playing') {
     upgradesPanelOpen = !upgradesPanelOpen;
+    if (typeof playSelectSound === 'function') playSelectSound();
   }
 });
 
@@ -175,11 +183,17 @@ window.addEventListener('keydown', e => {
   if (e.key === ' ') { keys.space = true; e.preventDefault(); }
   if (e.key.toLowerCase() === 'b' && gameState === 'playing') {
     upgradesPanelOpen = !upgradesPanelOpen;
+    if (typeof playSelectSound === 'function') playSelectSound();
   }
   if (upgradesPanelOpen && gameState === 'playing') {
     const num = parseInt(e.key);
     if (num >= 1 && num <= 5) {
-      buyUpgrade(UPGRADE_KEYS[num - 1]);
+      const purchased = buyUpgrade(UPGRADE_KEYS[num - 1]);
+      if (purchased) {
+        if (typeof playBuySound === 'function') playBuySound();
+      } else {
+        if (typeof playDenySound === 'function') playDenySound();
+      }
     }
   }
 });
@@ -189,59 +203,77 @@ window.addEventListener('keyup', e => {
   if (e.key === ' ') keys.space = false;
 });
 
-// ── Settings button handlers ──────────────────────────────────────────────────
+// ── Settings panel handlers ──────────────────────────────────────────────────
 (function () {
   const settingsBtn   = document.getElementById('settings-btn');
   const settingsPanel = document.getElementById('settings-panel');
-  const soundToggle   = document.getElementById('sound-toggle');
+  const musicToggle   = document.getElementById('music-toggle');
+  const sfxToggle     = document.getElementById('sfx-toggle');
   const settingsClose = document.getElementById('settings-close');
+  const btnSaveQuit   = document.getElementById('btn-save-quit');
+  const btnRestart    = document.getElementById('btn-restart');
+
+  function syncToggles() {
+    if (musicToggle) {
+      const on = typeof musicEnabled !== 'undefined' ? musicEnabled : true;
+      musicToggle.textContent = on ? 'ON' : 'OFF';
+      musicToggle.classList.toggle('off', !on);
+    }
+    if (sfxToggle) {
+      const on = typeof sfxEnabled !== 'undefined' ? sfxEnabled : true;
+      sfxToggle.textContent = on ? 'ON' : 'OFF';
+      sfxToggle.classList.toggle('off', !on);
+    }
+  }
 
   function openSettings() {
     settingsPanel.style.display = 'block';
-    // Sync button label with current audio state
-    if (typeof audioEnabled !== 'undefined') {
-      soundToggle.textContent = audioEnabled ? 'ON' : 'OFF';
-      soundToggle.classList.toggle('off', !audioEnabled);
-    }
+    syncToggles();
+    if (typeof playSelectSound === 'function') playSelectSound();
   }
 
   function closeSettings() {
     settingsPanel.style.display = 'none';
+    if (typeof playSelectSound === 'function') playSelectSound();
   }
 
-  settingsBtn.addEventListener('touchstart', e => {
-    e.preventDefault();
-    e.stopPropagation();
-    settingsPanel.style.display === 'none' ? openSettings() : closeSettings();
-  }, { passive: false });
+  function addTap(el, fn) {
+    el.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); fn(); }, { passive: false });
+    el.addEventListener('click', fn);
+  }
 
-  settingsBtn.addEventListener('click', () => {
-    settingsPanel.style.display === 'none' ? openSettings() : closeSettings();
+  addTap(settingsBtn, () => settingsPanel.style.display === 'none' ? openSettings() : closeSettings());
+  addTap(settingsClose, closeSettings);
+
+  addTap(musicToggle, () => {
+    if (typeof toggleMusic === 'function') toggleMusic();
+    syncToggles();
+    if (typeof playSelectSound === 'function') playSelectSound();
   });
 
-  soundToggle.addEventListener('touchstart', e => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (typeof toggleAudio === 'function') toggleAudio();
-    const on = typeof audioEnabled !== 'undefined' ? audioEnabled : true;
-    soundToggle.textContent = on ? 'ON' : 'OFF';
-    soundToggle.classList.toggle('off', !on);
-  }, { passive: false });
-
-  soundToggle.addEventListener('click', () => {
-    if (typeof toggleAudio === 'function') toggleAudio();
-    const on = typeof audioEnabled !== 'undefined' ? audioEnabled : true;
-    soundToggle.textContent = on ? 'ON' : 'OFF';
-    soundToggle.classList.toggle('off', !on);
+  addTap(sfxToggle, () => {
+    if (typeof toggleSFX === 'function') toggleSFX();
+    syncToggles();
+    if (typeof playSelectSound === 'function') playSelectSound();
   });
 
-  settingsClose.addEventListener('touchstart', e => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Save & Quit
+  addTap(btnSaveQuit, () => {
+    if (typeof playSelectSound === 'function') playSelectSound();
+    if (typeof doAutoSave === 'function') doAutoSave();
+    if (typeof stopMusic === 'function') stopMusic();
+    window.location.href = '/levels.html';
+  });
+
+  // Restart
+  addTap(btnRestart, () => {
+    if (typeof playSelectSound === 'function') playSelectSound();
     closeSettings();
-  }, { passive: false });
-
-  settingsClose.addEventListener('click', () => closeSettings());
+    if (typeof initGame === 'function') {
+      initGame();
+      gameState = 'playing';
+    }
+  });
 
   // Block canvas touches from leaking through the panel
   settingsPanel.addEventListener('touchstart', e => e.stopPropagation(), { passive: false });

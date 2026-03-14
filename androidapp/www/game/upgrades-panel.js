@@ -64,8 +64,14 @@ function getCurrentMaxHp() {
 function buyUpgrade(key) {
   const upg = upgrades[key];
   const cost = getUpgradeCost(upg);
-  if (gold < cost) return false;
-  if (key === 'doubleBul' && getUpgradeValue(upg) >= upg.max) return false;
+  if (gold < cost) {
+    if (typeof playDenySound === 'function') playDenySound();
+    return false;
+  }
+  if (key === 'doubleBul' && getUpgradeValue(upg) >= upg.max) {
+    if (typeof playDenySound === 'function') playDenySound();
+    return false;
+  }
   gold -= cost;
   upg.level++;
 
@@ -85,6 +91,7 @@ function buyUpgrade(key) {
   }
 
   spawnFloatingText(turret.x, turret.y - 50, 'UPGRADED!', upg.color);
+  if (typeof playBuySound === 'function') playBuySound();
   return true;
 }
 

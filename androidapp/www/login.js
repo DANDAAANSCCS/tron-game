@@ -22,6 +22,7 @@ const forms = document.querySelectorAll('.login-form');
 
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
+    if (typeof playSelectSound === 'function') playSelectSound();
     const target = tab.dataset.tab;
     tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === target));
     forms.forEach(f => f.classList.toggle('active', f.dataset.tab === target));
@@ -40,6 +41,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
   if (!identifier || !password) {
     errEl.textContent = 'FILL ALL FIELDS';
+    if (typeof playDenySound === 'function') playDenySound();
     return;
   }
 
@@ -51,12 +53,15 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     });
     const data = await res.json();
     if (res.ok) {
+      if (typeof playSelectSound === 'function') playSelectSound();
       window.location.href = '/';
     } else {
       errEl.textContent = data.error || 'LOGIN FAILED';
+      if (typeof playDenySound === 'function') playDenySound();
     }
   } catch (err) {
     errEl.textContent = 'CONNECTION ERROR';
+    if (typeof playDenySound === 'function') playDenySound();
   }
 });
 
@@ -73,16 +78,19 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
 
   if (!username || !email || !password || !password2) {
     errEl.textContent = 'FILL ALL FIELDS';
+    if (typeof playDenySound === 'function') playDenySound();
     return;
   }
   // Validar formato email en cliente
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     errEl.textContent = 'INVALID EMAIL FORMAT';
+    if (typeof playDenySound === 'function') playDenySound();
     return;
   }
   if (password !== password2) {
     errEl.textContent = 'PASSWORDS DO NOT MATCH';
+    if (typeof playDenySound === 'function') playDenySound();
     return;
   }
 
@@ -94,12 +102,15 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     });
     const data = await res.json();
     if (res.ok) {
+      if (typeof playSelectSound === 'function') playSelectSound();
       window.location.href = '/';
     } else {
       errEl.textContent = data.error || 'REGISTER FAILED';
+      if (typeof playDenySound === 'function') playDenySound();
     }
   } catch (err) {
     errEl.textContent = 'CONNECTION ERROR';
+    if (typeof playDenySound === 'function') playDenySound();
   }
 });
 

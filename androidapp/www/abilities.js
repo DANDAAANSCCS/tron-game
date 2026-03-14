@@ -227,7 +227,7 @@ function renderAbilities() {
     let levelHTML;
     if (info.level === 0) {
       levelHTML = `
-        <div class="ab-no-cards-label">SIN CARTAS &mdash; CONSIGUE EN TIENDA</div>
+        <div class="ab-no-cards-label">SIN CARTAS &mdash; <a class="shop-link" href="/shop.html">IR A TIENDA</a></div>
       `;
     } else if (info.level >= MAX_LEVEL) {
       levelHTML = `
@@ -279,17 +279,40 @@ function renderAbilities() {
     // ── Event listeners ──
     if (hasCards) {
       if (isEquipped) {
-        card.querySelector('.ab-unequip').addEventListener('click', () => unequipAbility(ab.id));
+        card.querySelector('.ab-unequip').addEventListener('click', () => {
+          if (typeof playSelectSound === 'function') playSelectSound();
+          unequipAbility(ab.id);
+        });
       } else {
         const btn = card.querySelector('.ab-equip');
         if (btn && !btn.disabled) {
-          btn.addEventListener('click', () => equipAbility(ab.id));
+          btn.addEventListener('click', () => {
+            if (typeof playSelectSound === 'function') playSelectSound();
+            equipAbility(ab.id);
+          });
         }
       }
     }
 
+    // ── "IR A TIENDA" link sound ──
+    const shopLink = card.querySelector('.shop-link');
+    if (shopLink) {
+      shopLink.addEventListener('click', () => {
+        if (typeof playSelectSound === 'function') playSelectSound();
+      });
+    }
+
     grid.appendChild(card);
   });
+
+  // ── Back button sound (wired once after render) ──
+  const backBtn = document.querySelector('.back-btn');
+  if (backBtn && !backBtn._soundBound) {
+    backBtn._soundBound = true;
+    backBtn.addEventListener('click', () => {
+      if (typeof playSelectSound === 'function') playSelectSound();
+    });
+  }
 }
 
 // ── Equip / Unequip ──
