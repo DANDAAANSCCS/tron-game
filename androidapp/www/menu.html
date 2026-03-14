@@ -80,6 +80,11 @@
       <span>MUSICA</span>
       <button id="menu-music-toggle" style="background:rgba(0,255,242,0.12);border:1px solid rgba(0,255,242,0.4);color:#00fff2;font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:2px;padding:5px 12px;cursor:pointer;">ON</button>
     </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;margin-top:-4px;">
+      <button id="menu-track-prev" style="background:rgba(0,255,242,0.08);border:1px solid rgba(0,255,242,0.3);color:rgba(0,255,242,0.7);font-family:'Orbitron',sans-serif;font-size:0.7rem;font-weight:700;width:28px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&lt;</button>
+      <span id="menu-track-name" style="font-family:'Share Tech Mono',monospace;font-size:0.55rem;color:rgba(0,255,242,0.5);letter-spacing:1px;min-width:90px;text-align:center;">TRACK</span>
+      <button id="menu-track-next" style="background:rgba(0,255,242,0.08);border:1px solid rgba(0,255,242,0.3);color:rgba(0,255,242,0.7);font-family:'Orbitron',sans-serif;font-size:0.7rem;font-weight:700;width:28px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&gt;</button>
+    </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:rgba(0,255,242,0.6);letter-spacing:2px;">
       <span>EFECTOS</span>
       <button id="menu-sfx-toggle" style="background:rgba(0,255,242,0.12);border:1px solid rgba(0,255,242,0.4);color:#00fff2;font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:2px;padding:5px 12px;cursor:pointer;">ON</button>
@@ -120,6 +125,10 @@
       const st = document.getElementById('menu-sfx-toggle');
       const cl = document.getElementById('menu-settings-close');
 
+      const tp = document.getElementById('menu-track-prev');
+      const tn = document.getElementById('menu-track-next');
+      const tname = document.getElementById('menu-track-name');
+
       function sync() {
         const mOn = typeof musicEnabled !== 'undefined' ? musicEnabled : true;
         const sOn = typeof sfxEnabled !== 'undefined' ? sfxEnabled : true;
@@ -129,6 +138,7 @@
         st.textContent = sOn ? 'ON' : 'OFF';
         st.style.color = sOn ? '#00fff2' : '#ff6644';
         st.style.borderColor = sOn ? 'rgba(0,255,242,0.4)' : 'rgba(255,102,68,0.4)';
+        if (tname && typeof getTrackName === 'function') tname.textContent = getTrackName();
       }
 
       btn.addEventListener('click', () => {
@@ -137,6 +147,8 @@
       });
       mt.addEventListener('click', () => { if (typeof toggleMusic === 'function') toggleMusic(); sync(); });
       st.addEventListener('click', () => { if (typeof toggleSFX === 'function') toggleSFX(); sync(); });
+      if (tp) tp.addEventListener('click', () => { if (typeof prevTrack === 'function') prevTrack(); if (typeof playSelectSound === 'function') playSelectSound(); sync(); });
+      if (tn) tn.addEventListener('click', () => { if (typeof nextTrack === 'function') nextTrack(); if (typeof playSelectSound === 'function') playSelectSound(); sync(); });
       cl.addEventListener('click', () => { panel.style.display = 'none'; });
     })();
   </script>

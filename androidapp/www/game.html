@@ -383,6 +383,45 @@
       background: rgba(255, 68, 34, 0.08);
       color: rgba(255, 68, 34, 0.9);
     }
+
+    .track-row {
+      justify-content: center;
+      gap: 8px;
+      margin-top: -6px;
+      margin-bottom: 10px;
+    }
+
+    .track-arrow {
+      background: rgba(0, 255, 242, 0.08);
+      border: 1px solid rgba(0, 255, 242, 0.3);
+      color: rgba(0, 255, 242, 0.7);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      width: 28px;
+      height: 24px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .track-arrow:active {
+      background: rgba(0, 255, 242, 0.2);
+      color: #00fff2;
+      box-shadow: 0 0 10px rgba(0, 255, 242, 0.3);
+    }
+
+    .track-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.55rem;
+      color: rgba(0, 255, 242, 0.5);
+      letter-spacing: 1px;
+      min-width: 90px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -419,6 +458,11 @@
     <div class="settings-row">
       <span>MUSICA</span>
       <button id="music-toggle" class="settings-toggle">ON</button>
+    </div>
+    <div class="settings-row track-row">
+      <button id="track-prev" class="track-arrow">&lt;</button>
+      <span id="track-name" class="track-label">TRACK 1</span>
+      <button id="track-next" class="track-arrow">&gt;</button>
     </div>
     <div class="settings-row">
       <span>EFECTOS</span>

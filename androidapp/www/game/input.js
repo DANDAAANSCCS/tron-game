@@ -213,6 +213,10 @@ window.addEventListener('keyup', e => {
   const btnSaveQuit   = document.getElementById('btn-save-quit');
   const btnRestart    = document.getElementById('btn-restart');
 
+  const trackPrev    = document.getElementById('track-prev');
+  const trackNext    = document.getElementById('track-next');
+  const trackNameEl  = document.getElementById('track-name');
+
   function syncToggles() {
     if (musicToggle) {
       const on = typeof musicEnabled !== 'undefined' ? musicEnabled : true;
@@ -223,6 +227,9 @@ window.addEventListener('keyup', e => {
       const on = typeof sfxEnabled !== 'undefined' ? sfxEnabled : true;
       sfxToggle.textContent = on ? 'ON' : 'OFF';
       sfxToggle.classList.toggle('off', !on);
+    }
+    if (trackNameEl && typeof getTrackName === 'function') {
+      trackNameEl.textContent = getTrackName();
     }
   }
 
@@ -244,6 +251,18 @@ window.addEventListener('keyup', e => {
 
   addTap(settingsBtn, () => settingsPanel.style.display === 'none' ? openSettings() : closeSettings());
   addTap(settingsClose, closeSettings);
+
+  if (trackPrev) addTap(trackPrev, () => {
+    if (typeof prevTrack === 'function') prevTrack();
+    if (typeof playSelectSound === 'function') playSelectSound();
+    syncToggles();
+  });
+
+  if (trackNext) addTap(trackNext, () => {
+    if (typeof nextTrack === 'function') nextTrack();
+    if (typeof playSelectSound === 'function') playSelectSound();
+    syncToggles();
+  });
 
   addTap(musicToggle, () => {
     if (typeof toggleMusic === 'function') toggleMusic();

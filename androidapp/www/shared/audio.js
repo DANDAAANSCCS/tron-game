@@ -18,6 +18,7 @@ if (_isAudioProxy) {
     'playWaveStartSound','playDeathSound','playLevelUpSound','playChestOpenSound',
     'playRouletteTickSound','playRouletteStopSound','playRouletteRewardSound',
     'startMusic','stopMusic','toggleMusic','toggleSFX','toggleAudio','ensureContext',
+    'nextTrack','prevTrack','getTrackName',
   ].forEach(name => {
     window[name] = function() { return window.parent[name]?.apply(window.parent, arguments); };
   });
@@ -338,6 +339,42 @@ function _createTrack5(dest) {
 }
 
 var _trackCreators = [_createTrack1, _createTrack2, _createTrack3, _createTrack4, _createTrack5];
+var _trackNames = ['NEON DRIFT', 'DIGITAL RAIN', 'GRID RUNNER', 'CYBER VOID', 'HORIZON'];
+
+function getTrackName() {
+  return _trackNames[_trackIndex] || 'TRACK ' + (_trackIndex + 1);
+}
+
+function nextTrack() {
+  if (!musicRunning) return;
+  _trackIndex = (_trackIndex + 1) % _trackCreators.length;
+  _crossfadeTo(_trackIndex);
+}
+
+function prevTrack() {
+  if (!musicRunning) return;
+  _trackIndex = (_trackIndex - 1 + _trackCreators.length) % _trackCreators.length;
+  _crossfadeTo(_trackIndex);
+}
+
+function _crossfadeTo(idx) {
+  const now = audioCtx.currentTime;
+  const newTrack = _trackCreators[idx](musicBus);
+  newTrack.gain.gain.setValueAtTime(0, now);
+  newTrack.gain.gain.linearRampToValueAtTime(1, now + CROSSFADE_TIME);
+  const oldTrack = _currentTrack;
+  if (oldTrack) {
+    oldTrack.gain.gain.setValueAtTime(oldTrack.gain.gain.value, now);
+    oldTrack.gain.gain.linearRampToValueAtTime(0, now + CROSSFADE_TIME);
+    setTimeout(() => _killTrack(oldTrack), CROSSFADE_TIME * 1000 + 500);
+  }
+  _currentTrack = newTrack;
+  // Reset auto-rotation timer
+  if (_trackTimer) clearInterval(_trackTimer);
+  _trackTimer = setInterval(() => {
+    if (musicRunning && musicEnabled) _crossfadeToNext();
+  }, TRACK_DURATION + Math.random() * 20000);
+}
 
 function _killTrack(track) {
   if (!track) return;
