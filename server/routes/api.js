@@ -207,10 +207,7 @@ router.post('/gamedata', requireAuth, async (req, res) => {
 router.get('/abilities', requireAuth, (req, res) => {
   const gd = req.user.gameData || {};
   const abilityCards = gd.abilityCards || {};
-  const abilityLevels = {};
-  for (const [id, cards] of Object.entries(abilityCards)) {
-    abilityLevels[id] = getAbilityLevel(cards);
-  }
+  const abilityLevels = gd.abilityLevels || {};
 
   res.json({
     abilityCards,
