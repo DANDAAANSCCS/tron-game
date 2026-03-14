@@ -241,16 +241,26 @@ body {
 /* ══════════════════════════════════════ */
 
 .levels-container {
-  position: relative;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   z-index: 2;
   text-align: center;
-  padding: 40px;
-  max-height: 100vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding-top: max(24px, env(safe-area-inset-top, 24px));
 }
 
 .levels-header {
-  margin-bottom: 40px;
+  flex-shrink: 0;
+  padding: 16px 20px 12px;
+}
+
+.levels-footer {
+  flex-shrink: 0;
+  padding: 12px 20px 20px;
+  display: flex;
+  justify-content: center;
 }
 
 .levels-title {
@@ -275,11 +285,15 @@ body {
 }
 
 .levels-grid {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
   justify-content: center;
-  margin-bottom: 40px;
+  padding: 0 20px 12px;
+  align-content: flex-start;
 }
 
 /* Level Card */
@@ -501,16 +515,26 @@ body {
 /* ══════════════════════════════════════ */
 
 .upgrades-container {
-  position: relative;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   z-index: 2;
   text-align: center;
-  padding: 30px 40px;
-  max-height: 100vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding-top: max(24px, env(safe-area-inset-top, 24px));
 }
 
 .upgrades-header {
-  margin-bottom: 30px;
+  flex-shrink: 0;
+  padding: 0 20px 12px;
+}
+
+.upgrades-footer {
+  flex-shrink: 0;
+  padding: 12px 20px 20px;
+  display: flex;
+  justify-content: center;
 }
 
 .gems-display {
@@ -536,12 +560,19 @@ body {
 }
 
 .upgrades-grid {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: 10px;
   align-items: center;
-  margin-bottom: 30px;
+  padding: 0 20px 12px;
 }
+
+.upgrades-grid::-webkit-scrollbar { width: 3px; }
+.upgrades-grid::-webkit-scrollbar-track { background: transparent; }
+.upgrades-grid::-webkit-scrollbar-thumb { background: rgba(0, 255, 242, 0.2); border-radius: 2px; }
 
 /* Upgrade Card */
 .upg-card {

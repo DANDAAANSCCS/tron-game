@@ -12,22 +12,23 @@
     /* ══════════════════════════════════════ */
 
     .shop-container {
-      position: relative;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
       z-index: 2;
       text-align: center;
-      padding: 24px 16px 32px;
-      width: 100%;
-      height: 100vh;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-    /* ── Header ── */
+    /* ── Header (fixed at top) ── */
     .shop-header {
-      margin-bottom: 24px;
       flex-shrink: 0;
+      padding: 30px 16px 12px;
+      padding-top: max(30px, env(safe-area-inset-top, 30px));
+      width: 100%;
     }
 
     .shop-title {
@@ -69,14 +70,30 @@
       text-shadow: 0 0 10px #e040fb;
     }
 
-    /* ── Chest Grid ── */
+    /* ── Chest Grid (scrollable) ── */
     .chest-grid {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       display: flex;
       flex-direction: column;
       gap: 16px;
       align-items: center;
       width: 100%;
-      margin-bottom: 24px;
+      padding: 0 16px 12px;
+    }
+
+    .chest-grid::-webkit-scrollbar { width: 3px; }
+    .chest-grid::-webkit-scrollbar-track { background: transparent; }
+    .chest-grid::-webkit-scrollbar-thumb { background: rgba(0, 255, 242, 0.2); border-radius: 2px; }
+
+    /* ── Footer (fixed at bottom) ── */
+    .shop-footer {
+      flex-shrink: 0;
+      padding: 12px 16px 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
     }
 
     /* ── Chest Card ── */
@@ -946,10 +963,12 @@
 
     </div><!-- /chest-grid -->
 
-    <button class="back-btn" id="shop-back-btn" aria-label="Volver al menu principal">
-      <span class="menu-arrow" aria-hidden="true">&lt;</span>
-      <span class="menu-text">VOLVER</span>
-    </button>
+    <div class="shop-footer">
+      <button class="back-btn" id="shop-back-btn" aria-label="Volver al menu principal">
+        <span class="menu-arrow" aria-hidden="true">&lt;</span>
+        <span class="menu-text">VOLVER</span>
+      </button>
+    </div>
 
   </div><!-- /shop-container -->
 
