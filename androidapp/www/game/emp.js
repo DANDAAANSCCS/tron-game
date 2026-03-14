@@ -41,6 +41,9 @@ const ABILITY_DEFS = {
 
 // ── Ability runtime state ──
 let abilityCooldowns = {};      // { abilityId: framesRemaining }
+let abilityCooldownsMax = {};   // { abilityId: maxCooldown } for HUD fill animation
+let _globalAbilityDelay = 0;    // frames until next ability can trigger (1 sec between abilities)
+const ABILITY_DELAY = 60;       // 1 second at 60fps
 
 let shieldActive = false;
 let shieldHp = 0;
@@ -76,6 +79,8 @@ function getAbilityStat(abilityId, statName) {
 // ── Reset all ability state (called from initGame) ──
 function resetAbilities() {
   abilityCooldowns = {};
+  abilityCooldownsMax = {};
+  _globalAbilityDelay = 0;
   shieldActive = false;
   shieldHp = 0;
   shieldTimer = 0;
@@ -304,6 +309,8 @@ function updateAbilities() {
   const equipped = serverGameData.equippedAbilities || [];
   const hasLiveEnemy = enemies.some(e => e.alive);
 
+  // Global delay between abilities
+  if (_globalAbilityDelay > 0) _globalAbilityDelay--;
 
   for (const id of equipped) {
     if (!hasAbility(id)) continue;
@@ -312,16 +319,16 @@ function updateAbilities() {
 
     // Initialize cooldown if not yet set
     if (abilityCooldowns[id] === undefined) {
-      abilityCooldowns[id] = 0; // start ready
+      abilityCooldowns[id] = 0;
     }
 
     if (abilityCooldowns[id] > 0) {
       abilityCooldowns[id]--;
     }
 
-    // Auto-trigger when cooldown reaches 0 and there are enemies alive
-    if (abilityCooldowns[id] <= 0 && hasLiveEnemy) {
-      const cooldown = Math.round(getAbilityStat(id, 'cooldown'));
+    // Auto-trigger when: own cooldown ready + enemies alive + no global delay
+    if (abilityCooldowns[id] <= 0 && hasLiveEnemy && _globalAbilityDelay <= 0) {
+      const cooldown = Math.max(1, Math.round(getAbilityStat(id, 'cooldown')));
 
       switch (id) {
         case 'emp':       triggerEMP();       break;
@@ -333,7 +340,8 @@ function updateAbilities() {
       }
 
       abilityCooldowns[id] = cooldown;
-      _updateAbilityBarCooldown(id, cooldown);
+      abilityCooldownsMax[id] = cooldown; // store max for HUD fill %
+      _globalAbilityDelay = ABILITY_DELAY; // 1 second before next ability can fire
     }
   }
 

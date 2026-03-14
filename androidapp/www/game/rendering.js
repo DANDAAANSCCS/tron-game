@@ -367,23 +367,23 @@ function updateHUD() {
     }
   }
 
-  // Ability cooldown HUD — works for all equipped abilities
+  // Ability cooldown HUD — fill animation from bottom to top
   const equipped = (serverGameData && serverGameData.equippedAbilities) || [];
   for (const id of equipped) {
     const slot = document.getElementById('ability-' + id);
     if (!slot) continue;
     const cd = (typeof abilityCooldowns !== 'undefined' && abilityCooldowns[id]) || 0;
-    const cdEl = slot.querySelector('.ability-cooldown');
+    const maxCd = (typeof abilityCooldownsMax !== 'undefined' && abilityCooldownsMax[id]) || 1;
+    let cdEl = slot.querySelector('.ability-cooldown');
     if (cd > 0) {
       slot.classList.remove('ready');
+      const pct = Math.min(cd / maxCd, 1); // 1 = full cover, 0 = empty
       if (!cdEl) {
-        const div = document.createElement('div');
-        div.className = 'ability-cooldown';
-        div.textContent = Math.ceil(cd / 60) + 's';
-        slot.appendChild(div);
-      } else {
-        cdEl.textContent = Math.ceil(cd / 60) + 's';
+        cdEl = document.createElement('div');
+        cdEl.className = 'ability-cooldown';
+        slot.appendChild(cdEl);
       }
+      cdEl.style.height = Math.round(pct * 100) + '%';
     } else {
       slot.classList.add('ready');
       if (cdEl) cdEl.remove();
