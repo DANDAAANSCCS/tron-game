@@ -104,139 +104,305 @@ function toggleMusic() {
 function toggleAudio() { toggleSFX(); return sfxEnabled; }
 
 // =============================================================================
-// MUSIC — Synthwave / Retrowave ambient
+// MUSIC — Multi-track system with smooth crossfade
+// Each track is a unique synth composition. Tracks rotate every 50-80 seconds
+// with a 4-second crossfade so transitions feel seamless.
 // =============================================================================
+
+var _currentTrack = null;   // { gain, intervals, oscs, id }
+var _trackIndex = 0;
+var _trackTimer = null;
+const TRACK_DURATION = 60000; // ms between track changes
+const CROSSFADE_TIME = 4;     // seconds
+
+// ── Track definitions ──
+// Each returns { gain, intervals, oscs } connected to a given destination
+
+function _createTrack1(dest) {
+  // "Neon Drift" — Am pentatonic arpeggio + warm saw pad
+  const g = audioCtx.createGain(); g.gain.value = 0; g.connect(dest);
+  const now = audioCtx.currentTime;
+  const oscs = [], intervals = [];
+
+  // Pad: A2 + E3
+  const padFilter = audioCtx.createBiquadFilter();
+  padFilter.type = 'lowpass'; padFilter.frequency.value = 500; padFilter.Q.value = 2;
+  const lfo = audioCtx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.06;
+  const lfoG = audioCtx.createGain(); lfoG.gain.value = 200;
+  lfo.connect(lfoG); lfoG.connect(padFilter.frequency); lfo.start(now); oscs.push(lfo);
+  [110, 164.8].forEach(f => {
+    const o = audioCtx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
+    const o2 = audioCtx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = f * 1.004;
+    o.connect(padFilter); o2.connect(padFilter); o.start(now); o2.start(now);
+    oscs.push(o, o2);
+  });
+  const pg = audioCtx.createGain(); pg.gain.value = 0.03;
+  padFilter.connect(pg); pg.connect(g);
+
+  // Arp: A C D E G
+  const arpNotes = [220,261.6,293.7,329.6,392,440,523.3,392,329.6,293.7,261.6,220];
+  let ai = 0;
+  intervals.push(setInterval(() => {
+    if (!musicRunning) return;
+    const o = audioCtx.createOscillator(); o.type = 'triangle';
+    o.frequency.value = arpNotes[ai++ % arpNotes.length] * jitter(1, 0.003);
+    const ng = audioCtx.createGain(); const t = audioCtx.currentTime;
+    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(0.04, t + 0.03);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    o.connect(ng); ng.connect(g); o.start(t); o.stop(t + 0.55);
+  }, 340));
+
+  // Sub
+  const sub = audioCtx.createOscillator(); sub.type = 'sine'; sub.frequency.value = 55;
+  const sg = audioCtx.createGain(); sg.gain.value = 0.035;
+  sub.connect(sg); sg.connect(g); sub.start(now); oscs.push(sub);
+
+  return { gain: g, intervals, oscs, id: 1 };
+}
+
+function _createTrack2(dest) {
+  // "Digital Rain" — Dm7 ethereal pad + slow descending melody
+  const g = audioCtx.createGain(); g.gain.value = 0; g.connect(dest);
+  const now = audioCtx.currentTime;
+  const oscs = [], intervals = [];
+
+  // Pad: D3 + A3 + C4 (Dm7 voicing)
+  const padFilter = audioCtx.createBiquadFilter();
+  padFilter.type = 'lowpass'; padFilter.frequency.value = 350; padFilter.Q.value = 1.5;
+  const lfo = audioCtx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.04;
+  const lfoG = audioCtx.createGain(); lfoG.gain.value = 150;
+  lfo.connect(lfoG); lfoG.connect(padFilter.frequency); lfo.start(now); oscs.push(lfo);
+  [146.8, 220, 261.6].forEach(f => {
+    const o = audioCtx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
+    const o2 = audioCtx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = f * 0.997;
+    o.connect(padFilter); o2.connect(padFilter); o.start(now); o2.start(now);
+    oscs.push(o, o2);
+  });
+  const pg = audioCtx.createGain(); pg.gain.value = 0.025;
+  padFilter.connect(pg); pg.connect(g);
+
+  // Melody: slow descending Dm notes
+  const melNotes = [587.3,523.3,440,392,349.2,293.7,261.6,293.7,349.2,392];
+  let mi = 0;
+  intervals.push(setInterval(() => {
+    if (!musicRunning) return;
+    const o = audioCtx.createOscillator(); o.type = 'sine';
+    o.frequency.value = melNotes[mi++ % melNotes.length] * jitter(1, 0.002);
+    const ng = audioCtx.createGain(); const t = audioCtx.currentTime;
+    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(0.035, t + 0.08);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+    o.connect(ng); ng.connect(g); o.start(t); o.stop(t + 1);
+  }, 700));
+
+  // Sub pulse
+  const sub = audioCtx.createOscillator(); sub.type = 'sine'; sub.frequency.value = 73.4;
+  const sg = audioCtx.createGain(); sg.gain.value = 0.04;
+  sub.connect(sg); sg.connect(g); sub.start(now); oscs.push(sub);
+
+  return { gain: g, intervals, oscs, id: 2 };
+}
+
+function _createTrack3(dest) {
+  // "Grid Runner" — Em driving bass + fast arp + hi-hat
+  const g = audioCtx.createGain(); g.gain.value = 0; g.connect(dest);
+  const now = audioCtx.currentTime;
+  const oscs = [], intervals = [];
+
+  // Bass pulse: E2 octave pump
+  const bassOsc = audioCtx.createOscillator(); bassOsc.type = 'square'; bassOsc.frequency.value = 82.4;
+  const bassFilter = audioCtx.createBiquadFilter(); bassFilter.type = 'lowpass'; bassFilter.frequency.value = 300;
+  const bassG = audioCtx.createGain(); bassG.gain.value = 0.04;
+  bassOsc.connect(bassFilter); bassFilter.connect(bassG); bassG.connect(g);
+  bassOsc.start(now); oscs.push(bassOsc);
+
+  // Pulsing LFO on bass gain
+  const bassLFO = audioCtx.createOscillator(); bassLFO.type = 'square'; bassLFO.frequency.value = 2.5;
+  const bassLFOG = audioCtx.createGain(); bassLFOG.gain.value = 0.02;
+  bassLFO.connect(bassLFOG); bassLFOG.connect(bassG.gain); bassLFO.start(now); oscs.push(bassLFO);
+
+  // Fast arp: E minor pentatonic
+  const arpNotes = [329.6,392,440,523.3,587.3,659.3,587.3,523.3,440,392];
+  let ai = 0;
+  intervals.push(setInterval(() => {
+    if (!musicRunning) return;
+    const o = audioCtx.createOscillator(); o.type = 'triangle';
+    o.frequency.value = arpNotes[ai++ % arpNotes.length] * jitter(1, 0.004);
+    const f = audioCtx.createBiquadFilter(); f.type = 'bandpass';
+    f.frequency.value = o.frequency.value * 2; f.Q.value = 1.5;
+    const ng = audioCtx.createGain(); const t = audioCtx.currentTime;
+    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(0.035, t + 0.02);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    o.connect(f); f.connect(ng); ng.connect(g); o.start(t); o.stop(t + 0.3);
+  }, 200));
+
+  // Hi-hat
+  intervals.push(setInterval(() => {
+    if (!musicRunning) return;
+    const buf = createNoiseBuffer(0.015);
+    const s = audioCtx.createBufferSource(); s.buffer = buf;
+    const hp = audioCtx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 9000;
+    const ng = audioCtx.createGain(); const t = audioCtx.currentTime;
+    ng.gain.setValueAtTime(0.018, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.015);
+    s.connect(hp); hp.connect(ng); ng.connect(g); s.start(t); s.stop(t + 0.02);
+  }, 150));
+
+  return { gain: g, intervals, oscs, id: 3 };
+}
+
+function _createTrack4(dest) {
+  // "Cyber Void" — Cm spacey pad + slow bell melody + deep sub
+  const g = audioCtx.createGain(); g.gain.value = 0; g.connect(dest);
+  const now = audioCtx.currentTime;
+  const oscs = [], intervals = [];
+
+  // Pad: Cm (C + Eb + G)
+  const padFilter = audioCtx.createBiquadFilter();
+  padFilter.type = 'lowpass'; padFilter.frequency.value = 280; padFilter.Q.value = 1;
+  const lfo = audioCtx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.03;
+  const lfoG = audioCtx.createGain(); lfoG.gain.value = 100;
+  lfo.connect(lfoG); lfoG.connect(padFilter.frequency); lfo.start(now); oscs.push(lfo);
+  [130.8, 155.6, 196].forEach(f => {
+    const o = audioCtx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
+    const o2 = audioCtx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = f * 1.005;
+    o.connect(padFilter); o2.connect(padFilter); o.start(now); o2.start(now);
+    oscs.push(o, o2);
+  });
+  const pg = audioCtx.createGain(); pg.gain.value = 0.022;
+  padFilter.connect(pg); pg.connect(g);
+
+  // Bell melody: Cm pentatonic
+  const bellNotes = [523.3,622.3,784,932.3,784,622.3,523.3,392,523.3,622.3];
+  let bi = 0;
+  intervals.push(setInterval(() => {
+    if (!musicRunning) return;
+    const freq = bellNotes[bi++ % bellNotes.length] * jitter(1, 0.002);
+    // Bell = sine + sine at 2x freq (slightly detuned)
+    [1, 2.01, 3.98].forEach((ratio, i) => {
+      const o = audioCtx.createOscillator(); o.type = 'sine'; o.frequency.value = freq * ratio;
+      const ng = audioCtx.createGain(); const t = audioCtx.currentTime;
+      const vol = 0.025 / (i + 1);
+      ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(vol, t + 0.01);
+      ng.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+      o.connect(ng); ng.connect(g); o.start(t); o.stop(t + 1.3);
+    });
+  }, 900));
+
+  // Deep sub
+  const sub = audioCtx.createOscillator(); sub.type = 'sine'; sub.frequency.value = 32.7;
+  const sg = audioCtx.createGain(); sg.gain.value = 0.04;
+  sub.connect(sg); sg.connect(g); sub.start(now); oscs.push(sub);
+
+  return { gain: g, intervals, oscs, id: 4 };
+}
+
+function _createTrack5(dest) {
+  // "Horizon" — F major7 warm pad + gentle ascending arp
+  const g = audioCtx.createGain(); g.gain.value = 0; g.connect(dest);
+  const now = audioCtx.currentTime;
+  const oscs = [], intervals = [];
+
+  // Pad: Fmaj7 (F + A + C + E)
+  const padFilter = audioCtx.createBiquadFilter();
+  padFilter.type = 'lowpass'; padFilter.frequency.value = 450; padFilter.Q.value = 1.2;
+  const lfo = audioCtx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.05;
+  const lfoG = audioCtx.createGain(); lfoG.gain.value = 180;
+  lfo.connect(lfoG); lfoG.connect(padFilter.frequency); lfo.start(now); oscs.push(lfo);
+  [87.3, 110, 130.8, 164.8].forEach(f => {
+    const o = audioCtx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
+    const o2 = audioCtx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = f * 1.003;
+    o.connect(padFilter); o2.connect(padFilter); o.start(now); o2.start(now);
+    oscs.push(o, o2);
+  });
+  const pg = audioCtx.createGain(); pg.gain.value = 0.028;
+  padFilter.connect(pg); pg.connect(g);
+
+  // Gentle arp: F A C E ascending
+  const arpNotes = [349.2,440,523.3,659.3,698.5,523.3,440,349.2,329.6,349.2];
+  let ai = 0;
+  intervals.push(setInterval(() => {
+    if (!musicRunning) return;
+    const o = audioCtx.createOscillator(); o.type = 'sine';
+    o.frequency.value = arpNotes[ai++ % arpNotes.length] * jitter(1, 0.002);
+    const ng = audioCtx.createGain(); const t = audioCtx.currentTime;
+    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(0.03, t + 0.05);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+    o.connect(ng); ng.connect(g); o.start(t); o.stop(t + 0.75);
+  }, 500));
+
+  // Sub
+  const sub = audioCtx.createOscillator(); sub.type = 'sine'; sub.frequency.value = 43.65;
+  const sg = audioCtx.createGain(); sg.gain.value = 0.035;
+  sub.connect(sg); sg.connect(g); sub.start(now); oscs.push(sub);
+
+  return { gain: g, intervals, oscs, id: 5 };
+}
+
+var _trackCreators = [_createTrack1, _createTrack2, _createTrack3, _createTrack4, _createTrack5];
+
+function _killTrack(track) {
+  if (!track) return;
+  track.intervals.forEach(id => clearInterval(id));
+  track.oscs.forEach(o => { try { o.stop(); } catch(_){} });
+  try { track.gain.disconnect(); } catch(_){}
+}
+
+function _crossfadeToNext() {
+  if (!musicRunning || !musicEnabled) return;
+  const now = audioCtx.currentTime;
+
+  // Pick next track (avoid repeating)
+  let nextIdx;
+  do { nextIdx = Math.floor(Math.random() * _trackCreators.length); }
+  while (_trackCreators.length > 1 && _currentTrack && _trackCreators[nextIdx] === _trackCreators[_trackIndex]);
+  _trackIndex = nextIdx;
+
+  const newTrack = _trackCreators[_trackIndex](musicBus);
+
+  // Fade in new track
+  newTrack.gain.gain.setValueAtTime(0, now);
+  newTrack.gain.gain.linearRampToValueAtTime(1, now + CROSSFADE_TIME);
+
+  // Fade out old track
+  const oldTrack = _currentTrack;
+  if (oldTrack) {
+    oldTrack.gain.gain.setValueAtTime(oldTrack.gain.gain.value, now);
+    oldTrack.gain.gain.linearRampToValueAtTime(0, now + CROSSFADE_TIME);
+    setTimeout(() => _killTrack(oldTrack), CROSSFADE_TIME * 1000 + 500);
+  }
+
+  _currentTrack = newTrack;
+}
 
 function startMusic() {
   if (musicRunning || !musicEnabled) return;
   ensureContext();
   musicRunning = true;
 
-  const now = audioCtx.currentTime;
+  // Start first track immediately
+  _trackIndex = Math.floor(Math.random() * _trackCreators.length);
+  _currentTrack = _trackCreators[_trackIndex](musicBus);
+  _currentTrack.gain.gain.setValueAtTime(0, audioCtx.currentTime);
+  _currentTrack.gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 2);
 
-  // ── Pad: C2 + G2 fifth drone with filter movement ──
-  const padFreqs = [65.41, 98.0]; // C2, G2
-  const padOscs = [];
-  const padGain = audioCtx.createGain();
-  padGain.gain.value = 0.035;
-
-  const padFilter = audioCtx.createBiquadFilter();
-  padFilter.type = 'lowpass';
-  padFilter.frequency.value = 400;
-  padFilter.Q.value = 3;
-
-  // Slow filter sweep LFO
-  const filterLFO = audioCtx.createOscillator();
-  filterLFO.type = 'sine';
-  filterLFO.frequency.value = 0.07;
-  const filterDepth = audioCtx.createGain();
-  filterDepth.gain.value = 250;
-  filterLFO.connect(filterDepth);
-  filterDepth.connect(padFilter.frequency);
-  filterLFO.start(now);
-
-  padFreqs.forEach(f => {
-    const osc = audioCtx.createOscillator();
-    osc.type = 'sawtooth';
-    osc.frequency.value = f;
-    osc.connect(padFilter);
-    osc.start(now);
-    padOscs.push(osc);
-
-    // Slight detune copy for thickness
-    const osc2 = audioCtx.createOscillator();
-    osc2.type = 'sawtooth';
-    osc2.frequency.value = f * 1.003;
-    osc2.connect(padFilter);
-    osc2.start(now);
-    padOscs.push(osc2);
-  });
-
-  padFilter.connect(padGain);
-  padGain.connect(musicBus);
-
-  // ── Sub bass: sine at C1 ──
-  const subOsc = audioCtx.createOscillator();
-  subOsc.type = 'sine';
-  subOsc.frequency.value = 32.7;
-  const subGain = audioCtx.createGain();
-  subGain.gain.value = 0.04;
-  subOsc.connect(subGain);
-  subGain.connect(musicBus);
-  subOsc.start(now);
-
-  // ── Arpeggio: Am pentatonic pattern ──
-  // A C D E G — moody retrowave feel
-  const arpNotes = [
-    220, 261.6, 293.7, 329.6, 392,       // A3 C4 D4 E4 G4
-    440, 523.3, 392, 329.6, 293.7,        // A4 C5 G4 E4 D4
-    261.6, 220, 196, 220, 261.6, 293.7,   // C4 A3 G3 A3 C4 D4
-  ];
-  let arpIdx = 0;
-
-  function playArpNote() {
-    if (!musicRunning || !musicEnabled) return;
-    const freq = arpNotes[arpIdx % arpNotes.length] * jitter(1, 0.003);
-    arpIdx++;
-
-    const osc = audioCtx.createOscillator();
-    osc.type = 'triangle';
-    osc.frequency.value = freq;
-
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = freq * 3;
-    filter.Q.value = 1;
-
-    const g = audioCtx.createGain();
-    const t = audioCtx.currentTime;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.04, t + 0.03);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-
-    osc.connect(filter);
-    filter.connect(g);
-    g.connect(musicBus);
-    osc.start(t);
-    osc.stop(t + 0.55);
-  }
-
-  const arpInterval = setInterval(playArpNote, 350);
-
-  // ── Hi-hat rhythm: subtle ticking ──
-  function playTick() {
-    if (!musicRunning || !musicEnabled) return;
-    const buf = createNoiseBuffer(0.02);
-    const src = audioCtx.createBufferSource();
-    src.buffer = buf;
-    const hp = audioCtx.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.value = 8000;
-    const g = audioCtx.createGain();
-    const t = audioCtx.currentTime;
-    g.gain.setValueAtTime(0.02, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
-    src.connect(hp);
-    hp.connect(g);
-    g.connect(musicBus);
-    src.start(t);
-    src.stop(t + 0.03);
-  }
-
-  const tickInterval = setInterval(playTick, 175);
-
-  musicNodes = { padOscs, subOsc, filterLFO, arpInterval, tickInterval };
+  // Schedule track rotation
+  _trackTimer = setInterval(() => {
+    if (musicRunning && musicEnabled) _crossfadeToNext();
+  }, TRACK_DURATION + Math.random() * 20000); // 60-80 seconds
 }
 
 function stopMusic() {
-  if (!musicRunning || !musicNodes) return;
+  if (!musicRunning) return;
   musicRunning = false;
-  if (musicNodes.padOscs) musicNodes.padOscs.forEach(o => { try { o.stop(); } catch(_){} });
-  try { musicNodes.subOsc.stop(); } catch(_){}
-  try { musicNodes.filterLFO.stop(); } catch(_){}
-  if (musicNodes.arpInterval) clearInterval(musicNodes.arpInterval);
-  if (musicNodes.tickInterval) clearInterval(musicNodes.tickInterval);
-  musicNodes = null;
+  if (_trackTimer) { clearInterval(_trackTimer); _trackTimer = null; }
+  if (_currentTrack) {
+    // Fade out over 1 second
+    const now = audioCtx.currentTime;
+    _currentTrack.gain.gain.setValueAtTime(_currentTrack.gain.gain.value, now);
+    _currentTrack.gain.gain.linearRampToValueAtTime(0, now + 1);
+    const old = _currentTrack;
+    _currentTrack = null;
+    setTimeout(() => _killTrack(old), 1500);
+  }
 }
 
 // =============================================================================
