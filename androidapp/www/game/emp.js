@@ -304,6 +304,7 @@ function updateAbilities() {
   const equipped = serverGameData.equippedAbilities || [];
   const hasLiveEnemy = enemies.some(e => e.alive);
 
+
   for (const id of equipped) {
     if (!hasAbility(id)) continue;
     const def = ABILITY_DEFS[id];

@@ -20,15 +20,23 @@ const ABILITY_REGISTRY = {
   orbital:   { icon: '\u2604' },
 };
 
-// Returns true if the player owns at least 1 card for this ability
+// Returns true if the player has this ability (cards > 0 OR equipped OR old unlocked)
 function hasAbility(id) {
   const cards = serverGameData.abilityCards || {};
-  return (cards[id] || 0) > 0;
+  if ((cards[id] || 0) > 0) return true;
+  // Fallback: check old unlockedAbilities or equippedAbilities
+  if ((serverGameData.unlockedAbilities || []).includes(id)) return true;
+  if ((serverGameData.equippedAbilities || []).includes(id)) return true;
+  return false;
 }
 
-// Returns the current level of an ability (0 = not leveled / not owned)
+// Returns the current level of an ability (minimum 1 if the ability is owned)
 function getAbilityLevel(id) {
-  return (serverGameData.abilityLevels || {})[id] || 0;
+  const level = (serverGameData.abilityLevels || {})[id] || 0;
+  if (level > 0) return level;
+  // If ability is owned but has no level data, assume level 1
+  if (hasAbility(id)) return 1;
+  return 0;
 }
 
 function buildAbilityBar() {
