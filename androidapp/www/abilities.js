@@ -108,8 +108,15 @@ const CARDS_PER_LEVEL = [1, 2, 4, 8, 12, 18, 25, 35, 45, 60, 80, 100, 130, 160, 
 const MAX_EQUIPPED = 5;
 const MAX_LEVEL = 20;
 
-// Silver cost per level (from server, with fallback)
-let SILVER_PER_LEVEL = [0, 50, 100, 200, 400, 600, 1000, 1500, 2000, 3000, 4000, 5000, 7000, 9000, 12000, 15000, 20000, 25000, 35000, 50000];
+// Silver cost: base per rarity * 1.25^(level-1)
+let SILVER_BASE = { common: 1500, rare: 3000, epic: 5000, legendary: 8000 };
+let SILVER_SCALE = 1.25;
+
+function getSilverCost(rarity, level) {
+  if (level < 1) return 0;
+  const base = SILVER_BASE[rarity] || 1500;
+  return Math.round(base * Math.pow(SILVER_SCALE, level - 1));
+}
 
 // ── State ──
 let serverGems = 0;
@@ -178,7 +185,8 @@ async function loadData() {
       const gd = await gemsRes.json();
       serverGems = gd.gems || 0;
       serverSilver = gd.silverCoins || 0;
-      if (gd.silverToUpgrade) SILVER_PER_LEVEL = gd.silverToUpgrade;
+      if (gd.silverBaseCost) SILVER_BASE = gd.silverBaseCost;
+      if (gd.silverScale) SILVER_SCALE = gd.silverScale;
       if (gd.cardsToUpgrade) CARDS_PER_LEVEL.splice(0, CARDS_PER_LEVEL.length, ...gd.cardsToUpgrade);
     }
     if (abRes.ok) {
@@ -263,14 +271,17 @@ function renderAbilities() {
     // ── Upgrade button (needs cards + silver) ──
     let upgradeHTML = '';
     if (hasCards && info.level > 0 && info.level < MAX_LEVEL) {
-      const silverCost = SILVER_PER_LEVEL[info.level] || 0;
-      const canUpgrade = info.cardsTowardNext >= info.cardsNeeded && serverSilver >= silverCost;
+      const silverCost = getSilverCost(ab.rarity, info.level);
       const cardsReady = info.cardsTowardNext >= info.cardsNeeded;
+      const silverReady = serverSilver >= silverCost;
+      const canUpgrade = cardsReady && silverReady;
+      const cardsMissing = Math.max(0, info.cardsNeeded - info.cardsTowardNext);
+
       upgradeHTML = `
         <button class="ab-upgrade-btn ${canUpgrade ? 'can-upgrade' : ''}" ${canUpgrade ? '' : 'disabled'} data-id="${ab.id}">
           MEJORAR
-          <span class="ab-upgrade-cost">${silverCost} <span style="color:#c0c0c0;">SLV</span></span>
-          ${!cardsReady ? '<span class="ab-upgrade-hint">FALTAN CARTAS</span>' : (serverSilver < silverCost ? '<span class="ab-upgrade-hint">FALTA PLATA</span>' : '')}
+          <span class="ab-upgrade-cost">${silverCost.toLocaleString()} <span style="color:#c0c0c0;">SLV</span></span>
+          ${!cardsReady ? `<span class="ab-upgrade-hint">FALTAN ${cardsMissing} CARTAS</span>` : (!silverReady ? '<span class="ab-upgrade-hint">FALTA PLATA</span>' : '')}
         </button>
       `;
     }

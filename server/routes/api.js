@@ -27,8 +27,15 @@ const CARDS_PER_LEVEL = [
 // Index 0 = cards to go from 0→1 (unlock), index 1 = 1→2, etc.
 const CARDS_TO_UPGRADE = [1, 2, 4, 8, 12, 18, 25, 35, 45, 60, 80, 100, 130, 160, 200, 250, 300, 380, 460];
 
-// Silver coins cost to upgrade FROM level N to level N+1
-const SILVER_TO_UPGRADE = [0, 50, 100, 200, 400, 600, 1000, 1500, 2000, 3000, 4000, 5000, 7000, 9000, 12000, 15000, 20000, 25000, 35000, 50000];
+// Silver cost per rarity base + 25% increase per level
+const SILVER_BASE_COST = { common: 1500, rare: 3000, epic: 5000, legendary: 8000 };
+const SILVER_SCALE = 1.25; // 25% more per level
+
+function getSilverCost(rarity, currentLevel) {
+  if (currentLevel < 1) return 0; // unlock is free
+  const base = SILVER_BASE_COST[rarity] || 1500;
+  return Math.round(base * Math.pow(SILVER_SCALE, currentLevel - 1));
+}
 
 // Total cards needed to have reached a given level (cumulative)
 function cardsNeededForLevel(level) {
@@ -172,7 +179,8 @@ router.get('/gamedata', requireAuth, (req, res) => {
     equippedAbilities: gd.equippedAbilities || [],
     // Send upgrade costs for client display
     cardsToUpgrade: CARDS_TO_UPGRADE,
-    silverToUpgrade: SILVER_TO_UPGRADE,
+    silverBaseCost: SILVER_BASE_COST,
+    silverScale: SILVER_SCALE,
   });
 });
 
@@ -214,7 +222,8 @@ router.get('/abilities', requireAuth, (req, res) => {
     abilityLevels,
     equippedAbilities: gd.equippedAbilities || [],
     cardsToUpgrade: CARDS_TO_UPGRADE,
-    silverToUpgrade: SILVER_TO_UPGRADE,
+    silverBaseCost: SILVER_BASE_COST,
+    silverScale: SILVER_SCALE,
   });
 });
 
@@ -285,8 +294,9 @@ router.post('/abilities/upgrade', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'NOT ENOUGH CARDS', cardsNeeded, cardsHave: totalCards });
     }
 
-    // Silver cost
-    const silverCost = SILVER_TO_UPGRADE[currentLevel] || 0;
+    // Silver cost based on rarity
+    const rarity = ABILITIES[abilityId]?.rarity || 'common';
+    const silverCost = getSilverCost(rarity, currentLevel);
     if (silver < silverCost) {
       return res.status(400).json({ error: 'NOT ENOUGH SILVER', silverNeeded: silverCost, silverHave: silver });
     }
