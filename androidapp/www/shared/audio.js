@@ -86,6 +86,10 @@ function startMusic() {
 
   const now = audioCtx.currentTime;
 
+  // Fade-in the music bus so page transitions aren't jarring
+  musicBus.gain.setValueAtTime(0, now);
+  musicBus.gain.linearRampToValueAtTime(0.5, now + 1.5);
+
   // ── Pad: C2 + G2 fifth drone with filter movement ──
   const padFreqs = [65.41, 98.0]; // C2, G2
   const padOscs = [];
@@ -569,14 +573,26 @@ function playRouletteRewardSound() {
   cn.start(chingStart); cn.stop(chingStart + chingDur + 0.01);
 }
 
-// ── Auto-unlock AudioContext on first user interaction ──
-// Music is NOT auto-started here — it's started by game/main.js only during gameplay.
+// ── Auto-start music + unlock AudioContext ──
 (function() {
-  const unlock = () => {
+  function tryStart() {
     ensureContext();
+    if (musicEnabled && !musicRunning) startMusic();
+  }
+  // Try immediately
+  tryStart();
+  // Fallback: unlock on first user interaction (browser autoplay policy)
+  const unlock = () => {
+    tryStart();
     document.removeEventListener('pointerdown', unlock);
     document.removeEventListener('keydown', unlock);
   };
   document.addEventListener('pointerdown', unlock);
   document.addEventListener('keydown', unlock);
 })();
+
+// ── Navigate with delay so sounds finish playing ──
+function navigateTo(url, delay) {
+  delay = delay || 350;
+  setTimeout(() => { window.location.href = url; }, delay);
+}

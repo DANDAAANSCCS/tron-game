@@ -226,7 +226,8 @@ document.addEventListener('keydown', (e) => {
     buyUpgrade(currentIndex);
   }
   if (e.key === 'Escape' || e.key === 'Backspace') {
-    window.location.href = '/';
+    if (typeof playSelectSound === 'function') playSelectSound();
+    setTimeout(() => { window.location.href = '/'; }, 300);
   }
 });
 

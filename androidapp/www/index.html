@@ -98,8 +98,9 @@
         document.getElementById('user-display').textContent = window.currentUser.displayName;
         document.getElementById('user-bar').style.display = '';
         document.getElementById('logout-btn').addEventListener('click', async () => {
+          if (typeof playSelectSound === 'function') playSelectSound();
           await fetch('/auth/logout', { method: 'POST' });
-          window.location.href = '/login.html';
+          setTimeout(() => { window.location.href = '/login.html'; }, 300);
         });
         // Load currencies
         fetch('/api/gamedata').then(r => r.ok ? r.json() : null).then(data => {

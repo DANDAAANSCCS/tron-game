@@ -54,7 +54,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const data = await res.json();
     if (res.ok) {
       if (typeof playSelectSound === 'function') playSelectSound();
-      window.location.href = '/';
+      setTimeout(() => { window.location.href = '/'; }, 300);
     } else {
       errEl.textContent = data.error || 'LOGIN FAILED';
       if (typeof playDenySound === 'function') playDenySound();
@@ -103,7 +103,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     const data = await res.json();
     if (res.ok) {
       if (typeof playSelectSound === 'function') playSelectSound();
-      window.location.href = '/';
+      setTimeout(() => { window.location.href = '/'; }, 300);
     } else {
       errEl.textContent = data.error || 'REGISTER FAILED';
       if (typeof playDenySound === 'function') playDenySound();
