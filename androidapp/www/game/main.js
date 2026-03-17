@@ -141,7 +141,7 @@ function gameLoop(timestamp) {
   drawRewardPopups();
   drawMinimap();
   drawHUDIcons();
-  drawUpgradesPanel();
+  if (!isInfiniteMode) drawUpgradesPanel();
   updateHUD();
 
   // Game over: show roulette then go to levels
@@ -231,9 +231,9 @@ async function startGame() {
 
   gameState = 'countdown';
 
-  // Show touch controls
+  // Show touch controls (hide upgrades in infinite mode)
   const upgBtn = document.getElementById('touch-upgrades-btn');
-  if (upgBtn) upgBtn.style.display = 'flex';
+  if (upgBtn) upgBtn.style.display = isInfiniteMode ? 'none' : 'flex';
 
   if (restored) {
     showOverlay(`WAVE ${wave}`, (typeof t === 'function' ? t('game.session_restored') : 'SESSION RESTORED — RESUMING...'));

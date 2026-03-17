@@ -11,10 +11,11 @@ function getUpgradePerLevel(upg) {
 function getUpgradeDesc(upg) {
   const pct = Math.round(getUpgradePerLevel(upg) * 100);
   if (upg === upgrades.doubleBul) {
-    const shots = 1 + ((typeof getMultiShotCount === 'function') ? getMultiShotCount() : 0);
-    const names = ['SINGLE', 'DOUBLE', 'TRIPLE', 'QUAD', 'PENTA', 'HEXA'];
+    const shots = (typeof getMultiShotCount === 'function') ? getMultiShotCount() : 1;
+    const names = ['SINGLE', 'DOUBLE', 'TRIPLE', 'QUAD', 'PENTA', 'HEXA', 'HEPTA', 'OCTA'];
     const shotName = names[shots - 1] || (shots + 'x');
-    return `${shotName} SHOT`;
+    const progress = (typeof getMultiShotProgressPct === 'function') ? getMultiShotProgressPct() : 0;
+    return `${shotName} [${progress}%]`;
   }
   return `+${pct}% ${upg.descBase}`;
 }
@@ -59,21 +60,27 @@ function getCurrentSpread() {
   return BASE_BULLET_SPREAD * Math.max(0.05, 1 - reduction);
 }
 
-// Multi-shot: returns number of EXTRA bullets (0 = single, 1 = double, 2 = triple, etc.)
-// Each 60% threshold adds another bullet
+// Multi-shot system:
+// - Starts at SINGLE (1 bullet). Progress builds toward 60%.
+// - At 60%: upgrades to DOUBLE (2 bullets), progress resets to 0%.
+// - At 60% again: upgrades to TRIPLE (3 bullets), resets again.
+// - The current tier is always guaranteed (no chance), tier only at 60%.
+
 function getMultiShotCount() {
+  // Returns total bullets to fire (1 = single, 2 = double, 3 = triple, etc.)
   const val = getUpgradeValue(upgrades.doubleBul);
-  if (val < 0.60) return 0;
-  // 0.60 = double (1 extra), next threshold at 1.20 = triple (2 extra), etc.
-  return Math.floor(val / 0.60);
+  return 1 + Math.floor(val / 0.60);
 }
 
-// Chance for the current multi-shot tier to proc (always building toward 60%)
-function getMultiShotChance() {
+function getMultiShotProgress() {
+  // Returns progress toward next tier (0.0 to 0.60)
   const val = getUpgradeValue(upgrades.doubleBul);
-  const tier = Math.floor(val / 0.60);
-  const progress = val - (tier * 0.60);
-  return Math.min(0.60, progress);
+  return val % 0.60;
+}
+
+function getMultiShotProgressPct() {
+  // Returns progress as percentage (0 to 100)
+  return Math.round((getMultiShotProgress() / 0.60) * 100);
 }
 
 function getCurrentMaxHp() {
@@ -87,11 +94,24 @@ function buyUpgrade(key) {
     if (typeof playDenySound === 'function') playDenySound();
     return false;
   }
+  // Track multi-shot before upgrade
+  const prevShots = (key === 'doubleBul' && typeof getMultiShotCount === 'function') ? getMultiShotCount() : 0;
+
   gold -= cost;
   upg.level++;
 
-  // Check tier up (every 10 levels)
-  if (upg.level % PIPS_PER_TIER === 0) {
+  // Multi-shot tier up: show message when shot count increases
+  if (key === 'doubleBul' && typeof getMultiShotCount === 'function') {
+    const newShots = getMultiShotCount();
+    if (newShots > prevShots) {
+      const names = ['SINGLE', 'DOUBLE', 'TRIPLE', 'QUAD', 'PENTA', 'HEXA', 'HEPTA', 'OCTA'];
+      const shotName = names[newShots - 1] || (newShots + 'x');
+      spawnFloatingText(turret.x, turret.y - 70, `${shotName} SHOT!`, upg.color);
+      spawnRewardPopup(`${shotName} SHOT!`, upg.color);
+      upg.tier++;
+    }
+  } else if (upg.level % PIPS_PER_TIER === 0) {
+    // Normal tier up for other upgrades
     upg.tier++;
     spawnFloatingText(turret.x, turret.y - 70, `TIER ${upg.tier + 1}!`, upg.color);
     spawnRewardPopup(`${upg.label} TIER UP!`, upg.color);
