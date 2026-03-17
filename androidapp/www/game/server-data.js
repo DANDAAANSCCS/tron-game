@@ -63,7 +63,7 @@ const ABILITY_REGISTRY = {
   phantom_barrage:      { icon: '\uD83D\uDC7B' },
   time_slow_field:      { icon: '\u23F1\uFE0F' },
   concussive_blast:     { icon: '\uD83D\uDCA3' },
-  orbital_mine_ring:    { icon: '\uD83D\uDCAO' },
+  orbital_mine_ring:    { icon: '\uD83D\uDCA0' },
   shockwave_pulse:      { icon: '\u3030\uFE0F' },
   elemental_infusion:   { icon: '\uD83C\uDF08' },
   spectral_copy:        { icon: '\uD83D\uDC65' },
@@ -94,7 +94,7 @@ const ABILITY_REGISTRY = {
   cryo_freeze:          { icon: '\u2744\uFE0F' },
   death_mark:           { icon: '\uD83D\uDC80' },
   overload_field:       { icon: '\u26A1' },
-  antimatter_shell:     { icon: '\uD83D\uDCAO' },
+  antimatter_shell:     { icon: '\uD83D\uDCA0' },
   phase_shift:          { icon: '\uD83C\uDF0A' },
   gravity_well_array:   { icon: '\uD83D\uDD18' },
   singularity_bomb:     { icon: '\uD83C\uDF20' },
@@ -246,7 +246,7 @@ function applyPermBonuses() {
   permBonus.health    = (pu.health    || 0) * 0.10;
   permBonus.damage    = (pu.damage    || 0) * 0.10;
   permBonus.regen     = (pu.regen     || 0) * 0.10;
-  permBonus.precision = (pu.precision || 0) * 0.10;
+  permBonus.precision = Math.min(1.0, (pu.precision || 0) * 0.10); // cap at 100%
   permBonus.fireRate  = (pu.fireRate  || 0) * 0.10;
 }
 

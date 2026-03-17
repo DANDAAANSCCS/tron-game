@@ -121,7 +121,8 @@ function buildUpgradeCards() {
     const level = upgData[upg.id] || 0;
     const cost = getUpgradeCost(level);
     const totalBonus = Math.round(level * BONUS_PER_LEVEL * 100);
-    const canBuy = gems >= cost;
+    const isPrecisionMaxed = upg.id === 'precision' && level >= 10;
+    const canBuy = gems >= cost && !isPrecisionMaxed;
 
     const card = document.createElement('div');
     card.className = `upg-card${i === currentIndex ? ' active' : ''}`;
@@ -183,6 +184,12 @@ function buyUpgrade(index) {
   const upg = PERM_UPGRADES[index];
   const level = serverUpgrades[upg.id] || 0;
   const cost = getUpgradeCost(level);
+
+  // Precision capped at level 10 (100%)
+  if (upg.id === 'precision' && level >= 10) {
+    playDenySound();
+    return;
+  }
 
   if (serverGems < cost) {
     playDenySound();
