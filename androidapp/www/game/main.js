@@ -63,6 +63,12 @@ function gameLoop(timestamp) {
     return;
   }
 
+  // Pause: keep rendering but don't update game logic
+  if (typeof gamePaused !== 'undefined' && gamePaused) {
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
   // Skip frame if not enough time has passed (keeps ~60fps on 90/120Hz screens)
   if (timestamp - _lastFrameTime < FRAME_INTERVAL * 0.9) {
     requestAnimationFrame(gameLoop);

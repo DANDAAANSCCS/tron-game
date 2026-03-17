@@ -370,10 +370,7 @@ function _crossfadeTo(idx) {
   }
   _currentTrack = newTrack;
   // Reset auto-rotation timer
-  if (_trackTimer) clearInterval(_trackTimer);
-  _trackTimer = setInterval(() => {
-    if (musicRunning && musicEnabled) _crossfadeToNext();
-  }, TRACK_DURATION + Math.random() * 20000);
+  _scheduleNextTrack();
 }
 
 function _killTrack(track) {
@@ -410,6 +407,16 @@ function _crossfadeToNext() {
   _currentTrack = newTrack;
 }
 
+function _scheduleNextTrack() {
+  if (_trackTimer) clearTimeout(_trackTimer);
+  _trackTimer = setTimeout(() => {
+    if (musicRunning && musicEnabled) {
+      _crossfadeToNext();
+      _scheduleNextTrack(); // chain the next one
+    }
+  }, TRACK_DURATION + Math.random() * 20000);
+}
+
 function startMusic() {
   if (musicRunning || !musicEnabled) return;
   ensureContext();
@@ -421,16 +428,14 @@ function startMusic() {
   _currentTrack.gain.gain.setValueAtTime(0, audioCtx.currentTime);
   _currentTrack.gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 2);
 
-  // Schedule track rotation
-  _trackTimer = setInterval(() => {
-    if (musicRunning && musicEnabled) _crossfadeToNext();
-  }, TRACK_DURATION + Math.random() * 20000); // 60-80 seconds
+  // Schedule track rotation using chained setTimeout (more reliable on mobile)
+  _scheduleNextTrack();
 }
 
 function stopMusic() {
   if (!musicRunning) return;
   musicRunning = false;
-  if (_trackTimer) { clearInterval(_trackTimer); _trackTimer = null; }
+  if (_trackTimer) { clearTimeout(_trackTimer); _trackTimer = null; }
   if (_currentTrack) {
     // Fade out over 1 second
     const now = audioCtx.currentTime;

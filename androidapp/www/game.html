@@ -225,8 +225,8 @@
       text-align: center;
     }
 
-    /* ─── SETTINGS BUTTON ────────────────────────────────── */
-    #settings-btn {
+    /* ─── PAUSE BUTTON ────────────────────────────────── */
+    #pause-btn {
       position: fixed;
       top: calc(75px + max(env(safe-area-inset-top), 30px));
       left: calc(10px + env(safe-area-inset-left));
@@ -238,35 +238,63 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 0.8rem;
       color: rgba(0, 255, 242, 0.75);
       text-shadow: 0 0 8px rgba(0, 255, 242, 0.4);
       pointer-events: auto;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       cursor: pointer;
+      letter-spacing: -2px;
     }
 
-    #settings-btn:active {
+    #pause-btn:active {
       border-color: #00fff2;
       background: rgba(0, 255, 242, 0.1);
       box-shadow: 0 0 16px rgba(0, 255, 242, 0.45);
       color: #00fff2;
     }
 
-    /* ─── SETTINGS PANEL ─────────────────────────────────── */
-    #settings-panel {
+    /* ─── PAUSE OVERLAY ─────────────────────────────────── */
+    #pause-overlay {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 220px;
-      background: rgba(5, 5, 18, 0.96);
+      inset: 0;
+      background: rgba(0, 0, 5, 0.88);
+      z-index: 30;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    #pause-panel {
+      width: 240px;
+      background: rgba(5, 5, 18, 0.98);
       border: 1px solid rgba(0, 255, 242, 0.45);
       box-shadow: 0 0 30px rgba(0, 255, 242, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.6);
       padding: 20px 18px 16px;
-      z-index: 30;
+    }
+
+    .pause-menu-btn.resume {
+      display: block;
+      width: 100%;
+      padding: 12px 0;
+      border: 1px solid rgba(0, 255, 242, 0.5);
+      background: rgba(0, 255, 242, 0.08);
+      color: #00fff2;
       font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      cursor: pointer;
+      text-shadow: 0 0 8px rgba(0, 255, 242, 0.4);
+      margin-bottom: 10px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .pause-menu-btn.resume:active {
+      background: rgba(0, 255, 242, 0.18);
+      box-shadow: 0 0 18px rgba(0, 255, 242, 0.3);
     }
 
     .settings-title {
@@ -444,30 +472,40 @@
 
   <div id="touch-upgrades-btn">UP</div>
 
-  <div id="settings-btn">&#9881;</div>
-  <div id="settings-panel" style="display:none;">
-    <div class="settings-title">CONFIG</div>
-    <div class="settings-row">
-      <span data-i18n="settings.music">MUSICA</span>
-      <button id="music-toggle" class="settings-toggle">ON</button>
+  <div id="pause-btn">&#10074;&#10074;</div>
+
+  <!-- Pause overlay (covers entire screen, pauses game) -->
+  <div id="pause-overlay" style="display:none;">
+    <div id="pause-panel">
+      <div class="settings-title" data-i18n="pause.title">PAUSA</div>
+
+      <button id="btn-resume" class="pause-menu-btn resume" data-i18n="settings.continue">CONTINUAR</button>
+
+      <div class="settings-divider"></div>
+
+      <div class="settings-row">
+        <span data-i18n="settings.music">MUSICA</span>
+        <button id="music-toggle" class="settings-toggle">ON</button>
+      </div>
+      <div class="settings-row track-row">
+        <button id="track-prev" class="track-arrow">&lt;</button>
+        <span id="track-name" class="track-label">TRACK 1</span>
+        <button id="track-next" class="track-arrow">&gt;</button>
+      </div>
+      <div class="settings-row">
+        <span data-i18n="settings.sfx">EFECTOS</span>
+        <button id="sfx-toggle" class="settings-toggle">ON</button>
+      </div>
+      <div class="settings-row">
+        <span data-i18n="settings.language">IDIOMA</span>
+        <button id="lang-toggle" class="settings-toggle">ES</button>
+      </div>
+
+      <div class="settings-divider"></div>
+
+      <button id="btn-save-quit" class="settings-action-btn" data-i18n="settings.save_quit">GUARDAR Y SALIR</button>
+      <button id="btn-restart" class="settings-action-btn warn" data-i18n="settings.restart">REINICIAR</button>
     </div>
-    <div class="settings-row track-row">
-      <button id="track-prev" class="track-arrow">&lt;</button>
-      <span id="track-name" class="track-label">TRACK 1</span>
-      <button id="track-next" class="track-arrow">&gt;</button>
-    </div>
-    <div class="settings-row">
-      <span data-i18n="settings.sfx">EFECTOS</span>
-      <button id="sfx-toggle" class="settings-toggle">ON</button>
-    </div>
-    <div class="settings-row">
-      <span data-i18n="settings.language">IDIOMA</span>
-      <button id="lang-toggle" class="settings-toggle">ES</button>
-    </div>
-    <div class="settings-divider"></div>
-    <button id="btn-save-quit" class="settings-action-btn" data-i18n="settings.save_quit">GUARDAR Y SALIR</button>
-    <button id="btn-restart" class="settings-action-btn warn" data-i18n="settings.restart">REINICIAR</button>
-    <button id="settings-close" class="settings-close-btn" data-i18n="settings.continue">CONTINUAR</button>
   </div>
 
   <div id="overlay">

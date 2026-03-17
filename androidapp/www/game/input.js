@@ -203,19 +203,22 @@ window.addEventListener('keyup', e => {
   if (e.key === ' ') keys.space = false;
 });
 
-// ── Settings panel handlers ──────────────────────────────────────────────────
-(function () {
-  const settingsBtn   = document.getElementById('settings-btn');
-  const settingsPanel = document.getElementById('settings-panel');
-  const musicToggle   = document.getElementById('music-toggle');
-  const sfxToggle     = document.getElementById('sfx-toggle');
-  const settingsClose = document.getElementById('settings-close');
-  const btnSaveQuit   = document.getElementById('btn-save-quit');
-  const btnRestart    = document.getElementById('btn-restart');
+// ── Pause system ────────────────────────────────────────────────────────────
+// Game pauses when pause overlay is shown, resumes when closed.
+let gamePaused = false;
 
+(function () {
+  const pauseBtn     = document.getElementById('pause-btn');
+  const pauseOverlay = document.getElementById('pause-overlay');
+  const btnResume    = document.getElementById('btn-resume');
+  const musicToggle  = document.getElementById('music-toggle');
+  const sfxToggle    = document.getElementById('sfx-toggle');
+  const btnSaveQuit  = document.getElementById('btn-save-quit');
+  const btnRestart   = document.getElementById('btn-restart');
   const trackPrev    = document.getElementById('track-prev');
   const trackNext    = document.getElementById('track-next');
   const trackNameEl  = document.getElementById('track-name');
+  const langToggle   = document.getElementById('lang-toggle');
 
   function syncToggles() {
     if (musicToggle) {
@@ -231,34 +234,41 @@ window.addEventListener('keyup', e => {
     if (trackNameEl && typeof getTrackName === 'function') {
       trackNameEl.textContent = getTrackName();
     }
+    if (langToggle && typeof getLanguage === 'function') {
+      langToggle.textContent = getLanguage().toUpperCase();
+    }
   }
 
-  function openSettings() {
-    settingsPanel.style.display = 'block';
+  function pauseGame() {
+    if (gameState !== 'playing') return;
+    gamePaused = true;
+    pauseOverlay.style.display = 'flex';
     syncToggles();
     if (typeof playSelectSound === 'function') playSelectSound();
   }
 
-  function closeSettings() {
-    settingsPanel.style.display = 'none';
+  function resumeGame() {
+    gamePaused = false;
+    pauseOverlay.style.display = 'none';
     if (typeof playSelectSound === 'function') playSelectSound();
   }
 
   function addTap(el, fn) {
+    if (!el) return;
     el.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); fn(); }, { passive: false });
     el.addEventListener('click', fn);
   }
 
-  addTap(settingsBtn, () => settingsPanel.style.display === 'none' ? openSettings() : closeSettings());
-  addTap(settingsClose, closeSettings);
+  addTap(pauseBtn, pauseGame);
+  addTap(btnResume, resumeGame);
 
-  if (trackPrev) addTap(trackPrev, () => {
+  addTap(trackPrev, () => {
     if (typeof prevTrack === 'function') prevTrack();
     if (typeof playSelectSound === 'function') playSelectSound();
     syncToggles();
   });
 
-  if (trackNext) addTap(trackNext, () => {
+  addTap(trackNext, () => {
     if (typeof nextTrack === 'function') nextTrack();
     if (typeof playSelectSound === 'function') playSelectSound();
     syncToggles();
@@ -276,29 +286,34 @@ window.addEventListener('keyup', e => {
     if (typeof playSelectSound === 'function') playSelectSound();
   });
 
-  // Save & Quit — saves full game state (wave, score, upgrades, etc.)
+  addTap(langToggle, () => {
+    if (typeof toggleLanguage === 'function') toggleLanguage();
+    location.reload();
+  });
+
+  // Save & Quit
   addTap(btnSaveQuit, () => {
     if (typeof playSelectSound === 'function') playSelectSound();
     if (typeof saveProgress === 'function') saveProgress();
     if (typeof doAutoSave === 'function') doAutoSave();
     if (typeof stopMusic === 'function') stopMusic();
-    setTimeout(() => { window.location.href = '/levels.html'; }, 300);
+    window.location.href = '/levels.html';
   });
 
   // Restart
   addTap(btnRestart, () => {
     if (typeof playSelectSound === 'function') playSelectSound();
-    closeSettings();
+    resumeGame();
     if (typeof initGame === 'function') {
       initGame();
       gameState = 'playing';
     }
   });
 
-  // Block canvas touches from leaking through the panel
-  settingsPanel.addEventListener('touchstart', e => e.stopPropagation(), { passive: false });
-  settingsPanel.addEventListener('touchmove',  e => e.stopPropagation(), { passive: false });
-  settingsPanel.addEventListener('touchend',   e => e.stopPropagation(), { passive: false });
+  // Block touches on pause overlay
+  pauseOverlay.addEventListener('touchstart', e => e.stopPropagation(), { passive: false });
+  pauseOverlay.addEventListener('touchmove',  e => e.stopPropagation(), { passive: false });
+  pauseOverlay.addEventListener('touchend',   e => e.stopPropagation(), { passive: false });
 })();
 
 // ── Collision: Bullets vs Enemies ─────────────────────────────────────────────

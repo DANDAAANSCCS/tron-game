@@ -29,6 +29,7 @@ const LANGS = {
     'settings.save_quit': 'GUARDAR Y SALIR',
     'settings.restart': 'REINICIAR',
     'settings.continue': 'CONTINUAR',
+    'pause.title': 'PAUSA',
     'settings.close': 'CERRAR',
     'settings.language': 'IDIOMA',
 
@@ -202,6 +203,7 @@ const LANGS = {
     'settings.save_quit': 'SAVE & QUIT',
     'settings.restart': 'RESTART',
     'settings.continue': 'CONTINUE',
+    'pause.title': 'PAUSE',
     'settings.close': 'CLOSE',
     'settings.language': 'LANGUAGE',
 
