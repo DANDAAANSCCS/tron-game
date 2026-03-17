@@ -11,11 +11,12 @@ function getUpgradePerLevel(upg) {
 function getUpgradeDesc(upg) {
   const pct = Math.round(getUpgradePerLevel(upg) * 100);
   if (upg === upgrades.doubleBul) {
-    const guaranteed = (typeof getMultiShotGuaranteed === 'function') ? getMultiShotGuaranteed() : 1;
+    // Shows what the next proc gives, e.g. "DOUBLE [46%]" means 46% chance for 2 bullets
+    const tier = (typeof getMultiShotGuaranteed === 'function') ? getMultiShotGuaranteed() : 1;
     const chance = (typeof getMultiShotChancePct === 'function') ? getMultiShotChancePct() : 0;
     const names = ['SINGLE', 'DOUBLE', 'TRIPLE', 'QUAD', 'PENTA', 'HEXA', 'HEPTA', 'OCTA'];
-    const shotName = names[guaranteed - 1] || (guaranteed + 'x');
-    return `${shotName} [${chance}%]`;
+    const nextShotName = names[tier] || ((tier + 1) + 'x');
+    return `${nextShotName} [${chance}%]`;
   }
   return `+${pct}% ${upg.descBase}`;
 }
@@ -105,10 +106,11 @@ function buyUpgrade(key) {
 
   // Multi-shot tier up: show message when guaranteed count increases
   if (key === 'doubleBul' && typeof getMultiShotGuaranteed === 'function') {
-    const newGuaranteed = getMultiShotGuaranteed();
-    if (newGuaranteed > prevGuaranteed) {
+    const newTier = getMultiShotGuaranteed();
+    if (newTier > prevGuaranteed) {
+      // Tier went up — the next shot name is now available
       const names = ['SINGLE', 'DOUBLE', 'TRIPLE', 'QUAD', 'PENTA', 'HEXA', 'HEPTA', 'OCTA'];
-      const shotName = names[newGuaranteed - 1] || (newGuaranteed + 'x');
+      const shotName = names[newTier] || ((newTier + 1) + 'x');
       spawnFloatingText(turret.x, turret.y - 70, `${shotName} SHOT!`, upg.color);
       spawnRewardPopup(`${shotName} SHOT!`, upg.color);
       upg.tier++;

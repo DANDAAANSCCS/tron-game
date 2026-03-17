@@ -120,16 +120,19 @@ class Turret {
     const bx = this.x + Math.cos(this.angle) * (this.radius + 12);
     const by = this.y + Math.sin(this.angle) * (this.radius + 12);
 
-    // Multi-shot: guaranteed bullets + chance for one extra
-    const guaranteed = (typeof getMultiShotGuaranteed === 'function') ? getMultiShotGuaranteed() : 1;
-    const extraChance = (typeof getMultiShotChance === 'function') ? getMultiShotChance() : 0;
-    const hasExtra = extraChance > 0 && Math.random() < extraChance;
-    const totalShots = guaranteed + (hasExtra ? 1 : 0);
+    // Multi-shot: always 1 bullet. Chance to fire the full tier instead.
+    // DOUBLE [46%] = 46% chance to fire 2 bullets, otherwise 1.
+    // TRIPLE [30%] = 30% chance to fire 3 bullets, otherwise 1.
+    // shotTier: base tier (1=working toward double, 2=working toward triple, etc.)
+    // tierChance: 0-65% chance to fire tier+1 bullets instead of 1
+    const shotTier = (typeof getMultiShotGuaranteed === 'function') ? getMultiShotGuaranteed() : 1;
+    const tierChance = (typeof getMultiShotChance === 'function') ? getMultiShotChance() : 0;
+    const procsMulti = tierChance > 0 && Math.random() < tierChance;
+    const totalShots = procsMulti ? (shotTier + 1) : 1;
 
     for (let i = 0; i < totalShots; i++) {
       let shotAngle = this.angle;
       if (totalShots > 1) {
-        // Fan pattern: spread bullets evenly with slight randomness
         const fanWidth = 0.12 * (totalShots - 1);
         const offset = (i / (totalShots - 1) - 0.5) * fanWidth * 2;
         shotAngle += offset + (Math.random() - 0.5) * curSpread;
