@@ -466,11 +466,9 @@ router.post('/chest/open', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'NOT ENOUGH GEMS' });
     }
 
+    const currentCards = user.gameData?.abilityCards || {};
     const drop = openChest(chestType, currentCards);
     if (!drop) return res.status(500).json({ error: 'CHEST OPEN FAILED' });
-
-    // Update cards
-    const currentCards = user.gameData?.abilityCards || {};
     const update = { 'gameData.gems': gems - chest.cost };
 
     for (const [abilityId, count] of Object.entries(drop.results)) {
