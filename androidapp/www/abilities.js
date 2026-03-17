@@ -1315,7 +1315,16 @@ function renderAbilities() {
   const grid = document.getElementById('abilities-grid');
   grid.innerHTML = '';
 
-  ABILITIES.forEach(ab => {
+  // Sort: unlocked first, then by rarity (legendary > epic > rare > common)
+  const rarityOrder = { legendary: 0, epic: 1, rare: 2, common: 3 };
+  const sorted = [...ABILITIES].sort((a, b) => {
+    const aCards = (abilityCards[a.id] || 0) > 0 ? 0 : 1;
+    const bCards = (abilityCards[b.id] || 0) > 0 ? 0 : 1;
+    if (aCards !== bCards) return aCards - bCards;
+    return (rarityOrder[a.rarity] || 3) - (rarityOrder[b.rarity] || 3);
+  });
+
+  sorted.forEach(ab => {
     const rarity = RARITY[ab.rarity];
     const info = getProgressInfo(ab.id);
     const isEquipped = equippedAbilities.includes(ab.id);
