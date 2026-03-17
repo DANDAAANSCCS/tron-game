@@ -131,14 +131,8 @@ class Turret {
     const totalShots = procsMulti ? (shotTier + 1) : 1;
 
     for (let i = 0; i < totalShots; i++) {
-      let shotAngle = this.angle;
-      if (totalShots > 1) {
-        const fanWidth = 0.12 * (totalShots - 1);
-        const offset = (i / (totalShots - 1) - 0.5) * fanWidth * 2;
-        shotAngle += offset + (Math.random() - 0.5) * curSpread;
-      } else {
-        shotAngle += (Math.random() - 0.5) * curSpread * 2;
-      }
+      // All bullets get random spread — no pattern, just scattered
+      const shotAngle = this.angle + (Math.random() - 0.5) * curSpread * 2;
       bullets.push(new Bullet(bx, by, shotAngle));
     }
 
