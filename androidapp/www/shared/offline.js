@@ -154,11 +154,14 @@ function _offlineOpenChest(chestType) {
 
   const ownedCards = cached.abilityCards || {};
 
-  for (let i = 0; i < totalCards; i++) {
+  // Pick 2-4 different abilities first
+  const maxSlots = 2 + Math.floor(Math.random() * 3);
+  const selectedAbilities = [];
+
+  for (let s = 0; s < maxSlots; s++) {
     let r = Math.random() * totalWeight;
     let rarity = weightEntries[0][0];
     for (const [rar, w] of weightEntries) { r -= w; if (r <= 0) { rarity = rar; break; } }
-    // Pick ability: 80% chance to favor owned, 20% any
     const pool = Object.entries(_ABILITY_RARITIES).filter(([, r]) => r === rarity).map(([id]) => id);
     if (!pool.length) continue;
     const ownedPool = pool.filter(id => (ownedCards[id] || 0) > 0);
@@ -168,6 +171,17 @@ function _offlineOpenChest(chestType) {
     } else {
       abilityId = pool[Math.floor(Math.random() * pool.length)];
     }
+    if (!selectedAbilities.includes(abilityId)) selectedAbilities.push(abilityId);
+  }
+
+  if (selectedAbilities.length === 0) {
+    const pool = Object.entries(_ABILITY_RARITIES).filter(([, r]) => r === weightEntries[0][0]).map(([id]) => id);
+    if (pool.length > 0) selectedAbilities.push(pool[Math.floor(Math.random() * pool.length)]);
+  }
+
+  // Distribute all cards among selected abilities
+  for (let i = 0; i < totalCards; i++) {
+    const abilityId = selectedAbilities[Math.floor(Math.random() * selectedAbilities.length)];
     drop[abilityId] = (drop[abilityId] || 0) + 1;
   }
 

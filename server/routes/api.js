@@ -219,12 +219,16 @@ function openChest(chestType, ownedCards) {
   const results = {}; // { abilityId: cardCount }
   const owned = ownedCards || {};
 
-  for (let i = 0; i < totalCards; i++) {
+  // Pick 2-4 different abilities first, then distribute all cards among them
+  const maxSlots = 2 + Math.floor(Math.random() * 3); // 2, 3, or 4
+  const selectedAbilities = [];
+
+  for (let s = 0; s < maxSlots; s++) {
     const rarity = pickRarity(chest.rarityWeights);
     const pool = getAbilitiesByRarity(rarity);
     if (pool.length === 0) continue;
 
-    // 80% chance to pick from owned abilities of this rarity, 20% new
+    // 80% chance to pick from owned, 20% any
     const ownedPool = pool.filter(id => (owned[id] || 0) > 0);
     let abilityId;
     if (ownedPool.length > 0 && Math.random() < 0.80) {
@@ -232,6 +236,21 @@ function openChest(chestType, ownedCards) {
     } else {
       abilityId = pool[Math.floor(Math.random() * pool.length)];
     }
+    if (!selectedAbilities.includes(abilityId)) {
+      selectedAbilities.push(abilityId);
+    }
+  }
+
+  // Ensure at least 1 ability selected
+  if (selectedAbilities.length === 0) {
+    const rarity = pickRarity(chest.rarityWeights);
+    const pool = getAbilitiesByRarity(rarity);
+    if (pool.length > 0) selectedAbilities.push(pool[Math.floor(Math.random() * pool.length)]);
+  }
+
+  // Distribute all cards among selected abilities (weighted random)
+  for (let i = 0; i < totalCards; i++) {
+    const abilityId = selectedAbilities[Math.floor(Math.random() * selectedAbilities.length)];
     results[abilityId] = (results[abilityId] || 0) + 1;
   }
 
