@@ -1,0 +1,2081 @@
+[
+  {
+    "id": "plasma_burst",
+    "name": "PLASMA BURST",
+    "rarity": "common",
+    "icon": "🔵",
+    "description_en": "Fires a radial burst of plasma bolts in all 8 directions, each dealing moderate damage.",
+    "description_es": "Dispara una rafaga radial de proyectiles de plasma en las 8 direcciones, cada uno causando daño moderado.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 40,
+      "damagePerLevel": 8,
+      "baseCooldown": 420,
+      "cooldownPerLevel": -15,
+      "baseProjectiles": 8,
+      "projectilesPerLevel": 0,
+      "baseRange": 300,
+      "rangePerLevel": 10
+    }
+  },
+  {
+    "id": "static_field",
+    "name": "STATIC FIELD",
+    "rarity": "common",
+    "icon": "⚡",
+    "description_en": "Creates a persistent electric field around the turret for 5 seconds that damages enemies on contact.",
+    "description_es": "Crea un campo electrico persistente alrededor de la torreta durante 5 segundos que daña a los enemigos al contacto.",
+    "mechanic_type": "zone",
+    "stats": {
+      "baseDamage": 10,
+      "damagePerLevel": 2,
+      "baseCooldown": 600,
+      "cooldownPerLevel": -20,
+      "baseRadius": 120,
+      "radiusPerLevel": 8,
+      "baseDuration": 300,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "repair_nanobots",
+    "name": "REPAIR NANOBOTS",
+    "rarity": "common",
+    "icon": "🔧",
+    "description_en": "Releases nanobots that restore a portion of the turret's lost health.",
+    "description_es": "Libera nanobots que restauran una porcion de la salud perdida de la torreta.",
+    "mechanic_type": "heal",
+    "stats": {
+      "baseHeal": 30,
+      "healPerLevel": 10,
+      "baseCooldown": 720,
+      "cooldownPerLevel": -20
+    }
+  },
+  {
+    "id": "shrapnel_mine",
+    "name": "SHRAPNEL MINE",
+    "rarity": "common",
+    "icon": "💣",
+    "description_en": "Places a proximity mine at the turret location that explodes when an enemy walks over it.",
+    "description_es": "Coloca una mina de proximidad en la ubicacion de la torreta que explota cuando un enemigo la pisa.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseDamage": 80,
+      "damagePerLevel": 15,
+      "baseCooldown": 480,
+      "cooldownPerLevel": -15,
+      "baseMines": 1,
+      "minesPerLevel": 0,
+      "baseTriggerRadius": 40,
+      "triggerRadiusPerLevel": 3
+    }
+  },
+  {
+    "id": "targeting_boost",
+    "name": "TARGETING BOOST",
+    "rarity": "common",
+    "icon": "🎯",
+    "description_en": "Temporarily increases the turret's effective range and bullet speed for 6 seconds.",
+    "description_es": "Aumenta temporalmente el alcance efectivo y la velocidad de bala de la torreta durante 6 segundos.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseRangeBonus": 100,
+      "rangeBonusPerLevel": 20,
+      "baseBulletSpeedBonus": 0.3,
+      "bulletSpeedBonusPerLevel": 0.05,
+      "baseCooldown": 540,
+      "cooldownPerLevel": -15,
+      "baseDuration": 360,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "poison_spray",
+    "name": "POISON SPRAY",
+    "rarity": "common",
+    "icon": "☠️",
+    "description_en": "Sprays a cone of toxic mist in the turret's aim direction, poisoning enemies for 4 seconds.",
+    "description_es": "Rocía un cono de niebla toxica en la direccion de apuntado de la torreta, envenenando a los enemigos durante 4 segundos.",
+    "mechanic_type": "dot",
+    "stats": {
+      "baseDotDamage": 8,
+      "dotDamagePerLevel": 2,
+      "baseCooldown": 480,
+      "cooldownPerLevel": -12,
+      "baseDuration": 240,
+      "durationPerLevel": 8,
+      "baseConeAngle": 60,
+      "coneAnglePerLevel": 2,
+      "baseConeRange": 250,
+      "coneRangePerLevel": 10
+    }
+  },
+  {
+    "id": "energy_wall",
+    "name": "ENERGY WALL",
+    "rarity": "common",
+    "icon": "🚧",
+    "description_en": "Erects a short energy barrier that slows enemies passing through it for 3 seconds.",
+    "description_es": "Erige una barrera de energia corta que frena a los enemigos que la atraviesan durante 3 segundos.",
+    "mechanic_type": "zone",
+    "stats": {
+      "baseSlowAmount": 0.4,
+      "slowAmountPerLevel": 0.05,
+      "baseCooldown": 540,
+      "cooldownPerLevel": -15,
+      "baseDuration": 180,
+      "durationPerLevel": 10,
+      "baseWallLength": 200,
+      "wallLengthPerLevel": 10
+    }
+  },
+  {
+    "id": "scatter_shot",
+    "name": "SCATTER SHOT",
+    "rarity": "common",
+    "icon": "💥",
+    "description_en": "Instantly fires a wide spread of 12 bullets in a 180-degree arc in front of the turret.",
+    "description_es": "Dispara instantaneamente una amplia rafaga de 12 balas en un arco de 180 grados frente a la torreta.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 25,
+      "damagePerLevel": 5,
+      "baseCooldown": 360,
+      "cooldownPerLevel": -10,
+      "baseProjectiles": 12,
+      "projectilesPerLevel": 1
+    }
+  },
+  {
+    "id": "blind_flash",
+    "name": "BLIND FLASH",
+    "rarity": "common",
+    "icon": "🌟",
+    "description_en": "Emits a blinding flash that stuns all nearby enemies for 1.5 seconds.",
+    "description_es": "Emite un destello cegador que aturde a todos los enemigos cercanos durante 1.5 segundos.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseStunDuration": 90,
+      "stunDurationPerLevel": 8,
+      "baseCooldown": 600,
+      "cooldownPerLevel": -15,
+      "baseRadius": 200,
+      "radiusPerLevel": 10
+    }
+  },
+  {
+    "id": "bullet_magnet",
+    "name": "BULLET MAGNET",
+    "rarity": "common",
+    "icon": "🧲",
+    "description_en": "Activates a magnetic field that causes all active bullets to curve toward the nearest enemy for 4 seconds.",
+    "description_es": "Activa un campo magnetico que hace que todas las balas activas se curven hacia el enemigo mas cercano durante 4 segundos.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseCooldown": 480,
+      "cooldownPerLevel": -12,
+      "baseDuration": 240,
+      "durationPerLevel": 10,
+      "baseCurveStrength": 0.08,
+      "curveStrengthPerLevel": 0.01
+    }
+  },
+  {
+    "id": "gravity_pull",
+    "name": "GRAVITY PULL",
+    "rarity": "common",
+    "icon": "🌀",
+    "description_en": "Briefly pulls all enemies on screen toward the turret center.",
+    "description_es": "Atrae brevemente a todos los enemigos en pantalla hacia el centro de la torreta.",
+    "mechanic_type": "utility",
+    "stats": {
+      "basePullForce": 80,
+      "pullForcePerLevel": 10,
+      "baseCooldown": 540,
+      "cooldownPerLevel": -12,
+      "baseDuration": 60,
+      "durationPerLevel": 5
+    }
+  },
+  {
+    "id": "armor_plating",
+    "name": "ARMOR PLATING",
+    "rarity": "common",
+    "icon": "🛡️",
+    "description_en": "Applies a temporary flat damage reduction to all incoming hits for 6 seconds.",
+    "description_es": "Aplica una reduccion de daño plana temporal a todos los impactos entrantes durante 6 segundos.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseDamageReduction": 10,
+      "damageReductionPerLevel": 3,
+      "baseCooldown": 720,
+      "cooldownPerLevel": -18,
+      "baseDuration": 360,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "spark_trail",
+    "name": "SPARK TRAIL",
+    "rarity": "common",
+    "icon": "✨",
+    "description_en": "Each bullet leaves a damaging spark trail for 3 seconds after this ability fires.",
+    "description_es": "Cada bala deja un rastro de chispas dañino durante 3 segundos despues de que se activa esta habilidad.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseTrailDamage": 5,
+      "trailDamagePerLevel": 1,
+      "baseCooldown": 600,
+      "cooldownPerLevel": -15,
+      "baseDuration": 180,
+      "durationPerLevel": 8
+    }
+  },
+  {
+    "id": "micro_missiles",
+    "name": "MICRO MISSILES",
+    "rarity": "common",
+    "icon": "🚀",
+    "description_en": "Launches 4 homing micro-missiles that each track a random enemy and explode on impact.",
+    "description_es": "Lanza 4 micro-misiles teledirigidos que rastrean a un enemigo aleatorio y explotan al impacto.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 35,
+      "damagePerLevel": 7,
+      "baseCooldown": 480,
+      "cooldownPerLevel": -12,
+      "baseMissiles": 4,
+      "missilesPerLevel": 1
+    }
+  },
+  {
+    "id": "decoy_signal",
+    "name": "DECOY SIGNAL",
+    "rarity": "common",
+    "icon": "📡",
+    "description_en": "Deploys a decoy beacon that distracts all enemies, causing them to target it for 4 seconds.",
+    "description_es": "Despliega una baliza señuelo que distrae a todos los enemigos, haciendo que la ataquen durante 4 segundos.",
+    "mechanic_type": "utility",
+    "stats": {
+      "baseCooldown": 720,
+      "cooldownPerLevel": -20,
+      "baseDuration": 240,
+      "durationPerLevel": 12,
+      "baseDecoyHP": 50,
+      "decoyHPPerLevel": 15
+    }
+  },
+  {
+    "id": "voltaic_aura",
+    "name": "VOLTAIC AURA",
+    "rarity": "common",
+    "icon": "⭕",
+    "description_en": "Activates a short-duration electric aura that deals small damage to all enemies within a close radius each second.",
+    "description_es": "Activa un aura electrica de corta duracion que causa pequeño daño a todos los enemigos en un radio cercano cada segundo.",
+    "mechanic_type": "passive",
+    "stats": {
+      "baseDamagePerTick": 8,
+      "damagePerTickPerLevel": 2,
+      "baseCooldown": 600,
+      "cooldownPerLevel": -15,
+      "baseRadius": 100,
+      "radiusPerLevel": 5,
+      "baseDuration": 300,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "grease_slick",
+    "name": "GREASE SLICK",
+    "rarity": "common",
+    "icon": "🛢️",
+    "description_en": "Drops a slick puddle beneath the turret that slows enemies moving through it by 50%.",
+    "description_es": "Deja un charco resbaladizo bajo la torreta que frena a los enemigos que lo atraviesan en un 50%.",
+    "mechanic_type": "zone",
+    "stats": {
+      "baseSlowAmount": 0.5,
+      "slowAmountPerLevel": 0.03,
+      "baseCooldown": 480,
+      "cooldownPerLevel": -12,
+      "baseDuration": 360,
+      "durationPerLevel": 15,
+      "baseRadius": 90,
+      "radiusPerLevel": 6
+    }
+  },
+  {
+    "id": "ricochet_round",
+    "name": "RICOCHET ROUND",
+    "rarity": "common",
+    "icon": "↩️",
+    "description_en": "Fires a single high-velocity bullet that bounces off screen edges up to 4 times.",
+    "description_es": "Dispara una sola bala de alta velocidad que rebota en los bordes de la pantalla hasta 4 veces.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 55,
+      "damagePerLevel": 10,
+      "baseCooldown": 360,
+      "cooldownPerLevel": -10,
+      "baseBounces": 4,
+      "bouncesPerLevel": 1
+    }
+  },
+  {
+    "id": "smoke_screen",
+    "name": "SMOKE SCREEN",
+    "rarity": "common",
+    "icon": "💨",
+    "description_en": "Deploys a smoke screen that reduces enemy movement speed by 30% for 5 seconds.",
+    "description_es": "Despliega una cortina de humo que reduce la velocidad de movimiento de los enemigos en un 30% durante 5 segundos.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseSlowAmount": 0.3,
+      "slowAmountPerLevel": 0.03,
+      "baseCooldown": 540,
+      "cooldownPerLevel": -12,
+      "baseDuration": 300,
+      "durationPerLevel": 12,
+      "baseRadius": 180,
+      "radiusPerLevel": 8
+    }
+  },
+  {
+    "id": "overcharge_shot",
+    "name": "OVERCHARGE SHOT",
+    "rarity": "common",
+    "icon": "🔋",
+    "description_en": "Fires one massively overcharged bullet that deals triple the normal bullet damage and pierces up to 3 enemies.",
+    "description_es": "Dispara una sola bala masivamente sobrecargada que causa el triple del daño normal y perfora hasta 3 enemigos.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamageMultiplier": 3,
+      "damageMultiplierPerLevel": 0.2,
+      "baseCooldown": 480,
+      "cooldownPerLevel": -12,
+      "basePierce": 3,
+      "piercePerLevel": 1
+    }
+  },
+  {
+    "id": "seismic_tap",
+    "name": "SEISMIC TAP",
+    "rarity": "common",
+    "icon": "💢",
+    "description_en": "Strikes the ground and sends a shockwave radially outward, briefly knocking back enemies.",
+    "description_es": "Golpea el suelo y envia una onda de choque radialmente hacia afuera, empujando brevemente a los enemigos.",
+    "mechanic_type": "utility",
+    "stats": {
+      "baseKnockback": 60,
+      "knockbackPerLevel": 8,
+      "baseCooldown": 420,
+      "cooldownPerLevel": -10,
+      "baseRadius": 250,
+      "radiusPerLevel": 10
+    }
+  },
+  {
+    "id": "turret_overclock",
+    "name": "TURRET OVERCLOCK",
+    "rarity": "common",
+    "icon": "⚙️",
+    "description_en": "Temporarily overclocks the turret, increasing its fire rate by 50% for 4 seconds.",
+    "description_es": "Sobrecarga temporalmente la torreta, aumentando su cadencia de fuego en un 50% durante 4 segundos.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseFireRateBonus": 0.5,
+      "fireRateBonusPerLevel": 0.05,
+      "baseCooldown": 720,
+      "cooldownPerLevel": -18,
+      "baseDuration": 240,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "acid_splash",
+    "name": "ACID SPLASH",
+    "rarity": "common",
+    "icon": "🧪",
+    "description_en": "Splashes acid on the nearest 3 enemies, reducing their armor and causing them to take 20% more damage for 5 seconds.",
+    "description_es": "Salpica acido en los 3 enemigos mas cercanos, reduciendo su armadura y haciendo que reciban un 20% mas de daño durante 5 segundos.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseDamageAmplify": 0.2,
+      "damageAmplifyPerLevel": 0.03,
+      "baseCooldown": 540,
+      "cooldownPerLevel": -12,
+      "baseDuration": 300,
+      "durationPerLevel": 10,
+      "baseTargets": 3,
+      "targetsPerLevel": 1
+    }
+  },
+  {
+    "id": "burst_shield",
+    "name": "BURST SHIELD",
+    "rarity": "common",
+    "icon": "🔵",
+    "description_en": "Instantly absorbs the next incoming hit completely, regardless of damage amount.",
+    "description_es": "Absorbe instantaneamente el siguiente impacto entrante por completo, independientemente del daño.",
+    "mechanic_type": "shield",
+    "stats": {
+      "baseHitsAbsorbed": 1,
+      "hitsAbsorbedPerLevel": 0,
+      "baseCooldown": 600,
+      "cooldownPerLevel": -15
+    }
+  },
+  {
+    "id": "energy_spike",
+    "name": "ENERGY SPIKE",
+    "rarity": "common",
+    "icon": "📌",
+    "description_en": "Plants an energy spike at a random enemy position that deals instant heavy damage when triggered.",
+    "description_es": "Planta un pico de energia en la posicion de un enemigo aleatorio que causa daño pesado instantaneo al activarse.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 70,
+      "damagePerLevel": 12,
+      "baseCooldown": 420,
+      "cooldownPerLevel": -10,
+      "baseRadius": 50,
+      "radiusPerLevel": 3
+    }
+  },
+  {
+    "id": "hail_storm",
+    "name": "HAIL STORM",
+    "rarity": "common",
+    "icon": "🌨️",
+    "description_en": "Showers a random screen area with 20 small ice projectiles dealing light damage each.",
+    "description_es": "Cubre un area aleatoria de la pantalla con 20 pequeños proyectiles de hielo que causan poco daño cada uno.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseDamage": 12,
+      "damagePerLevel": 2,
+      "baseCooldown": 480,
+      "cooldownPerLevel": -12,
+      "baseProjectiles": 20,
+      "projectilesPerLevel": 2
+    }
+  },
+  {
+    "id": "crit_boost",
+    "name": "CRIT BOOST",
+    "rarity": "common",
+    "icon": "🎰",
+    "description_en": "Grants a 40% critical hit chance for the next 6 seconds, causing crits to deal double damage.",
+    "description_es": "Otorga un 40% de probabilidad de golpe critico durante los proximos 6 segundos, causando que los criticos hagan el doble de daño.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseCritChance": 0.4,
+      "critChancePerLevel": 0.05,
+      "baseCooldown": 720,
+      "cooldownPerLevel": -18,
+      "baseDuration": 360,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "web_trap",
+    "name": "WEB TRAP",
+    "rarity": "common",
+    "icon": "🕸️",
+    "description_en": "Fires a web that roots the nearest enemy in place for 3 seconds.",
+    "description_es": "Dispara una telaraña que inmoviliza al enemigo mas cercano durante 3 segundos.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseRootDuration": 180,
+      "rootDurationPerLevel": 12,
+      "baseCooldown": 480,
+      "cooldownPerLevel": -12,
+      "baseTargets": 1,
+      "targetsPerLevel": 0
+    }
+  },
+  {
+    "id": "flare_launch",
+    "name": "FLARE LAUNCH",
+    "rarity": "common",
+    "icon": "🔆",
+    "description_en": "Launches a flare that reveals all enemies on the minimap and marks them to take 15% bonus damage for 5 seconds.",
+    "description_es": "Lanza una bengala que revela a todos los enemigos en el minimapa y los marca para recibir un 15% de daño adicional durante 5 segundos.",
+    "mechanic_type": "utility",
+    "stats": {
+      "baseDamageBonus": 0.15,
+      "damageBonusPerLevel": 0.03,
+      "baseCooldown": 600,
+      "cooldownPerLevel": -15,
+      "baseDuration": 300,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "repulsor_blast",
+    "name": "REPULSOR BLAST",
+    "rarity": "common",
+    "icon": "💫",
+    "description_en": "Pushes all enemies on screen away from the turret with moderate force.",
+    "description_es": "Empuja a todos los enemigos en pantalla lejos de la torreta con fuerza moderada.",
+    "mechanic_type": "utility",
+    "stats": {
+      "baseRepulseForce": 120,
+      "repulseForcePerLevel": 15,
+      "baseCooldown": 540,
+      "cooldownPerLevel": -12
+    }
+  },
+  {
+    "id": "twin_barrels",
+    "name": "TWIN BARRELS",
+    "rarity": "rare",
+    "icon": "🔫",
+    "description_en": "Temporarily doubles the number of bullets fired per shot for 5 seconds, with each extra bullet dealing 50% damage.",
+    "description_es": "Dobla temporalmente el numero de balas disparadas por tiro durante 5 segundos, con cada bala extra causando el 50% del daño.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseExtraBullets": 1,
+      "extraBulletsPerLevel": 1,
+      "baseDamageRatio": 0.5,
+      "damageRatioPerLevel": 0.05,
+      "baseCooldown": 900,
+      "cooldownPerLevel": -25,
+      "baseDuration": 300,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "chain_burn",
+    "name": "CHAIN BURN",
+    "rarity": "rare",
+    "icon": "🔥",
+    "description_en": "Ignites the nearest enemy; fire spreads to adjacent enemies within range, burning each for 4 seconds.",
+    "description_es": "Inflama al enemigo mas cercano; el fuego se propaga a los enemigos adyacentes en rango, quemando a cada uno durante 4 segundos.",
+    "mechanic_type": "dot",
+    "stats": {
+      "baseBurnDamage": 12,
+      "burnDamagePerLevel": 2,
+      "baseCooldown": 720,
+      "cooldownPerLevel": -20,
+      "baseDuration": 240,
+      "durationPerLevel": 8,
+      "baseSpreadRange": 100,
+      "spreadRangePerLevel": 8,
+      "baseMaxTargets": 5,
+      "maxTargetsPerLevel": 1
+    }
+  },
+  {
+    "id": "void_rift",
+    "name": "VOID RIFT",
+    "rarity": "rare",
+    "icon": "🕳️",
+    "description_en": "Opens a rift at a random enemy cluster that deals damage over time and pulls nearby enemies into it for 4 seconds.",
+    "description_es": "Abre una grieta en un grupo aleatorio de enemigos que causa daño continuo y atrae a los enemigos cercanos durante 4 segundos.",
+    "mechanic_type": "zone",
+    "stats": {
+      "baseDamagePerTick": 15,
+      "damagePerTickPerLevel": 3,
+      "baseCooldown": 1080,
+      "cooldownPerLevel": -25,
+      "baseDuration": 240,
+      "durationPerLevel": 10,
+      "basePullForce": 60,
+      "pullForcePerLevel": 5,
+      "baseRadius": 100,
+      "radiusPerLevel": 8
+    }
+  },
+  {
+    "id": "kill_trigger_bomb",
+    "name": "KILL BOMB",
+    "rarity": "rare",
+    "icon": "💀",
+    "description_en": "Places a kill-triggered bomb: when any enemy dies within range, it detonates, dealing AoE damage to all nearby enemies.",
+    "description_es": "Coloca una bomba activada por muerte: cuando cualquier enemigo muere en rango, detona causando daño en area a los enemigos cercanos.",
+    "mechanic_type": "triggered",
+    "stats": {
+      "baseDamage": 90,
+      "damagePerLevel": 18,
+      "baseCooldown": 840,
+      "cooldownPerLevel": -20,
+      "baseTriggerRadius": 150,
+      "triggerRadiusPerLevel": 10,
+      "baseBlastRadius": 120,
+      "blastRadiusPerLevel": 8
+    }
+  },
+  {
+    "id": "drone_sentry",
+    "name": "DRONE SENTRY",
+    "rarity": "rare",
+    "icon": "🤖",
+    "description_en": "Deploys an autonomous drone that orbits the turret and shoots the nearest enemy for 10 seconds.",
+    "description_es": "Despliega un dron autonomo que orbita la torreta y dispara al enemigo mas cercano durante 10 segundos.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseDroneDamage": 20,
+      "droneDamagePerLevel": 4,
+      "baseCooldown": 1200,
+      "cooldownPerLevel": -30,
+      "baseDuration": 600,
+      "durationPerLevel": 20,
+      "baseDroneFireRate": 60,
+      "droneFireRatePerLevel": -3
+    }
+  },
+  {
+    "id": "lifesteal_rounds",
+    "name": "LIFESTEAL ROUNDS",
+    "rarity": "rare",
+    "icon": "🩸",
+    "description_en": "Loads lifesteal ammunition for 6 seconds; each bullet heals the turret for 10% of the damage dealt.",
+    "description_es": "Carga municion de robo de vida durante 6 segundos; cada bala cura la torreta por el 10% del daño infligido.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseLifestealRatio": 0.1,
+      "lifestealRatioPerLevel": 0.02,
+      "baseCooldown": 1080,
+      "cooldownPerLevel": -25,
+      "baseDuration": 360,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "tesla_coil",
+    "name": "TESLA COIL",
+    "rarity": "rare",
+    "icon": "🗼",
+    "description_en": "Deploys a stationary Tesla coil that zaps up to 3 enemies per second for 8 seconds.",
+    "description_es": "Despliega una bobina Tesla estacionaria que sacude a hasta 3 enemigos por segundo durante 8 segundos.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseDamagePerZap": 18,
+      "damagePerZapPerLevel": 4,
+      "baseCooldown": 1080,
+      "cooldownPerLevel": -25,
+      "baseDuration": 480,
+      "durationPerLevel": 15,
+      "baseTargetsPerZap": 3,
+      "targetsPerZapPerLevel": 1
+    }
+  },
+  {
+    "id": "mirror_wall",
+    "name": "MIRROR WALL",
+    "rarity": "rare",
+    "icon": "🪞",
+    "description_en": "Spawns a reflective wall that bounces bullets back at enemies for 5 seconds.",
+    "description_es": "Genera una pared reflectante que rebota las balas de vuelta hacia los enemigos durante 5 segundos.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseBulletDamageMultiplier": 1.5,
+      "bulletDamageMultiplierPerLevel": 0.1,
+      "baseCooldown": 900,
+      "cooldownPerLevel": -22,
+      "baseDuration": 300,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "vulnerability_mark",
+    "name": "VULN MARK",
+    "rarity": "rare",
+    "icon": "🎯",
+    "description_en": "Marks the 3 highest-HP enemies on screen to take 35% increased damage for 8 seconds.",
+    "description_es": "Marca a los 3 enemigos con mas vida en pantalla para recibir un 35% mas de daño durante 8 segundos.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseDamageIncrease": 0.35,
+      "damageIncreasePerLevel": 0.05,
+      "baseCooldown": 900,
+      "cooldownPerLevel": -22,
+      "baseDuration": 480,
+      "durationPerLevel": 15,
+      "baseTargets": 3,
+      "targetsPerLevel": 1
+    }
+  },
+  {
+    "id": "phantom_barrage",
+    "name": "PHANTOM BARRAGE",
+    "rarity": "rare",
+    "icon": "👻",
+    "description_en": "Fires 20 phantom bullets in a full circle that pass through walls but deal reduced damage.",
+    "description_es": "Dispara 20 balas fantasma en circulo completo que atraviesan paredes pero causan daño reducido.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 30,
+      "damagePerLevel": 6,
+      "baseCooldown": 840,
+      "cooldownPerLevel": -20,
+      "baseProjectiles": 20,
+      "projectilesPerLevel": 2
+    }
+  },
+  {
+    "id": "time_slow_field",
+    "name": "TIME SLOW FIELD",
+    "rarity": "rare",
+    "icon": "⏱️",
+    "description_en": "Projects a localized field that slows all enemies within it to 20% speed for 5 seconds.",
+    "description_es": "Proyecta un campo localizado que frena a todos los enemigos dentro de el al 20% de velocidad durante 5 segundos.",
+    "mechanic_type": "zone",
+    "stats": {
+      "baseSlowAmount": 0.8,
+      "slowAmountPerLevel": 0.02,
+      "baseCooldown": 1200,
+      "cooldownPerLevel": -28,
+      "baseDuration": 300,
+      "durationPerLevel": 12,
+      "baseRadius": 180,
+      "radiusPerLevel": 10
+    }
+  },
+  {
+    "id": "concussive_blast",
+    "name": "CONCUSSIVE BLAST",
+    "rarity": "rare",
+    "icon": "💣",
+    "description_en": "Detonates a concussive explosion that deals moderate damage and disarms special enemy abilities for 5 seconds.",
+    "description_es": "Detona una explosion concusiva que causa daño moderado y desactiva las habilidades especiales de los enemigos durante 5 segundos.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseDamage": 60,
+      "damagePerLevel": 12,
+      "baseCooldown": 900,
+      "cooldownPerLevel": -22,
+      "baseRadius": 220,
+      "radiusPerLevel": 10,
+      "baseDisarmDuration": 300,
+      "disarmDurationPerLevel": 12
+    }
+  },
+  {
+    "id": "orbital_mine_ring",
+    "name": "MINE RING",
+    "rarity": "rare",
+    "icon": "💠",
+    "description_en": "Deploys a ring of 6 proximity mines at fixed distance around the turret.",
+    "description_es": "Despliega un anillo de 6 minas de proximidad a distancia fija alrededor de la torreta.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseDamage": 75,
+      "damagePerLevel": 15,
+      "baseCooldown": 1080,
+      "cooldownPerLevel": -25,
+      "baseMines": 6,
+      "minesPerLevel": 1,
+      "baseMineRadius": 60,
+      "mineRadiusPerLevel": 3,
+      "baseOrbitRadius": 200,
+      "orbitRadiusPerLevel": 10
+    }
+  },
+  {
+    "id": "shockwave_pulse",
+    "name": "SHOCKWAVE PULSE",
+    "rarity": "rare",
+    "icon": "〰️",
+    "description_en": "Emits 3 sequential expanding shockwave rings that each deal damage, with a slight delay between them.",
+    "description_es": "Emite 3 anillos de onda de choque expansivos secuenciales que cada uno causa daño, con un ligero retraso entre ellos.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseDamage": 45,
+      "damagePerLevel": 9,
+      "baseCooldown": 840,
+      "cooldownPerLevel": -20,
+      "baseWaveCount": 3,
+      "waveCountPerLevel": 0,
+      "baseRadius": 300,
+      "radiusPerLevel": 12
+    }
+  },
+  {
+    "id": "elemental_infusion",
+    "name": "ELEMENTAL INFUSION",
+    "rarity": "rare",
+    "icon": "🌈",
+    "description_en": "Infuses bullets with elemental energy for 6 seconds: every 3rd bullet applies a random status effect (burn, freeze, or shock).",
+    "description_es": "Infunde balas con energia elemental durante 6 segundos: cada 3a bala aplica un estado aleatorio (quema, congela o descarga).",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseStatusDuration": 120,
+      "statusDurationPerLevel": 10,
+      "baseCooldown": 960,
+      "cooldownPerLevel": -22,
+      "baseDuration": 360,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "spectral_copy",
+    "name": "SPECTRAL COPY",
+    "rarity": "rare",
+    "icon": "👥",
+    "description_en": "Creates a spectral copy of the turret that fires ghost bullets in the opposite direction for 4 seconds.",
+    "description_es": "Crea una copia espectral de la torreta que dispara balas fantasma en direccion opuesta durante 4 segundos.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseCopyDamageRatio": 0.6,
+      "copyDamageRatioPerLevel": 0.05,
+      "baseCooldown": 1080,
+      "cooldownPerLevel": -25,
+      "baseDuration": 240,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "execute_protocol",
+    "name": "EXECUTE PROTOCOL",
+    "rarity": "rare",
+    "icon": "☠️",
+    "description_en": "Instantly kills all enemies below 20% health on screen.",
+    "description_es": "Mata instantaneamente a todos los enemigos con menos del 20% de salud en pantalla.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseExecuteThreshold": 0.2,
+      "executeThresholdPerLevel": 0.02,
+      "baseCooldown": 1500,
+      "cooldownPerLevel": -35
+    }
+  },
+  {
+    "id": "nano_swarm",
+    "name": "NANO SWARM",
+    "rarity": "rare",
+    "icon": "🐝",
+    "description_en": "Releases a swarm of nanobots that spread between nearby enemies dealing continuous damage for 6 seconds.",
+    "description_es": "Libera un enjambre de nanobots que se propagan entre enemigos cercanos causando daño continuo durante 6 segundos.",
+    "mechanic_type": "dot",
+    "stats": {
+      "baseDamagePerTick": 10,
+      "damagePerTickPerLevel": 2,
+      "baseCooldown": 900,
+      "cooldownPerLevel": -22,
+      "baseDuration": 360,
+      "durationPerLevel": 12,
+      "baseSpreadCount": 5,
+      "spreadCountPerLevel": 1
+    }
+  },
+  {
+    "id": "kinetic_surge",
+    "name": "KINETIC SURGE",
+    "rarity": "rare",
+    "icon": "⚡",
+    "description_en": "Charges up for 1 second then releases a devastating directed kinetic beam that deals massive damage to all enemies in a line.",
+    "description_es": "Se carga durante 1 segundo y luego libera un devastador rayo cinematico dirigido que causa daño masivo a todos los enemigos en linea.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 120,
+      "damagePerLevel": 20,
+      "baseCooldown": 1200,
+      "cooldownPerLevel": -28,
+      "baseBeamWidth": 40,
+      "beamWidthPerLevel": 3
+    }
+  },
+  {
+    "id": "scatter_mines",
+    "name": "SCATTER MINES",
+    "rarity": "rare",
+    "icon": "🌐",
+    "description_en": "Scatters 8 mines randomly around the arena that detonate on enemy contact.",
+    "description_es": "Dispersa 8 minas aleatoriamente por la arena que detonan al contacto con enemigos.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseDamage": 65,
+      "damagePerLevel": 12,
+      "baseCooldown": 900,
+      "cooldownPerLevel": -22,
+      "baseMines": 8,
+      "minesPerLevel": 1,
+      "baseTriggerRadius": 35,
+      "triggerRadiusPerLevel": 2
+    }
+  },
+  {
+    "id": "pulse_shield",
+    "name": "PULSE SHIELD",
+    "rarity": "rare",
+    "icon": "🔷",
+    "description_en": "Erects a shield that absorbs up to 150 damage and, when destroyed, releases a damaging EMP burst.",
+    "description_es": "Erige un escudo que absorbe hasta 150 de daño y, al destruirse, libera una rafaga EMP dañina.",
+    "mechanic_type": "shield",
+    "stats": {
+      "baseShieldHP": 150,
+      "shieldHPPerLevel": 25,
+      "baseBurstDamage": 60,
+      "burstDamagePerLevel": 12,
+      "baseCooldown": 1080,
+      "cooldownPerLevel": -25,
+      "baseBurstRadius": 200,
+      "burstRadiusPerLevel": 10
+    }
+  },
+  {
+    "id": "dark_matter_round",
+    "name": "DARK MATTER",
+    "rarity": "rare",
+    "icon": "⚫",
+    "description_en": "Fires a dark matter round that pierces all enemies in its path and leaves a damaging trail for 3 seconds.",
+    "description_es": "Dispara un proyectil de materia oscura que perfora a todos los enemigos en su trayectoria y deja un rastro dañino durante 3 segundos.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 50,
+      "damagePerLevel": 10,
+      "baseTrailDamage": 8,
+      "trailDamagePerLevel": 2,
+      "baseCooldown": 840,
+      "cooldownPerLevel": -20,
+      "baseTrailDuration": 180,
+      "trailDurationPerLevel": 8
+    }
+  },
+  {
+    "id": "beacon_of_weakness",
+    "name": "WEAK BEACON",
+    "rarity": "rare",
+    "icon": "📉",
+    "description_en": "Plants a beacon that reduces the damage output of all nearby enemies by 30% for 8 seconds.",
+    "description_es": "Planta una baliza que reduce el daño de todos los enemigos cercanos en un 30% durante 8 segundos.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseDamageReduction": 0.3,
+      "damageReductionPerLevel": 0.03,
+      "baseCooldown": 1080,
+      "cooldownPerLevel": -25,
+      "baseDuration": 480,
+      "durationPerLevel": 15,
+      "baseRadius": 200,
+      "radiusPerLevel": 10
+    }
+  },
+  {
+    "id": "blackhole_seed",
+    "name": "BLACKHOLE SEED",
+    "rarity": "epic",
+    "icon": "🌑",
+    "description_en": "Deploys a miniature black hole that grows for 6 seconds, pulling all enemies inward and crushing them for massive AoE damage when it collapses.",
+    "description_es": "Despliega un mini agujero negro que crece durante 6 segundos, atrayendo a todos los enemigos hacia adentro y aplastándolos por daño masivo en area al colapsar.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseCollapseDamage": 200,
+      "collapseDamagePerLevel": 35,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseDuration": 360,
+      "durationPerLevel": 12,
+      "basePullForce": 100,
+      "pullForcePerLevel": 8,
+      "baseRadius": 300,
+      "radiusPerLevel": 15
+    }
+  },
+  {
+    "id": "bullet_storm",
+    "name": "BULLET STORM",
+    "rarity": "epic",
+    "icon": "🌪️",
+    "description_en": "Unleashes a 5-second bullet storm that fires 5 bullets per frame in random directions filling the entire arena.",
+    "description_es": "Desata una tormenta de balas de 5 segundos que dispara 5 balas por fotograma en direcciones aleatorias llenando toda la arena.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseDamage": 15,
+      "damagePerLevel": 3,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseDuration": 300,
+      "durationPerLevel": 12,
+      "baseBulletsPerFrame": 5,
+      "bulletsPerFramePerLevel": 1
+    }
+  },
+  {
+    "id": "time_reversal",
+    "name": "TIME REVERSAL",
+    "rarity": "epic",
+    "icon": "⏪",
+    "description_en": "Teleports all enemies back to their spawn positions on the screen edge, resetting their approach.",
+    "description_es": "Teletransporta a todos los enemigos de vuelta a sus posiciones de aparicion en el borde de la pantalla, reiniciando su avance.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseCooldown": 2100,
+      "cooldownPerLevel": -45,
+      "baseEnemiesAffected": 999,
+      "enemiesAffectedPerLevel": 0
+    }
+  },
+  {
+    "id": "ion_cannon",
+    "name": "ION CANNON",
+    "rarity": "epic",
+    "icon": "🔭",
+    "description_en": "Charges and fires a sustained ion beam in the aimed direction for 3 seconds, dealing heavy damage per second to everything it hits.",
+    "description_es": "Carga y dispara un rayo iónico sostenido en la direccion apuntada durante 3 segundos, causando daño pesado por segundo a todo lo que golpea.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamagePerSecond": 150,
+      "damagePerSecondPerLevel": 25,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseDuration": 180,
+      "durationPerLevel": 8
+    }
+  },
+  {
+    "id": "quantum_mirror",
+    "name": "QUANTUM MIRROR",
+    "rarity": "epic",
+    "icon": "🪟",
+    "description_en": "Creates a quantum mirror that duplicates every bullet fired for 5 seconds, with duplicates dealing 70% damage.",
+    "description_es": "Crea un espejo cuantico que duplica cada bala disparada durante 5 segundos, con los duplicados causando el 70% del daño.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseDuplicateDamageRatio": 0.7,
+      "duplicateDamageRatioPerLevel": 0.05,
+      "baseCooldown": 1500,
+      "cooldownPerLevel": -35,
+      "baseDuration": 300,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "plague_cloud",
+    "name": "PLAGUE CLOUD",
+    "rarity": "epic",
+    "icon": "☁️",
+    "description_en": "Spawns a massive toxic cloud that fills 40% of the screen, dealing stacking poison damage and reducing enemy speed by 40% for 8 seconds.",
+    "description_es": "Genera una nube toxica masiva que llena el 40% de la pantalla, causando daño de veneno acumulativo y reduciendo la velocidad de los enemigos en un 40% durante 8 segundos.",
+    "mechanic_type": "zone",
+    "stats": {
+      "basePoisonDamage": 15,
+      "poisonDamagePerLevel": 3,
+      "baseSlowAmount": 0.4,
+      "slowAmountPerLevel": 0.03,
+      "baseCooldown": 2100,
+      "cooldownPerLevel": -45,
+      "baseDuration": 480,
+      "durationPerLevel": 15,
+      "baseRadius": 300,
+      "radiusPerLevel": 15
+    }
+  },
+  {
+    "id": "turret_fortress",
+    "name": "TURRET FORTRESS",
+    "rarity": "epic",
+    "icon": "🏰",
+    "description_en": "Deploys 4 mini-turrets in cardinal directions that independently auto-fire for 10 seconds.",
+    "description_es": "Despliega 4 mini-torretas en las direcciones cardinales que disparan automaticamente de forma independiente durante 10 segundos.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseMiniTurretDamage": 25,
+      "miniTurretDamagePerLevel": 5,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseDuration": 600,
+      "durationPerLevel": 20,
+      "baseTurretCount": 4,
+      "turretCountPerLevel": 0
+    }
+  },
+  {
+    "id": "gravity_inverter",
+    "name": "GRAVITY INVERTER",
+    "rarity": "epic",
+    "icon": "🔄",
+    "description_en": "Inverts gravity for all enemies for 3 seconds, causing them to move away from the turret rapidly instead of toward it.",
+    "description_es": "Invierte la gravedad para todos los enemigos durante 3 segundos, haciendo que se alejen rapidamente de la torreta en lugar de acercarse.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseRepelForce": 200,
+      "repelForcePerLevel": 20,
+      "baseCooldown": 1500,
+      "cooldownPerLevel": -35,
+      "baseDuration": 180,
+      "durationPerLevel": 8
+    }
+  },
+  {
+    "id": "energy_leech",
+    "name": "ENERGY LEECH",
+    "rarity": "epic",
+    "icon": "🦠",
+    "description_en": "Drains life from all enemies within range, healing the turret for 2% of each enemy's max HP and dealing the same as damage.",
+    "description_es": "Drena vida de todos los enemigos en rango, curando la torreta por el 2% del HP maximo de cada enemigo y causando el mismo como daño.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseLeechRatio": 0.02,
+      "leechRatioPerLevel": 0.005,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseRadius": 350,
+      "radiusPerLevel": 15
+    }
+  },
+  {
+    "id": "cryo_freeze",
+    "name": "CRYO FREEZE",
+    "rarity": "epic",
+    "icon": "❄️",
+    "description_en": "Instantly freezes all enemies on screen solid for 3 seconds, making them unable to move and causing them to shatter for bonus damage when hit.",
+    "description_es": "Congela instantaneamente a todos los enemigos en pantalla durante 3 segundos, impidiendoles moverse y causando que se rompan con daño adicional al ser golpeados.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseFreezeDuration": 180,
+      "freezeDurationPerLevel": 10,
+      "baseShatterBonusDamage": 0.5,
+      "shatterBonusDamagePerLevel": 0.05,
+      "baseCooldown": 2100,
+      "cooldownPerLevel": -45
+    }
+  },
+  {
+    "id": "death_mark",
+    "name": "DEATH MARK",
+    "rarity": "epic",
+    "icon": "💀",
+    "description_en": "Marks the 5 nearest enemies with a death mark; when a marked enemy takes enough damage, it instantly dies and explodes dealing AoE damage.",
+    "description_es": "Marca a los 5 enemigos mas cercanos con una marca de muerte; cuando un enemigo marcado recibe suficiente daño, muere instantaneamente y explota causando daño en area.",
+    "mechanic_type": "triggered",
+    "stats": {
+      "baseMarkThreshold": 0.4,
+      "markThresholdPerLevel": 0.03,
+      "baseExplosionDamage": 80,
+      "explosionDamagePerLevel": 15,
+      "baseCooldown": 1500,
+      "cooldownPerLevel": -35,
+      "baseTargets": 5,
+      "targetsPerLevel": 1,
+      "baseExplosionRadius": 100,
+      "explosionRadiusPerLevel": 8
+    }
+  },
+  {
+    "id": "overload_field",
+    "name": "OVERLOAD FIELD",
+    "rarity": "epic",
+    "icon": "⚡",
+    "description_en": "Overloads every active ability simultaneously to trigger one extra time, then all abilities enter a 3-second lockout.",
+    "description_es": "Sobrecarga cada habilidad activa simultaneamente para que se active una vez mas, luego todas las habilidades entran en un bloqueo de 3 segundos.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseLockoutDuration": 180,
+      "lockoutDurationPerLevel": -5
+    }
+  },
+  {
+    "id": "antimatter_shell",
+    "name": "ANTIMATTER SHELL",
+    "rarity": "epic",
+    "icon": "💠",
+    "description_en": "Fires an antimatter shell that passes through all enemies then detonates at max range, reversing the explosion inward.",
+    "description_es": "Dispara un proyectil de antimateria que atraviesa a todos los enemigos y luego detona al maximo alcance, revirtiendo la explosion hacia adentro.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 100,
+      "damagePerLevel": 18,
+      "baseCooldown": 1500,
+      "cooldownPerLevel": -35,
+      "baseExplosionRadius": 250,
+      "explosionRadiusPerLevel": 12
+    }
+  },
+  {
+    "id": "phase_shift",
+    "name": "PHASE SHIFT",
+    "rarity": "epic",
+    "icon": "🌊",
+    "description_en": "Shifts the turret into a phase dimension for 2 seconds, becoming immune to all damage, then phases back dealing AoE damage.",
+    "description_es": "Lleva la torreta a una dimension de fase durante 2 segundos, volviendola inmune a todo daño, luego regresa causando daño en area.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseImmunityDuration": 120,
+      "immunityDurationPerLevel": 8,
+      "baseReturnDamage": 120,
+      "returnDamagePerLevel": 20,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseReturnRadius": 200,
+      "returnRadiusPerLevel": 10
+    }
+  },
+  {
+    "id": "gravity_well_array",
+    "name": "GRAVITY ARRAY",
+    "rarity": "epic",
+    "icon": "🔘",
+    "description_en": "Spawns 4 gravity wells in corners of the screen that each pull and compress enemies toward their center for 6 seconds.",
+    "description_es": "Genera 4 pozos de gravedad en las esquinas de la pantalla que cada uno atrae y comprime a los enemigos hacia su centro durante 6 segundos.",
+    "mechanic_type": "summon",
+    "stats": {
+      "basePullForce": 70,
+      "pullForcePerLevel": 8,
+      "baseDamagePerTick": 12,
+      "damagePerTickPerLevel": 2,
+      "baseCooldown": 2100,
+      "cooldownPerLevel": -45,
+      "baseDuration": 360,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "singularity_bomb",
+    "name": "SINGULARITY BOMB",
+    "rarity": "epic",
+    "icon": "🌠",
+    "description_en": "Launches a singularity bomb that implodes, converting 30% of all nearby enemies' current HP into direct damage dealt back to them.",
+    "description_es": "Lanza una bomba de singularidad que implosiona, convirtiendo el 30% de la vida actual de todos los enemigos cercanos en daño directo aplicado a ellos mismos.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseHpConvertRatio": 0.3,
+      "hpConvertRatioPerLevel": 0.03,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseRadius": 280,
+      "radiusPerLevel": 12
+    }
+  },
+  {
+    "id": "neural_disruptor",
+    "name": "NEURAL DISRUPT",
+    "rarity": "epic",
+    "icon": "🧠",
+    "description_en": "Scrambles enemy targeting, causing all enemies to randomly change direction and attack each other for 5 seconds.",
+    "description_es": "Desordena el objetivo enemigo, haciendo que todos los enemigos cambien aleatoriamente de direccion y se ataquen mutuamente durante 5 segundos.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseDuration": 300,
+      "durationPerLevel": 12,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseFriendlyFireDamage": 25,
+      "friendlyFireDamagePerLevel": 5
+    }
+  },
+  {
+    "id": "gravity_lens",
+    "name": "GRAVITY LENS",
+    "rarity": "epic",
+    "icon": "🔍",
+    "description_en": "Bends all bullets fired in the next 5 seconds to curve and hit the single highest-HP enemy.",
+    "description_es": "Dobla todas las balas disparadas en los proximos 5 segundos para curvarlas y golpear al enemigo con mas vida.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseCooldown": 1500,
+      "cooldownPerLevel": -35,
+      "baseDuration": 300,
+      "durationPerLevel": 12,
+      "baseDamageBonus": 0.2,
+      "damageBonusPerLevel": 0.03
+    }
+  },
+  {
+    "id": "chain_reaction",
+    "name": "CHAIN REACTION",
+    "rarity": "epic",
+    "icon": "💥",
+    "description_en": "The next enemy killed creates an explosion that triggers the next kill to create a larger explosion, chaining up to 8 kills.",
+    "description_es": "El siguiente enemigo muerto crea una explosion que activa que la siguiente muerte cree una explosion mayor, encadenando hasta 8 muertes.",
+    "mechanic_type": "triggered",
+    "stats": {
+      "baseInitialDamage": 80,
+      "initialDamagePerLevel": 15,
+      "baseChainMultiplier": 1.5,
+      "chainMultiplierPerLevel": 0.1,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseMaxChains": 8,
+      "maxChainsPerLevel": 1,
+      "baseChainRadius": 100,
+      "chainRadiusPerLevel": 8
+    }
+  },
+  {
+    "id": "temporal_stasis",
+    "name": "TEMPORAL STASIS",
+    "rarity": "epic",
+    "icon": "⏸️",
+    "description_en": "Pauses all enemies in place for 4 seconds while the turret continues to fire normally.",
+    "description_es": "Pausa a todos los enemigos en su lugar durante 4 segundos mientras la torreta continua disparando normalmente.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseFreezeDuration": 240,
+      "freezeDurationPerLevel": 12,
+      "baseCooldown": 2100,
+      "cooldownPerLevel": -45
+    }
+  },
+  {
+    "id": "photon_barrier",
+    "name": "PHOTON BARRIER",
+    "rarity": "epic",
+    "icon": "🔶",
+    "description_en": "Erects a full circular photon barrier around the arena border that reflects projectiles and damages enemies touching it for 6 seconds.",
+    "description_es": "Erige una barrera de fotones circular completa alrededor del borde de la arena que refleja proyectiles y daña a los enemigos que la tocan durante 6 segundos.",
+    "mechanic_type": "zone",
+    "stats": {
+      "baseContactDamage": 30,
+      "contactDamagePerLevel": 6,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseDuration": 360,
+      "durationPerLevel": 15
+    }
+  },
+  {
+    "id": "power_surge",
+    "name": "POWER SURGE",
+    "rarity": "epic",
+    "icon": "🔌",
+    "description_en": "Channels all the turret's energy into a 4-second burst where damage is tripled and all cooldowns regenerate at 3x speed.",
+    "description_es": "Canaliza toda la energia de la torreta en una rafaga de 4 segundos donde el daño se triplica y todos los tiempos de recarga se regeneran a 3x velocidad.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseDamageMultiplier": 3,
+      "damageMultiplierPerLevel": 0.2,
+      "baseCooldownRechargeRate": 3,
+      "cooldownRechargeRatePerLevel": 0.2,
+      "baseCooldown": 2100,
+      "cooldownPerLevel": -45,
+      "baseDuration": 240,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "cosmic_ray",
+    "name": "COSMIC RAY",
+    "rarity": "legendary",
+    "icon": "☀️",
+    "description_en": "Calls down a massive cosmic ray from above that sweeps across the entire arena dealing 400 damage to everything it touches.",
+    "description_es": "Llama a un rayo cosmico masivo desde arriba que barre toda la arena causando 400 de daño a todo lo que toca.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseDamage": 400,
+      "damagePerLevel": 60,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55,
+      "baseSweepDuration": 120,
+      "sweepDurationPerLevel": -3
+    }
+  },
+  {
+    "id": "apocalypse_nova",
+    "name": "APOCALYPSE NOVA",
+    "rarity": "legendary",
+    "icon": "🌋",
+    "description_en": "Unleashes a catastrophic nova that deals 250 damage to all enemies on screen and leaves a 10-second burning field covering the entire arena.",
+    "description_es": "Desata una nova catastrofica que causa 250 de daño a todos los enemigos en pantalla y deja un campo ardiente de 10 segundos que cubre toda la arena.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseNovaDamage": 250,
+      "novaDamagePerLevel": 40,
+      "baseFireFieldDamage": 20,
+      "fireFieldDamagePerLevel": 4,
+      "baseCooldown": 2400,
+      "cooldownPerLevel": -50,
+      "baseFieldDuration": 600,
+      "fieldDurationPerLevel": 20
+    }
+  },
+  {
+    "id": "time_stop",
+    "name": "TIME STOP",
+    "rarity": "legendary",
+    "icon": "🕰️",
+    "description_en": "Stops all time for enemies for 6 seconds — they freeze completely while the turret fires at double speed during this period.",
+    "description_es": "Detiene todo el tiempo para los enemigos durante 6 segundos — se congelan completamente mientras la torreta dispara a doble velocidad durante este periodo.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseFreezeDuration": 360,
+      "freezeDurationPerLevel": 15,
+      "baseFireRateBonus": 2,
+      "fireRateBonusPerLevel": 0.1,
+      "baseCooldown": 3000,
+      "cooldownPerLevel": -60
+    }
+  },
+  {
+    "id": "supernova_collapse",
+    "name": "SUPERNOVA",
+    "rarity": "legendary",
+    "icon": "🌟",
+    "description_en": "Creates a star that expands rapidly across the entire screen over 3 seconds, dealing 500 total damage distributed across all enemies hit.",
+    "description_es": "Crea una estrella que se expande rapidamente por toda la pantalla en 3 segundos, causando 500 de daño total distribuido entre todos los enemigos golpeados.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseTotalDamage": 500,
+      "totalDamagePerLevel": 80,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55
+    }
+  },
+  {
+    "id": "dimensional_rift",
+    "name": "DIMENSIONAL RIFT",
+    "rarity": "legendary",
+    "icon": "🌀",
+    "description_en": "Tears open a dimensional rift that randomly teleports each enemy to a different position on the map, then detonates causing 300 AoE damage.",
+    "description_es": "Desgarra un portal dimensional que teletransporta aleatoriamente a cada enemigo a una posicion diferente del mapa, luego detona causando 300 de daño en area.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseDetonationDamage": 300,
+      "detonationDamagePerLevel": 50,
+      "baseCooldown": 2400,
+      "cooldownPerLevel": -50,
+      "baseDetonationRadius": 400,
+      "detonationRadiusPerLevel": 15
+    }
+  },
+  {
+    "id": "infinite_turret",
+    "name": "INFINITE TURRET",
+    "rarity": "legendary",
+    "icon": "♾️",
+    "description_en": "Spawns 8 identical turret copies that fire in all directions simultaneously for 12 seconds.",
+    "description_es": "Genera 8 copias identicas de la torreta que disparan en todas direcciones simultaneamente durante 12 segundos.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseCopyDamageRatio": 0.8,
+      "copyDamageRatioPerLevel": 0.05,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55,
+      "baseDuration": 720,
+      "durationPerLevel": 25,
+      "baseCopies": 8,
+      "copiesPerLevel": 1
+    }
+  },
+  {
+    "id": "total_annihilation",
+    "name": "ANNIHILATION",
+    "rarity": "legendary",
+    "icon": "💥",
+    "description_en": "Instantly kills all enemies currently on screen, regardless of HP, with an earth-shattering explosion.",
+    "description_es": "Mata instantaneamente a todos los enemigos actualmente en pantalla, independientemente de su vida, con una explosion devastadora.",
+    "mechanic_type": "instant_damage",
+    "stats": {
+      "baseDamage": 999999,
+      "damagePerLevel": 0,
+      "baseCooldown": 3000,
+      "cooldownPerLevel": -60
+    }
+  },
+  {
+    "id": "vampire_field",
+    "name": "VAMPIRE FIELD",
+    "rarity": "legendary",
+    "icon": "🧛",
+    "description_en": "Creates a 12-second field that drains 5% of max HP per second from every enemy in range, fully healing the turret.",
+    "description_es": "Crea un campo de 12 segundos que drena el 5% del HP maximo por segundo de cada enemigo en rango, curando completamente la torreta.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseDrainRatio": 0.05,
+      "drainRatioPerLevel": 0.005,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55,
+      "baseDuration": 720,
+      "durationPerLevel": 20,
+      "baseRadius": 500,
+      "radiusPerLevel": 20
+    }
+  },
+  {
+    "id": "matrix_hack",
+    "name": "MATRIX HACK",
+    "rarity": "legendary",
+    "icon": "💻",
+    "description_en": "Hacks reality itself, converting 3 random enemies into allied units that fight for you for 15 seconds.",
+    "description_es": "Hackea la realidad misma, convirtiendo 3 enemigos aleatorios en unidades aliadas que luchan por ti durante 15 segundos.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseConvertCount": 3,
+      "convertCountPerLevel": 1,
+      "baseDuration": 900,
+      "durationPerLevel": 25,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55
+    }
+  },
+  {
+    "id": "solar_flare",
+    "name": "SOLAR FLARE",
+    "rarity": "legendary",
+    "icon": "🌞",
+    "description_en": "Unleashes an intense solar flare that blinds and burns all enemies for 10 seconds while boosting turret damage by 100%.",
+    "description_es": "Desata una intensa llamarada solar que ciega y quema a todos los enemigos durante 10 segundos mientras aumenta el daño de la torreta en un 100%.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseBurnDamage": 25,
+      "burnDamagePerLevel": 5,
+      "baseDamageBonus": 1,
+      "damageBonusPerLevel": 0.1,
+      "baseCooldown": 2400,
+      "cooldownPerLevel": -50,
+      "baseDuration": 600,
+      "durationPerLevel": 20
+    }
+  },
+  {
+    "id": "omega_shield",
+    "name": "OMEGA SHIELD",
+    "rarity": "legendary",
+    "icon": "🛡️",
+    "description_en": "Activates an impenetrable shield for 8 seconds; when it expires, it detonates absorbing all received damage and dealing it back as AoE.",
+    "description_es": "Activa un escudo impenetrable durante 8 segundos; cuando expira, detona absorbiendo todo el daño recibido y devolviendolo como area.",
+    "mechanic_type": "shield",
+    "stats": {
+      "baseDuration": 480,
+      "durationPerLevel": 15,
+      "baseDamageReturnRatio": 1.5,
+      "damageReturnRatioPerLevel": 0.1,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55,
+      "baseDetonationRadius": 350,
+      "detonationRadiusPerLevel": 15
+    }
+  },
+  {
+    "id": "god_mode",
+    "name": "GOD MODE",
+    "rarity": "legendary",
+    "icon": "👑",
+    "description_en": "Grants 10 seconds of absolute power: infinite pierce, triple damage, immunity to damage, and 500% fire rate.",
+    "description_es": "Otorga 10 segundos de poder absoluto: perforacion infinita, triple daño, inmunidad al daño y 500% de cadencia de fuego.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseDamageMultiplier": 3,
+      "damageMultiplierPerLevel": 0.2,
+      "baseFireRateBonus": 5,
+      "fireRateBonusPerLevel": 0.3,
+      "baseCooldown": 3000,
+      "cooldownPerLevel": -60,
+      "baseDuration": 600,
+      "durationPerLevel": 20
+    }
+  },
+  {
+    "id": "paradox_loop",
+    "name": "PARADOX LOOP",
+    "rarity": "legendary",
+    "icon": "🔁",
+    "description_en": "Creates a time loop: the next 8 seconds of damage dealt is recorded and then instantly replayed again on all enemies.",
+    "description_es": "Crea un bucle temporal: los proximos 8 segundos de daño infligido se graban y luego se reproducen instantaneamente sobre todos los enemigos.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseRecordDuration": 480,
+      "recordDurationPerLevel": 15,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55,
+      "baseDamageReplayRatio": 1,
+      "damageReplayRatioPerLevel": 0.1
+    }
+  },
+  {
+    "id": "wrath_of_cosmos",
+    "name": "WRATH OF COSMOS",
+    "rarity": "legendary",
+    "icon": "🌌",
+    "description_en": "Rains 50 meteors across the arena over 5 seconds, each dealing 120 damage in a 80px blast radius on impact.",
+    "description_es": "Llueve 50 meteoros por la arena durante 5 segundos, cada uno causando 120 de daño en un radio de explosion de 80px al impactar.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseMeteorDamage": 120,
+      "meteorDamagePerLevel": 20,
+      "baseCooldown": 2400,
+      "cooldownPerLevel": -50,
+      "baseMeteorCount": 50,
+      "meteorCountPerLevel": 5,
+      "baseMeteorRadius": 80,
+      "meteorRadiusPerLevel": 5,
+      "baseDuration": 300,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "infinity_mirror",
+    "name": "INFINITY MIRROR",
+    "rarity": "legendary",
+    "icon": "🪞",
+    "description_en": "Creates 6 mirrors around the arena; for 10 seconds, every bullet fired is cloned at each mirror point, creating 7x bullet output.",
+    "description_es": "Crea 6 espejos alrededor de la arena; durante 10 segundos, cada bala disparada se clona en cada punto espejo, creando 7x de produccion de balas.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseMirrorCount": 6,
+      "mirrorCountPerLevel": 1,
+      "baseDamageRatioPerClone": 0.5,
+      "damageRatioPerClonePerLevel": 0.05,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55,
+      "baseDuration": 600,
+      "durationPerLevel": 20
+    }
+  },
+  {
+    "id": "reaper_scythe",
+    "name": "REAPER SCYTHE",
+    "rarity": "legendary",
+    "icon": "⚔️",
+    "description_en": "Summons the Reaper's scythe that sweeps across the screen 3 times, each sweep dealing 350 damage to all enemies in its arc.",
+    "description_es": "Invoca la guadaña del Segador que barre la pantalla 3 veces, cada barrido causando 350 de daño a todos los enemigos en su arco.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseDamage": 350,
+      "damagePerLevel": 55,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55,
+      "baseSweepCount": 3,
+      "sweepCountPerLevel": 0
+    }
+  },
+  {
+    "id": "eternal_storm",
+    "name": "ETERNAL STORM",
+    "rarity": "legendary",
+    "icon": "⛈️",
+    "description_en": "Summons an eternal storm that lasts 15 seconds: random lightning strikes hit enemies every 0.5 seconds for 200 damage each.",
+    "description_es": "Invoca una tormenta eterna que dura 15 segundos: rayos aleatorios golpean enemigos cada 0.5 segundos por 200 de daño cada uno.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseLightningDamage": 200,
+      "lightningDamagePerLevel": 30,
+      "baseCooldown": 3000,
+      "cooldownPerLevel": -60,
+      "baseDuration": 900,
+      "durationPerLevel": 25,
+      "baseLightningInterval": 30,
+      "lightningIntervalPerLevel": -1
+    }
+  },
+  {
+    "id": "void_collapse",
+    "name": "VOID COLLAPSE",
+    "rarity": "legendary",
+    "icon": "🔮",
+    "description_en": "Collapses all void matter in the arena, dealing damage equal to 50% of each enemy's current HP simultaneously to all enemies.",
+    "description_es": "Colapsa toda la materia del vacío en la arena, causando daño igual al 50% de la vida actual de cada enemigo simultáneamente a todos los enemigos.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseHpDamageRatio": 0.5,
+      "hpDamageRatioPerLevel": 0.03,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55
+    }
+  },
+  {
+    "id": "cluster_bomb",
+    "name": "CLUSTER BOMB",
+    "rarity": "rare",
+    "icon": "💣",
+    "description_en": "Launches a bomb that splits into 5 cluster grenades mid-air, each dealing area damage on separate impacts.",
+    "description_es": "Lanza una bomba que se divide en 5 granadas de racimo en el aire, cada una causando daño en area en impactos separados.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseDamage": 55,
+      "damagePerLevel": 10,
+      "baseCooldown": 840,
+      "cooldownPerLevel": -20,
+      "baseClusterCount": 5,
+      "clusterCountPerLevel": 1,
+      "baseClusterRadius": 70,
+      "clusterRadiusPerLevel": 4
+    }
+  },
+  {
+    "id": "sonic_boom",
+    "name": "SONIC BOOM",
+    "rarity": "rare",
+    "icon": "📢",
+    "description_en": "Releases a sonic shockwave that silences all enemies (disabling their special abilities) and knocks them back for 3 seconds.",
+    "description_es": "Libera una onda de choque sonica que silencia a todos los enemigos (desactivando sus habilidades especiales) y los empuja durante 3 segundos.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseSilenceDuration": 180,
+      "silenceDurationPerLevel": 10,
+      "baseKnockback": 80,
+      "knockbackPerLevel": 8,
+      "baseCooldown": 900,
+      "cooldownPerLevel": -22,
+      "baseRadius": 300,
+      "radiusPerLevel": 12
+    }
+  },
+  {
+    "id": "sniper_scope",
+    "name": "SNIPER SCOPE",
+    "rarity": "rare",
+    "icon": "🔭",
+    "description_en": "Activates sniper mode for 5 seconds: fire rate is halved but each bullet deals 5x damage and has infinite range.",
+    "description_es": "Activa el modo francotirador durante 5 segundos: la cadencia de fuego se reduce a la mitad pero cada bala causa 5x daño y tiene alcance infinito.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseDamageMultiplier": 5,
+      "damageMultiplierPerLevel": 0.3,
+      "baseCooldown": 1200,
+      "cooldownPerLevel": -28,
+      "baseDuration": 300,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "overclock_ammo",
+    "name": "OVERCLOCK AMMO",
+    "rarity": "rare",
+    "icon": "🔄",
+    "description_en": "Loads special overclocked ammo for 5 seconds: bullets have 50% splash damage in a small radius on hit.",
+    "description_es": "Carga municion sobrecargada especial durante 5 segundos: las balas tienen el 50% de daño en area en un pequeño radio al impactar.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseSplashDamageRatio": 0.5,
+      "splashDamageRatioPerLevel": 0.05,
+      "baseSplashRadius": 50,
+      "splashRadiusPerLevel": 4,
+      "baseCooldown": 900,
+      "cooldownPerLevel": -22,
+      "baseDuration": 300,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "frost_nova",
+    "name": "FROST NOVA",
+    "rarity": "rare",
+    "icon": "🌬️",
+    "description_en": "Explodes in a burst of frost that freezes all enemies within medium range for 2 seconds and then shatters them for bonus damage.",
+    "description_es": "Explota en una rafaga de escarcha que congela a todos los enemigos en rango medio durante 2 segundos y luego los rompe por daño adicional.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseFreezeDuration": 120,
+      "freezeDurationPerLevel": 8,
+      "baseShatterDamage": 70,
+      "shatterDamagePerLevel": 12,
+      "baseCooldown": 1080,
+      "cooldownPerLevel": -25,
+      "baseRadius": 220,
+      "radiusPerLevel": 10
+    }
+  },
+  {
+    "id": "momentum_field",
+    "name": "MOMENTUM FIELD",
+    "rarity": "rare",
+    "icon": "🌀",
+    "description_en": "Creates a momentum field that accelerates all active bullets, increasing their damage by 30% and speed by 50% for 4 seconds.",
+    "description_es": "Crea un campo de momentum que acelera todas las balas activas, aumentando su daño en un 30% y su velocidad en un 50% durante 4 segundos.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseDamageBonus": 0.3,
+      "damageBonusPerLevel": 0.04,
+      "baseSpeedBonus": 0.5,
+      "speedBonusPerLevel": 0.05,
+      "baseCooldown": 900,
+      "cooldownPerLevel": -22,
+      "baseDuration": 240,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "toxin_canister",
+    "name": "TOXIN CANISTER",
+    "rarity": "rare",
+    "icon": "🧫",
+    "description_en": "Lobs a toxin canister that breaks apart on impact, creating 4 toxic puddles that each slow and damage enemies for 6 seconds.",
+    "description_es": "Lanza un bote de toxinas que se rompe al impactar, creando 4 charcos toxicos que cada uno frena y daña a los enemigos durante 6 segundos.",
+    "mechanic_type": "zone",
+    "stats": {
+      "basePuddleDamage": 8,
+      "puddleDamagePerLevel": 2,
+      "baseSlowAmount": 0.35,
+      "slowAmountPerLevel": 0.03,
+      "baseCooldown": 960,
+      "cooldownPerLevel": -22,
+      "baseDuration": 360,
+      "durationPerLevel": 12,
+      "basePuddleCount": 4,
+      "puddleCountPerLevel": 0,
+      "basePuddleRadius": 60,
+      "puddleRadiusPerLevel": 4
+    }
+  },
+  {
+    "id": "warp_field",
+    "name": "WARP FIELD",
+    "rarity": "epic",
+    "icon": "🌌",
+    "description_en": "Opens a warp field that teleports all bullets fired for 5 seconds to appear directly in front of a random enemy.",
+    "description_es": "Abre un campo de distorsion que teletransporta todas las balas disparadas durante 5 segundos para aparecer directamente frente a un enemigo aleatorio.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseDamageBonus": 0.1,
+      "damageBonusPerLevel": 0.02,
+      "baseCooldown": 1500,
+      "cooldownPerLevel": -35,
+      "baseDuration": 300,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "temporal_dilation",
+    "name": "TEMPORAL DILATION",
+    "rarity": "epic",
+    "icon": "🔮",
+    "description_en": "Dilates time around the turret, making the turret operate at 3x normal speed while enemies move at 30% speed for 4 seconds.",
+    "description_es": "Dilata el tiempo alrededor de la torreta, haciendo que la torreta opere a 3x velocidad normal mientras los enemigos se mueven al 30% de velocidad durante 4 segundos.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseTurretSpeedMultiplier": 3,
+      "turretSpeedMultiplierPerLevel": 0.2,
+      "baseEnemySlowAmount": 0.7,
+      "enemySlowAmountPerLevel": 0.02,
+      "baseCooldown": 2100,
+      "cooldownPerLevel": -45,
+      "baseDuration": 240,
+      "durationPerLevel": 10
+    }
+  },
+  {
+    "id": "spectral_bomb",
+    "name": "SPECTRAL BOMB",
+    "rarity": "epic",
+    "icon": "👁️",
+    "description_en": "Deploys a spectral bomb that is invisible to enemies and detonates when 5 or more enemies are in its radius, dealing massive damage.",
+    "description_es": "Despliega una bomba espectral invisible para los enemigos que detona cuando 5 o mas enemigos estan en su radio, causando daño masivo.",
+    "mechanic_type": "triggered",
+    "stats": {
+      "baseDamage": 180,
+      "damagePerLevel": 30,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseTriggerCount": 5,
+      "triggerCountPerLevel": 0,
+      "baseTriggerRadius": 180,
+      "triggerRadiusPerLevel": 10
+    }
+  },
+  {
+    "id": "rewind_damage",
+    "name": "REWIND DAMAGE",
+    "rarity": "epic",
+    "icon": "⏮️",
+    "description_en": "Rewinds all enemies to their positions and HP values from 4 seconds ago, effectively reversing the last 4 seconds of their healing/advancement.",
+    "description_es": "Rebobina a todos los enemigos a sus posiciones y valores de vida de hace 4 segundos, revirtiendo efectivamente los ultimos 4 segundos de su curacion/avance.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseRewindTime": 240,
+      "rewindTimePerLevel": 15,
+      "baseCooldown": 2100,
+      "cooldownPerLevel": -45
+    }
+  },
+  {
+    "id": "prism_array",
+    "name": "PRISM ARRAY",
+    "rarity": "epic",
+    "icon": "🔺",
+    "description_en": "Deploys a prism that splits the turret's fire into 3 beams in different directions for 5 seconds.",
+    "description_es": "Despliega un prisma que divide el fuego de la torreta en 3 rayos en diferentes direcciones durante 5 segundos.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseBeamCount": 3,
+      "beamCountPerLevel": 0,
+      "baseDamageRatioPerBeam": 0.7,
+      "damageRatioPerBeamPerLevel": 0.05,
+      "baseCooldown": 1500,
+      "cooldownPerLevel": -35,
+      "baseDuration": 300,
+      "durationPerLevel": 12
+    }
+  },
+  {
+    "id": "dark_resonance",
+    "name": "DARK RESONANCE",
+    "rarity": "epic",
+    "icon": "🌑",
+    "description_en": "Applies dark resonance to all enemies: each time a resonated enemy is hit, all other resonated enemies take 30% of that damage too.",
+    "description_es": "Aplica resonancia oscura a todos los enemigos: cada vez que un enemigo resonado es golpeado, todos los demas enemigos resonados reciben tambien el 30% de ese daño.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseResonanceDamageRatio": 0.3,
+      "resonanceDamageRatioPerLevel": 0.03,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseDuration": 480,
+      "durationPerLevel": 15
+    }
+  },
+  {
+    "id": "nanobot_swarm_repair",
+    "name": "NANOBOT REPAIR",
+    "rarity": "epic",
+    "icon": "🤖",
+    "description_en": "Deploys a sustained nanobot repair swarm for 8 seconds that heals 10 HP per second and boosts the shield capacity by 50.",
+    "description_es": "Despliega un enjambre de nanobots de reparacion sostenida durante 8 segundos que cura 10 HP por segundo y aumenta la capacidad del escudo en 50.",
+    "mechanic_type": "heal",
+    "stats": {
+      "baseHealPerSecond": 10,
+      "healPerSecondPerLevel": 2,
+      "baseShieldBonus": 50,
+      "shieldBonusPerLevel": 10,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseDuration": 480,
+      "durationPerLevel": 15
+    }
+  },
+  {
+    "id": "entropy_bomb",
+    "name": "ENTROPY BOMB",
+    "rarity": "legendary",
+    "icon": "☢️",
+    "description_en": "Plants an entropy bomb that builds power for 5 seconds; it then detonates dealing damage equal to the total damage taken by the turret during that window x10.",
+    "description_es": "Planta una bomba de entropía que acumula poder durante 5 segundos; luego detona causando daño igual al daño total recibido por la torreta durante esa ventana x10.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseDamageMultiplier": 10,
+      "damageMultiplierPerLevel": 1,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55,
+      "baseChargeDuration": 300,
+      "chargeDurationPerLevel": 0
+    }
+  },
+  {
+    "id": "legion_protocol",
+    "name": "LEGION PROTOCOL",
+    "rarity": "legendary",
+    "icon": "⚔️",
+    "description_en": "Activates the Legion Protocol: deploys 12 autonomous combat drones that each fire independently for 15 seconds.",
+    "description_es": "Activa el Protocolo Legion: despliega 12 drones de combate autonomos que cada uno dispara independientemente durante 15 segundos.",
+    "mechanic_type": "summon",
+    "stats": {
+      "baseDroneDamage": 30,
+      "droneDamagePerLevel": 5,
+      "baseCooldown": 3000,
+      "cooldownPerLevel": -60,
+      "baseDuration": 900,
+      "durationPerLevel": 25,
+      "baseDroneCount": 12,
+      "droneCountPerLevel": 1
+    }
+  },
+  {
+    "id": "reality_fracture",
+    "name": "REALITY FRACTURE",
+    "rarity": "legendary",
+    "icon": "💎",
+    "description_en": "Fractures reality into 6 parallel realities for 8 seconds: in each reality the turret fires, multiplying effective damage output by 6.",
+    "description_es": "Fractura la realidad en 6 realidades paralelas durante 8 segundos: en cada realidad la torreta dispara, multiplicando la produccion de daño efectiva por 6.",
+    "mechanic_type": "unique",
+    "stats": {
+      "baseRealityCount": 6,
+      "realityCountPerLevel": 1,
+      "baseDamageRatioPerReality": 0.8,
+      "damageRatioPerRealityPerLevel": 0.05,
+      "baseCooldown": 3000,
+      "cooldownPerLevel": -60,
+      "baseDuration": 480,
+      "durationPerLevel": 15
+    }
+  },
+  {
+    "id": "mass_corruption",
+    "name": "MASS CORRUPTION",
+    "rarity": "legendary",
+    "icon": "🖤",
+    "description_en": "Corrupts all enemies on screen: they take 100% increased damage from all sources and deal 50% less damage for 10 seconds.",
+    "description_es": "Corrompe a todos los enemigos en pantalla: reciben 100% mas daño de todas las fuentes y causan un 50% menos de daño durante 10 segundos.",
+    "mechanic_type": "debuff",
+    "stats": {
+      "baseDamageTakenIncrease": 1,
+      "damageTakenIncreasePerLevel": 0.1,
+      "baseDamageDealtReduction": 0.5,
+      "damageDealtReductionPerLevel": 0.03,
+      "baseCooldown": 2700,
+      "cooldownPerLevel": -55,
+      "baseDuration": 600,
+      "durationPerLevel": 20
+    }
+  },
+  {
+    "id": "turret_ascension",
+    "name": "TURRET ASCENSION",
+    "rarity": "legendary",
+    "icon": "🏆",
+    "description_en": "Ascends the turret to its ultimate form for 12 seconds: all stats are doubled, shots pierce infinitely, and a damaging aura surrounds the turret.",
+    "description_es": "Asciende la torreta a su forma definitiva durante 12 segundos: todas las estadisticas se duplican, los disparos perforan infinitamente y un aura dañina rodea la torreta.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseStatMultiplier": 2,
+      "statMultiplierPerLevel": 0.1,
+      "baseAuraDamage": 20,
+      "auraDamagePerLevel": 4,
+      "baseCooldown": 3000,
+      "cooldownPerLevel": -60,
+      "baseDuration": 720,
+      "durationPerLevel": 25,
+      "baseAuraRadius": 150,
+      "auraRadiusPerLevel": 8
+    }
+  },
+  {
+    "id": "nano_heal_aura",
+    "name": "NANO HEAL AURA",
+    "rarity": "epic",
+    "icon": "💉",
+    "description_en": "Activates a nano-healing aura for 10 seconds that regenerates 5 HP per second and grants immunity to the next 2 hits.",
+    "description_es": "Activa un aura de nano-curacion durante 10 segundos que regenera 5 HP por segundo y otorga inmunidad a los proximos 2 golpes.",
+    "mechanic_type": "heal",
+    "stats": {
+      "baseHealPerSecond": 5,
+      "healPerSecondPerLevel": 1,
+      "baseHitsImmune": 2,
+      "hitsImmunePerLevel": 1,
+      "baseCooldown": 1800,
+      "cooldownPerLevel": -40,
+      "baseDuration": 600,
+      "durationPerLevel": 20
+    }
+  },
+  {
+    "id": "overdrive_core",
+    "name": "OVERDRIVE CORE",
+    "rarity": "legendary",
+    "icon": "⚛️",
+    "description_en": "Overdrives the turret core for 10 seconds: bullets split into 3 on each enemy hit, each dealing 40% of original damage.",
+    "description_es": "Sobrecarga el nucleo de la torreta durante 10 segundos: las balas se dividen en 3 al golpear cada enemigo, cada una causando el 40% del daño original.",
+    "mechanic_type": "buff",
+    "stats": {
+      "baseSplitCount": 3,
+      "splitCountPerLevel": 0,
+      "baseSplitDamageRatio": 0.4,
+      "splitDamageRatioPerLevel": 0.04,
+      "baseCooldown": 3000,
+      "cooldownPerLevel": -60,
+      "baseDuration": 600,
+      "durationPerLevel": 20
+    }
+  },
+  {
+    "id": "echo_blast",
+    "name": "ECHO BLAST",
+    "rarity": "legendary",
+    "icon": "📡",
+    "description_en": "Fires a blast that echoes outward 5 times, each echo dealing the same damage with a 0.5 second delay between each ring.",
+    "description_es": "Dispara una explosion que resuena hacia afuera 5 veces, cada eco causando el mismo daño con un retraso de 0.5 segundos entre cada anillo.",
+    "mechanic_type": "aoe",
+    "stats": {
+      "baseDamage": 180,
+      "damagePerLevel": 30,
+      "baseCooldown": 2400,
+      "cooldownPerLevel": -50,
+      "baseEchoCount": 5,
+      "echoCountPerLevel": 1,
+      "baseEchoRadius": 350,
+      "echoRadiusPerLevel": 15
+    }
+  }
+]

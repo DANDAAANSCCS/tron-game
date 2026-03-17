@@ -95,7 +95,45 @@ const _CHEST_DEFS = {
   rare:   { cost: 350, rarities: ['rare', 'epic'],   weights: { rare: 75, epic: 25 },   min: 10, max: 30 },
   epic:   { cost: 500, rarities: ['epic', 'legendary'], weights: { epic: 70, legendary: 30 }, min: 4, max: 8 },
 };
-const _ABILITY_RARITIES = { emp: 'common', shield: 'common', rapidfire: 'rare', chain: 'rare', freeze: 'epic', orbital: 'legendary' };
+const _ABILITY_RARITIES = {
+  // Original 6
+  emp: 'common', shield: 'common', rapidfire: 'rare', chain: 'rare', freeze: 'epic', orbital: 'legendary',
+  // Common
+  plasma_burst: 'common', static_field: 'common', repair_nanobots: 'common', shrapnel_mine: 'common',
+  targeting_boost: 'common', poison_spray: 'common', energy_wall: 'common', scatter_shot: 'common',
+  blind_flash: 'common', bullet_magnet: 'common', gravity_pull: 'common', armor_plating: 'common',
+  spark_trail: 'common', micro_missiles: 'common', decoy_signal: 'common', voltaic_aura: 'common',
+  grease_slick: 'common', ricochet_round: 'common', smoke_screen: 'common', overcharge_shot: 'common',
+  seismic_tap: 'common', turret_overclock: 'common', acid_splash: 'common', burst_shield: 'common',
+  energy_spike: 'common', hail_storm: 'common', crit_boost: 'common', web_trap: 'common',
+  flare_launch: 'common', repulsor_blast: 'common',
+  // Rare
+  twin_barrels: 'rare', chain_burn: 'rare', void_rift: 'rare', kill_trigger_bomb: 'rare',
+  drone_sentry: 'rare', lifesteal_rounds: 'rare', tesla_coil: 'rare', mirror_wall: 'rare',
+  vulnerability_mark: 'rare', phantom_barrage: 'rare', time_slow_field: 'rare', concussive_blast: 'rare',
+  orbital_mine_ring: 'rare', shockwave_pulse: 'rare', elemental_infusion: 'rare', spectral_copy: 'rare',
+  execute_protocol: 'rare', nano_swarm: 'rare', kinetic_surge: 'rare', scatter_mines: 'rare',
+  pulse_shield: 'rare', dark_matter_round: 'rare', beacon_of_weakness: 'rare', cluster_bomb: 'rare',
+  sonic_boom: 'rare', sniper_scope: 'rare', overclock_ammo: 'rare', frost_nova: 'rare',
+  momentum_field: 'rare', toxin_canister: 'rare',
+  // Epic
+  blackhole_seed: 'epic', bullet_storm: 'epic', time_reversal: 'epic', ion_cannon: 'epic',
+  quantum_mirror: 'epic', plague_cloud: 'epic', turret_fortress: 'epic', gravity_inverter: 'epic',
+  energy_leech: 'epic', cryo_freeze: 'epic', death_mark: 'epic', overload_field: 'epic',
+  antimatter_shell: 'epic', phase_shift: 'epic', gravity_well_array: 'epic', singularity_bomb: 'epic',
+  neural_disruptor: 'epic', gravity_lens: 'epic', chain_reaction: 'epic', temporal_stasis: 'epic',
+  photon_barrier: 'epic', power_surge: 'epic', warp_field: 'epic', temporal_dilation: 'epic',
+  spectral_bomb: 'epic', rewind_damage: 'epic', prism_array: 'epic', dark_resonance: 'epic',
+  nanobot_swarm_repair: 'epic', nano_heal_aura: 'epic',
+  // Legendary
+  cosmic_ray: 'legendary', apocalypse_nova: 'legendary', time_stop: 'legendary', supernova_collapse: 'legendary',
+  dimensional_rift: 'legendary', infinite_turret: 'legendary', total_annihilation: 'legendary',
+  vampire_field: 'legendary', matrix_hack: 'legendary', solar_flare: 'legendary', omega_shield: 'legendary',
+  god_mode: 'legendary', paradox_loop: 'legendary', wrath_of_cosmos: 'legendary', infinity_mirror: 'legendary',
+  reaper_scythe: 'legendary', eternal_storm: 'legendary', void_collapse: 'legendary', entropy_bomb: 'legendary',
+  legion_protocol: 'legendary', reality_fracture: 'legendary', mass_corruption: 'legendary',
+  turret_ascension: 'legendary', overdrive_core: 'legendary', echo_blast: 'legendary',
+};
 
 function _offlineOpenChest(chestType) {
   const chest = _CHEST_DEFS[chestType];
