@@ -248,7 +248,10 @@ body {
   text-align: center;
   display: flex;
   flex-direction: column;
-  padding-top: max(24px, env(safe-area-inset-top, 24px));
+}
+
+.levels-header {
+  padding-top: 30px;
 }
 
 .levels-header {
@@ -522,12 +525,11 @@ body {
   text-align: center;
   display: flex;
   flex-direction: column;
-  padding-top: max(24px, env(safe-area-inset-top, 24px));
 }
 
 .upgrades-header {
   flex-shrink: 0;
-  padding: 0 20px 12px;
+  padding: 30px 20px 12px;
 }
 
 .upgrades-footer {
