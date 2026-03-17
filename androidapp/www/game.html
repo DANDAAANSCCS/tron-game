@@ -49,18 +49,18 @@
     /* Center column: Level + Wave */
     .hud-center {
       font-family: 'Orbitron', sans-serif;
-      font-size: 1rem;
+      font-size: clamp(0.65rem, 2.5vw, 1rem);
       font-weight: 700;
       color: rgba(0, 255, 242, 0.9);
       text-shadow: 0 0 12px rgba(0, 255, 242, 0.5);
-      letter-spacing: 3px;
+      letter-spacing: clamp(1px, 0.6vw, 3px);
       text-align: center;
       white-space: nowrap;
     }
 
     .hud-center .hud-lvl {
       display: block;
-      font-size: 0.65rem;
+      font-size: clamp(0.5rem, 1.8vw, 0.65rem);
       opacity: 0.6;
       letter-spacing: 2px;
       margin-bottom: 1px;
@@ -76,16 +76,27 @@
 
     .hud-item {
       font-family: 'Share Tech Mono', monospace;
-      font-size: 0.65rem;
+      font-size: clamp(0.5rem, 1.8vw, 0.65rem);
       letter-spacing: 1px;
       color: rgba(0, 255, 242, 0.55);
       text-shadow: 0 0 6px rgba(0, 255, 242, 0.25);
+      white-space: nowrap;
     }
 
-    .hud-item .val       { color: #00fff2; font-size: 0.85rem; font-weight: 700; }
-    .hud-item .val-hp    { color: #00ff66; font-size: 0.85rem; font-weight: 700; }
-    .hud-item .val-wave  { color: #ff6600; font-size: 0.85rem; font-weight: 700; }
-    .hud-item .val-score { color: #ffdd00; font-size: 0.85rem; font-weight: 700; }
+    .hud-item .val       { color: #00fff2; font-size: clamp(0.65rem, 2.2vw, 0.85rem); font-weight: 700; }
+    .hud-item .val-hp    { color: #00ff66; font-size: clamp(0.65rem, 2.2vw, 0.85rem); font-weight: 700; }
+    .hud-item .val-wave  { color: #ff6600; font-size: clamp(0.65rem, 2.2vw, 0.85rem); font-weight: 700; }
+    .hud-item .val-score { color: #ffdd00; font-size: clamp(0.65rem, 2.2vw, 0.85rem); font-weight: 700; }
+
+    @media (max-width: 380px) {
+      .hud-item { font-size: 0.5rem; letter-spacing: 0; }
+      .hud-item .val,
+      .hud-item .val-hp,
+      .hud-item .val-wave,
+      .hud-item .val-score { font-size: 0.65rem; }
+      .hud-center { font-size: 0.62rem; letter-spacing: 1px; }
+      .hud-center .hud-lvl { font-size: 0.48rem; }
+    }
 
     /* ─── ABILITY BAR ─────────────────────────────────────── */
     #ability-bar {
@@ -269,7 +280,8 @@
     }
 
     #pause-panel {
-      width: 240px;
+      width: 85%;
+      max-width: 240px;
       background: rgba(5, 5, 18, 0.98);
       border: 1px solid rgba(0, 255, 242, 0.45);
       box-shadow: 0 0 30px rgba(0, 255, 242, 0.15), inset 0 0 20px rgba(0, 0, 0, 0.6);
@@ -314,6 +326,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
       margin-bottom: 14px;
       font-family: 'Share Tech Mono', monospace;
       font-size: 0.7rem;
@@ -407,6 +421,7 @@
 
     .track-row {
       justify-content: center;
+      flex-wrap: wrap;
       gap: 8px;
       margin-top: -6px;
       margin-bottom: 10px;
