@@ -127,14 +127,20 @@ function buildUpgradeCards() {
     card.className = `upg-card${i === currentIndex ? ' active' : ''}`;
     card.dataset.index = i;
 
+    const displayLabel = (typeof t === 'function' ? t('perm.' + upg.id) : '') || upg.label;
+    const displayDesc  = (typeof t === 'function' ? t('perm.' + upg.id + '_desc') : '') || upg.desc;
+    const displayLvl   = (typeof t === 'function' ? t('perm.lvl') : 'LVL') + ' ' + level;
+    const displayTotal = (typeof t === 'function' ? t('perm.total') : 'TOTAL') + ': +' + totalBonus + '%';
+    const displayGem   = (typeof t === 'function' ? t('perm.gem') : 'GEM');
+
     card.innerHTML = `
       <div class="upg-icon" style="color:${upg.color};text-shadow:0 0 12px ${upg.color}">${upg.icon}</div>
       <div class="upg-body">
-        <div class="upg-label" style="color:${upg.color}">${upg.label}</div>
-        <div class="upg-desc">${upg.desc}</div>
+        <div class="upg-label" style="color:${upg.color}">${displayLabel}</div>
+        <div class="upg-desc">${displayDesc}</div>
         <div class="upg-stats">
-          <span class="upg-level">LVL ${level}</span>
-          <span class="upg-total" style="color:${upg.color}">TOTAL: +${totalBonus}%</span>
+          <span class="upg-level">${displayLvl}</span>
+          <span class="upg-total" style="color:${upg.color}">${displayTotal}</span>
         </div>
         <div class="upg-bar-wrap">
           <div class="upg-bar">
@@ -145,7 +151,7 @@ function buildUpgradeCards() {
       <div class="upg-cost-area">
         <div class="upg-cost ${canBuy ? 'can-buy' : 'no-buy'}">
           <span class="upg-cost-val">${cost}</span>
-          <span class="upg-cost-gem">GEM</span>
+          <span class="upg-cost-gem">${displayGem}</span>
         </div>
         <div class="upg-key">[${i + 1}]</div>
       </div>

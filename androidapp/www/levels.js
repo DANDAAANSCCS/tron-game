@@ -128,7 +128,7 @@ function drawThumbnail(cvs, level, progress) {
     c.shadowBlur = 10;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-    c.fillText('COMPLETED', w / 2, h / 2 + 25);
+    c.fillText((typeof t === 'function' ? t('levels.completed') : 'COMPLETED'), w / 2, h / 2 + 25);
     c.shadowBlur = 0;
   }
 }
@@ -152,28 +152,44 @@ function buildLevelCards() {
     card.className = `level-card${progress.completed ? ' completed' : ''}${!unlocked ? ' locked' : ''}`;
     card.dataset.level = level.id;
 
+    const _tCompleted  = (typeof t === 'function' ? t('levels.completed')  : 'COMPLETED');
+    const _tLocked     = (typeof t === 'function' ? t('levels.locked')     : 'LOCKED');
+    const _tLockedMsg  = (typeof t === 'function' ? t('levels.locked_msg', { n: level.requiresLevel }) : 'COMPLETE LEVEL ' + level.requiresLevel + ' TO UNLOCK');
+    const _tNotStarted = (typeof t === 'function' ? t('levels.not_started'): 'NOT STARTED');
+    const _tWave       = (typeof t === 'function' ? t('levels.best_wave')  : 'WAVE');
+    const _tScore      = (typeof t === 'function' ? t('levels.score_label'): 'SCORE');
+
+    let statusText;
+    if (progress.completed) {
+      statusText = _tCompleted;
+    } else if (progress.waveReached > 0) {
+      statusText = _tWave + ' ' + progress.waveReached + ' / ' + level.waves;
+    } else {
+      statusText = _tNotStarted;
+    }
+
     card.innerHTML = `
       <canvas class="level-thumbnail" width="160" height="160"></canvas>
       <div class="level-info">
         <div class="level-name">${level.name}</div>
         <div class="level-sub">${level.subtitle}</div>
-        <div class="level-desc">${unlocked ? level.description : 'COMPLETE LEVEL ' + level.requiresLevel + ' TO UNLOCK'}</div>
+        <div class="level-desc">${unlocked ? level.description : _tLockedMsg}</div>
         <div class="level-progress-wrap">
           <div class="level-progress-bar">
             <div class="level-progress-fill" style="width:${unlocked ? pct : 0}%;${progress.completed ? 'background:#00ff66;box-shadow:0 0 8px #00ff66;' : ''}"></div>
           </div>
-          <span class="level-progress-text">${unlocked ? pct + '%' : 'LOCKED'}</span>
+          <span class="level-progress-text">${unlocked ? pct + '%' : _tLocked}</span>
         </div>
         <div class="level-stats">
           ${unlocked ? `
-            <span class="stat-item">${progress.completed ? 'COMPLETED' : progress.waveReached > 0 ? `WAVE ${progress.waveReached} / ${level.waves}` : 'NOT STARTED'}</span>
+            <span class="stat-item">${statusText}</span>
             <span class="stat-sep">|</span>
             <span class="stat-item">${progress.timePlayed > 0 ? formatTime(progress.timePlayed) : '--:--'}</span>
             <span class="stat-sep">|</span>
-            <span class="stat-item">SCORE: ${progress.score}</span>
-          ` : '<span class="stat-item" style="color:rgba(255,0,85,0.6);">LOCKED</span>'}
+            <span class="stat-item">${_tScore}: ${progress.score}</span>
+          ` : '<span class="stat-item" style="color:rgba(255,0,85,0.6);">' + _tLocked + '</span>'}
         </div>
-        <div class="level-play-hint">${unlocked ? '[ ENTER / CLICK TO PLAY ]' : '[ LOCKED ]'}</div>
+        <div class="level-play-hint">${unlocked ? '[ ENTER / CLICK TO PLAY ]' : '[ ' + _tLocked + ' ]'}</div>
       </div>
     `;
 

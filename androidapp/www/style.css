@@ -69,6 +69,7 @@ body {
   z-index: 2;
   text-align: center;
   padding: 40px;
+  padding-top: 50px;
 }
 
 /* Logo */
@@ -251,12 +252,8 @@ body {
 }
 
 .levels-header {
-  padding-top: 30px;
-}
-
-.levels-header {
   flex-shrink: 0;
-  padding: 16px 20px 12px;
+  padding: 40px 20px 12px;
 }
 
 .levels-footer {
@@ -529,7 +526,7 @@ body {
 
 .upgrades-header {
   flex-shrink: 0;
-  padding: 30px 20px 12px;
+  padding: 40px 20px 12px;
 }
 
 .upgrades-footer {
@@ -1036,7 +1033,7 @@ body {
   position: relative;
   z-index: 2;
   text-align: center;
-  padding: 30px 40px;
+  padding: 50px 40px 30px;
   width: 400px;
   max-width: 95vw;
 }

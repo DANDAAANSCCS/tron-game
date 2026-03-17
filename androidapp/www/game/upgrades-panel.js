@@ -161,7 +161,7 @@ function drawUpgradesPanel() {
   ctx.fillStyle = '#ffd700';
   ctx.shadowColor = '#ffd700';
   ctx.shadowBlur = 6;
-  ctx.fillText(`GOLD: ${gold}`, px + panelW / 2, py + 50);
+  ctx.fillText((typeof t === 'function' ? t('panel.gold') : 'GOLD') + ': ' + gold, px + panelW / 2, py + 50);
   ctx.shadowBlur = 0;
 
   // Separator
@@ -204,15 +204,18 @@ function drawUpgradesPanel() {
     ctx.fillText(upg.icon, px + 58, ry + 28);
 
     // Label + tier badge
+    const UPGRADE_KEY_MAP = { damage: 'damage', fireRate: 'fire_rate', precision: 'precision', doubleBul: 'double_shot', health: 'health' };
+    const i18nKey = UPGRADE_KEY_MAP[key];
+    const displayLabel = (typeof t === 'function' && i18nKey ? t('upgrade.' + i18nKey) : '') || upg.label;
     ctx.font = '700 12px Orbitron';
     ctx.fillStyle = canBuy ? '#fff' : 'rgba(255, 255, 255, 0.3)';
     ctx.textAlign = 'left';
-    ctx.fillText(upg.label, px + 80, ry + 18);
+    ctx.fillText(displayLabel, px + 80, ry + 18);
 
     // Tier badge
     if (tierNum > 0) {
       const tierText = `T${tierNum + 1}`;
-      const tx = px + 80 + ctx.measureText(upg.label).width + 8;
+      const tx = px + 80 + ctx.measureText(displayLabel).width + 8;
       ctx.font = '700 8px Orbitron';
       ctx.fillStyle = upg.color;
       ctx.shadowColor = upg.color;
@@ -235,7 +238,7 @@ function drawUpgradesPanel() {
     ctx.textAlign = 'left';
     const desc = getUpgradeDesc(upg);
     const totalPct = Math.round(getUpgradeValue(upg) * 100);
-    ctx.fillText(`${desc}  [total: ${totalPct}%]`, px + 80, ry + 33);
+    ctx.fillText(desc + '  [' + (typeof t === 'function' ? t('panel.total') : 'total') + ': ' + totalPct + '%]', px + 80, ry + 33);
 
     // Progress pips (10 per tier, fills and resets)
     const maxPips = PIPS_PER_TIER;
@@ -256,7 +259,7 @@ function drawUpgradesPanel() {
     ctx.font = '600 7px Share Tech Mono';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.textAlign = 'center';
-    ctx.fillText(`LVL ${upg.level}`, pipStartX + (maxPips * (pipW + 2)) / 2 - 1, ry + 24);
+    ctx.fillText((typeof t === 'function' ? t('panel.lvl') : 'LVL') + ' ' + upg.level, pipStartX + (maxPips * (pipW + 2)) / 2 - 1, ry + 24);
 
     // Cost / MAX
     ctx.font = '700 11px Orbitron';

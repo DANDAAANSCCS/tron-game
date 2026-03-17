@@ -180,7 +180,7 @@ function updateWaveSpawning() {
       goldReward *= 2;
     }
 
-    let rewardMsg = `+${goldReward} gold`;
+    let rewardMsg = '+' + goldReward + ' ' + (typeof t === 'function' ? t('rewards.gold') : 'gold');
 
     // Gem every 5 waves
     if (completedWave % 5 === 0) {
@@ -199,7 +199,8 @@ function updateWaveSpawning() {
     // Show reward popup
     spawnRewardPopup(rewardMsg, '#ffd700');
     if (gemReward > 0) {
-      spawnRewardPopup(`+${gemReward} GEM${gemReward > 1 ? 'S' : ''}`, '#e040fb');
+      const gemLabel = (typeof t === 'function' ? t('rewards.gems') : 'GEMS');
+      spawnRewardPopup('+' + gemReward + ' ' + (gemReward > 1 ? gemLabel : gemLabel.replace(/S$/, '')), '#e040fb');
     }
 
     // Save progress after every wave
@@ -217,8 +218,8 @@ function updateWaveSpawning() {
         (typeof t === 'function' ? t('game.victory') : 'VICTORY!'),
         (typeof t === 'function' ? t('game.level_complete', {n: currentLevel, s: score}) : `LEVEL ${currentLevel} COMPLETE — SCORE: ${score}`)
       );
-      spawnRewardPopup('LEVEL COMPLETE!', '#00ff66');
-      spawnRewardPopup('+25 GEMS', '#e040fb');
+      spawnRewardPopup((typeof t === 'function' ? t('game.victory') : 'LEVEL COMPLETE!'), '#00ff66');
+      spawnRewardPopup('+25 ' + (typeof t === 'function' ? t('rewards.gems') : 'GEMS'), '#e040fb');
       // Hide touch controls
       const upgBtn = document.getElementById('touch-upgrades-btn');
       if (upgBtn) upgBtn.style.display = 'none';
@@ -267,7 +268,7 @@ function updateWaveSpawning() {
       else if (wave === BOSS_WAVE) waveMsg = (typeof t === 'function' ? t('wave.boss_final') : 'FINAL WAVE — BOSS INCOMING');
     }
     if (typeof playWaveStartSound === 'function') playWaveStartSound();
-    showOverlay(`WAVE ${wave}`, waveMsg);
+    showOverlay((typeof t === 'function' ? t('hud.wave') : 'WAVE') + ' ' + wave, waveMsg);
     waveStartDelay = 210;
   }
 }

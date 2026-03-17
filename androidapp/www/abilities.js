@@ -294,7 +294,7 @@ function buildStatsTableHTML(ab, info) {
         font-size:0.6rem;
         letter-spacing:1px;
       ">
-        <span style="color:rgba(255,255,255,0.45);min-width:90px;">${def.label}</span>
+        <span style="color:rgba(255,255,255,0.45);min-width:90px;">${(typeof t === 'function' ? t('stat.' + key) : '') || def.label}</span>
         <span style="display:flex;align-items:center;gap:2px;">
           <span style="color:#fff;">${currentVal}</span>
           ${nextCell}

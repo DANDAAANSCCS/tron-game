@@ -175,6 +175,60 @@ const LANGS = {
     'panel.upgrades': 'MEJORAS',
     'panel.tap_buy': 'TOCA MEJORA PARA COMPRAR | TOCA X PARA CERRAR',
     'panel.max': 'MAX',
+    'panel.gold': 'ORO',
+    'panel.total': 'total',
+    'panel.lvl': 'NVL',
+
+    // In-game upgrade labels
+    'upgrade.damage': 'DAÑO',
+    'upgrade.fire_rate': 'CADENCIA',
+    'upgrade.precision': 'PRECISION',
+    'upgrade.double_shot': 'DOBLE DISPARO',
+    'upgrade.health': 'VIDA',
+    'upgrade.dmg': 'DMG',
+    'upgrade.speed': 'VELOCIDAD',
+    'upgrade.spread': 'DISPERSION',
+    'upgrade.chance': 'PROB',
+    'upgrade.hp': 'PV',
+
+    // Stat labels
+    'stat.damage': 'DAÑO',
+    'stat.radius': 'RADIO',
+    'stat.cooldown': 'RECARGA',
+    'stat.absorb': 'ABSORBE',
+    'stat.duration': 'DURACION',
+    'stat.boost': 'AUMENTO',
+    'stat.bounces': 'REBOTES',
+    'stat.slow': 'LENTO',
+
+    // Permanent upgrades page
+    'perm.health': 'VIDA',
+    'perm.health_desc': '+10% PV MAX',
+    'perm.damage': 'DAÑO',
+    'perm.damage_desc': '+10% DMG BALA',
+    'perm.regen': 'REGEN',
+    'perm.regen_desc': '+10% REGEN PV',
+    'perm.precision': 'PRECISION',
+    'perm.precision_desc': '+10% PUNTERIA',
+    'perm.fire_rate': 'CADENCIA',
+    'perm.fireRate': 'CADENCIA',
+    'perm.fire_rate_desc': '+10% VEL. DISPARO',
+    'perm.fireRate_desc': '+10% VEL. DISPARO',
+    'perm.gem': 'GEMA',
+    'perm.total': 'TOTAL',
+    'perm.lvl': 'NVL',
+
+    // Level cards
+    'levels.completed': 'COMPLETADO',
+    'levels.locked': 'BLOQUEADO',
+    'levels.locked_msg': 'COMPLETA NIVEL {n} PARA DESBLOQUEAR',
+    'levels.not_started': 'SIN INICIAR',
+    'levels.best_wave': 'OLEADA',
+    'levels.score_label': 'PUNTOS',
+
+    // Rewards
+    'rewards.gems': 'GEMAS',
+    'rewards.gold': 'oro',
 
     // Update
     'update.title': 'NUEVA VERSION',
@@ -349,6 +403,60 @@ const LANGS = {
     'panel.upgrades': 'UPGRADES',
     'panel.tap_buy': 'TAP UPGRADE TO BUY | TAP X TO CLOSE',
     'panel.max': 'MAX',
+    'panel.gold': 'GOLD',
+    'panel.total': 'total',
+    'panel.lvl': 'LVL',
+
+    // In-game upgrade labels
+    'upgrade.damage': 'DAMAGE',
+    'upgrade.fire_rate': 'FIRE RATE',
+    'upgrade.precision': 'PRECISION',
+    'upgrade.double_shot': 'DOUBLE SHOT',
+    'upgrade.health': 'HEALTH',
+    'upgrade.dmg': 'DMG',
+    'upgrade.speed': 'SPEED',
+    'upgrade.spread': 'SPREAD',
+    'upgrade.chance': 'CHANCE',
+    'upgrade.hp': 'HP',
+
+    // Stat labels
+    'stat.damage': 'DAMAGE',
+    'stat.radius': 'RADIUS',
+    'stat.cooldown': 'COOLDOWN',
+    'stat.absorb': 'ABSORB',
+    'stat.duration': 'DURATION',
+    'stat.boost': 'BOOST',
+    'stat.bounces': 'BOUNCES',
+    'stat.slow': 'SLOW',
+
+    // Permanent upgrades page
+    'perm.health': 'HEALTH',
+    'perm.health_desc': '+10% MAX HP',
+    'perm.damage': 'DAMAGE',
+    'perm.damage_desc': '+10% BULLET DMG',
+    'perm.regen': 'REGEN',
+    'perm.regen_desc': '+10% HP REGEN',
+    'perm.precision': 'PRECISION',
+    'perm.precision_desc': '+10% ACCURACY',
+    'perm.fire_rate': 'FIRE RATE',
+    'perm.fireRate': 'FIRE RATE',
+    'perm.fire_rate_desc': '+10% FIRE SPEED',
+    'perm.fireRate_desc': '+10% FIRE SPEED',
+    'perm.gem': 'GEM',
+    'perm.total': 'TOTAL',
+    'perm.lvl': 'LVL',
+
+    // Level cards
+    'levels.completed': 'COMPLETED',
+    'levels.locked': 'LOCKED',
+    'levels.locked_msg': 'COMPLETE LEVEL {n} TO UNLOCK',
+    'levels.not_started': 'NOT STARTED',
+    'levels.best_wave': 'WAVE',
+    'levels.score_label': 'SCORE',
+
+    // Rewards
+    'rewards.gems': 'GEMS',
+    'rewards.gold': 'gold',
 
     // Update
     'update.title': 'NEW VERSION',
