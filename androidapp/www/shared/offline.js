@@ -152,14 +152,22 @@ function _offlineOpenChest(chestType) {
   const weightEntries = Object.entries(chest.weights);
   const totalWeight = weightEntries.reduce((s, [, w]) => s + w, 0);
 
+  const ownedCards = cached.abilityCards || {};
+
   for (let i = 0; i < totalCards; i++) {
     let r = Math.random() * totalWeight;
     let rarity = weightEntries[0][0];
     for (const [rar, w] of weightEntries) { r -= w; if (r <= 0) { rarity = rar; break; } }
-    // Pick random ability of this rarity
+    // Pick ability: 80% chance to favor owned, 20% any
     const pool = Object.entries(_ABILITY_RARITIES).filter(([, r]) => r === rarity).map(([id]) => id);
     if (!pool.length) continue;
-    const abilityId = pool[Math.floor(Math.random() * pool.length)];
+    const ownedPool = pool.filter(id => (ownedCards[id] || 0) > 0);
+    let abilityId;
+    if (ownedPool.length > 0 && Math.random() < 0.80) {
+      abilityId = ownedPool[Math.floor(Math.random() * ownedPool.length)];
+    } else {
+      abilityId = pool[Math.floor(Math.random() * pool.length)];
+    }
     drop[abilityId] = (drop[abilityId] || 0) + 1;
   }
 

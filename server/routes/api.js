@@ -211,18 +211,27 @@ function getAbilitiesByRarity(rarity) {
   return Object.entries(ABILITIES).filter(([, a]) => a.rarity === rarity).map(([id]) => id);
 }
 
-function openChest(chestType) {
+function openChest(chestType, ownedCards) {
   const chest = CHESTS[chestType];
   if (!chest) return null;
 
   const totalCards = weightedCardCount(chest.minCards, chest.maxCards);
   const results = {}; // { abilityId: cardCount }
+  const owned = ownedCards || {};
 
   for (let i = 0; i < totalCards; i++) {
     const rarity = pickRarity(chest.rarityWeights);
     const pool = getAbilitiesByRarity(rarity);
     if (pool.length === 0) continue;
-    const abilityId = pool[Math.floor(Math.random() * pool.length)];
+
+    // 80% chance to pick from owned abilities of this rarity, 20% new
+    const ownedPool = pool.filter(id => (owned[id] || 0) > 0);
+    let abilityId;
+    if (ownedPool.length > 0 && Math.random() < 0.80) {
+      abilityId = ownedPool[Math.floor(Math.random() * ownedPool.length)];
+    } else {
+      abilityId = pool[Math.floor(Math.random() * pool.length)];
+    }
     results[abilityId] = (results[abilityId] || 0) + 1;
   }
 
@@ -457,7 +466,7 @@ router.post('/chest/open', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'NOT ENOUGH GEMS' });
     }
 
-    const drop = openChest(chestType);
+    const drop = openChest(chestType, currentCards);
     if (!drop) return res.status(500).json({ error: 'CHEST OPEN FAILED' });
 
     // Update cards
