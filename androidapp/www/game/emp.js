@@ -15,7 +15,7 @@ const ABILITY_DEFS = {
   freeze:    { type: 'freeze_original',   stats: { baseSlow: 0.5, slowPerLevel: 0.015, baseDuration: 180, durationPerLevel: 8, baseCooldown: 1500, cooldownPerLevel: -30, baseRadius: 400, radiusPerLevel: 15 } },
   orbital:   { type: 'orbital_original',  stats: { baseDamage: 300, damagePerLevel: 25, baseRadius: 500, radiusPerLevel: 20, baseCooldown: 2700, cooldownPerLevel: -50 } },
 
-  // ── New abilities from abilities_final.json ──
+  // ── New abilities ──
   plasma_burst:          { type: 'instant_damage', stats: { baseDamage: 40, damagePerLevel: 8, baseCooldown: 420, cooldownPerLevel: -15, baseProjectiles: 8, projectilesPerLevel: 0, baseRange: 300, rangePerLevel: 10 } },
   static_field:          { type: 'zone',           stats: { baseDamage: 10, damagePerLevel: 2, baseCooldown: 600, cooldownPerLevel: -20, baseRadius: 120, radiusPerLevel: 8, baseDuration: 300, durationPerLevel: 10 } },
   repair_nanobots:       { type: 'heal',           stats: { baseHeal: 30, healPerLevel: 10, baseCooldown: 720, cooldownPerLevel: -20 } },
@@ -153,31 +153,40 @@ let freezeTimer           = 0;
 let currentFreezeSlowAmount = 0;
 
 // Generic buff/debuff state
-let _activeBuff   = null;  // { id, timer, stats }
-let _activeDebuff = null;  // { id, timer, stats, markedEnemies: Set }
+let _activeBuff   = null;
+let _activeDebuff = null;
 
-// Zone pool: [ { x, y, radius, timer, damage, slowAmount, color } ]
+// Zone pool
 let _activeZones = [];
 
-// DoT pool: tracked per-enemy via enemy._dotStack
-// Summon pool: orbiting drones + mines
-let _summons = []; // [ { type, x, y, angle, orbitRadius, orbitSpeed, timer, damage, triggerRadius, alive } ]
+// Summon pool
+let _summons = [];
 
 // Triggered ability state
-let _triggeredAbilities = {}; // { id: { armed: bool, charges: int } }
+let _triggeredAbilities = {};
 
-// Unique ability state (timers for complex effects)
-let _uniqueState = {}; // { id: { timer, ... } }
+// Unique ability state
+let _uniqueState = {};
 
 // Visual effect pools
 let chainLightningLines = [];
 let orbitalExplosions   = [];
 let freezeRings         = [];
 let shieldRingPulse     = 0;
-let _genericRings       = []; // { x, y, radius, maxRadius, life, maxLife, color }
+let _genericRings       = []; // { x, y, radius, maxRadius, life, maxLife, color, style }
 let _buffGlowTimer      = 0;
 let _buffGlowColor      = '#00fff2';
 let _droneAngleOffset   = 0;
+// Projectile lines: { x1,y1,x2,y2,life,maxLife,color }
+let _projectileLines    = [];
+// Heal particles: { x, y, vy, life, maxLife }
+let _healParticles      = [];
+// DoT puff indicators: { x, y, life, maxLife, color }
+let _dotPuffs           = [];
+// Tendril lines for debuffs: { x1,y1,x2,y2,life,maxLife }
+let _debuffTendrils     = [];
+// Buff sparkles: { angle, dist, life, maxLife }
+let _buffSparkles       = [];
 
 // ── Reset (called from initGame) ──
 function resetAbilities() {
@@ -209,6 +218,11 @@ function resetAbilities() {
   _genericRings       = [];
   _buffGlowTimer      = 0;
   _droneAngleOffset   = 0;
+  _projectileLines    = [];
+  _healParticles      = [];
+  _dotPuffs           = [];
+  _debuffTendrils     = [];
+  _buffSparkles       = [];
   abilityEffects      = [];
 }
 
@@ -228,7 +242,6 @@ function getAbilityStat(abilityId, statName) {
   return base + (level - 1) * (perLevel || 0);
 }
 
-// Returns flat object of every computed stat for an ability at its current level
 function getAbilityStatsComputed(id) {
   const def = ABILITY_DEFS[id];
   if (!def || !def.stats) return {};
@@ -236,8 +249,8 @@ function getAbilityStatsComputed(id) {
   const out = {};
   for (const key in def.stats) {
     if (!key.startsWith('base')) continue;
-    const rawName  = key.slice(4); // e.g. "Damage"
-    const statName = rawName.charAt(0).toLowerCase() + rawName.slice(1); // "damage"
+    const rawName  = key.slice(4);
+    const statName = rawName.charAt(0).toLowerCase() + rawName.slice(1);
     const perKey   = statName + 'PerLevel';
     out[statName]  = def.stats[key] + (level - 1) * (def.stats[perKey] || 0);
   }
@@ -424,17 +437,15 @@ function triggerInstantDamage(id, s) {
   const range  = s.range  || s.radius || 400;
   const damage = s.damage || 50;
 
-  // Pick a random target within range (or nearest if none in range)
   let targets = aliveEnemies.filter(e => Math.hypot(e.x - turret.x, e.y - turret.y) < range);
   if (targets.length === 0) targets = [aliveEnemies[0]];
 
-  const count = s.projectiles || 1;
+  const count  = s.projectiles || 1;
   const picked = [];
   for (let i = 0; i < Math.min(count, targets.length); i++) {
     picked.push(targets[Math.floor(Math.random() * targets.length)]);
   }
 
-  // Special: execute_protocol kills below HP threshold
   if (id === 'execute_protocol') {
     for (const e of aliveEnemies) {
       if ((e.hp / e.maxHp) <= 0.2) e.takeDamage(e.hp + 9999);
@@ -444,18 +455,19 @@ function triggerInstantDamage(id, s) {
       if (!e.alive) continue;
       e.takeDamage(damage);
       _spawnImpactParticles(e.x, e.y, COL.cyan, 12);
+      // Colored projectile line from turret to target
+      _projectileLines.push({ x1: turret.x, y1: turret.y, x2: e.x, y2: e.y, life: 12, maxLife: 12, color: COL.cyan });
     }
-    // If projectiles > 1 also hit all within range once
     if (count > 1) {
       for (const e of targets) {
         if (picked.includes(e)) continue;
         e.takeDamage(damage * 0.5);
+        _projectileLines.push({ x1: turret.x, y1: turret.y, x2: e.x, y2: e.y, life: 8, maxLife: 8, color: COL.cyan });
       }
     }
   }
 
-  // Visual ring from turret
-  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: Math.min(range, 400), life: 20, maxLife: 20, color: COL.cyan });
+  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: Math.min(range, 400), life: 20, maxLife: 20, color: COL.cyan, style: 'damage' });
   camera.shakeX = (Math.random() - 0.5) * 6;
   camera.shakeY = (Math.random() - 0.5) * 6;
 }
@@ -466,7 +478,6 @@ function triggerAoE(id, s) {
   const radius = s.radius || 250;
   const damage = s.damage || 40;
 
-  // Target a random enemy cluster center or turret
   let cx = turret.x, cy = turret.y;
   if (aliveEnemies.length > 0) {
     const t = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
@@ -492,15 +503,19 @@ function triggerDoT(id, s) {
   const radius   = s.radius || s.coneRange || 300;
   const duration = s.duration || 180;
   const dotDmg   = s.dotDamage || 8;
+  // poison = green/teal, burn = orange
+  const dotColor = (id === 'chain_burn' || id === 'solar_flare' || id === 'eternal_storm' || id === 'overload_field') ? COL.orange : COL.teal;
 
   for (const e of aliveEnemies) {
     if (Math.hypot(e.x - turret.x, e.y - turret.y) > radius) continue;
     if (!e._dotStack) e._dotStack = [];
-    e._dotStack.push({ damage: dotDmg, timer: duration, tickTimer: 30 });
-    _spawnImpactParticles(e.x, e.y, COL.teal, 6);
+    e._dotStack.push({ damage: dotDmg, timer: duration, tickTimer: 30, color: dotColor });
+    _spawnImpactParticles(e.x, e.y, dotColor, 6);
+    // Dark tendril from turret to each target
+    _debuffTendrils.push({ x1: turret.x, y1: turret.y, x2: e.x, y2: e.y, life: 18, maxLife: 18, color: dotColor });
   }
 
-  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: radius, life: 25, maxLife: 25, color: COL.teal });
+  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: radius, life: 25, maxLife: 25, color: dotColor, style: 'dot' });
 }
 
 function triggerZone(id, s) {
@@ -510,15 +525,22 @@ function triggerZone(id, s) {
   const damage   = s.damage || 8;
   const slow     = s.slowAmount || 0;
 
+  // Pick zone color by type
+  let zoneColor = COL.cyan;
+  if (slow > 0.5) zoneColor = COL.blue;
+  else if (slow > 0) zoneColor = '#4488ff';
+  else if (id === 'void_rift' || id === 'plague_cloud') zoneColor = COL.purple;
+
   _activeZones.push({
     x: turret.x, y: turret.y,
     radius, timer: Math.round(duration),
     damage, slowAmount: slow,
-    color: slow > 0 ? COL.blue : COL.cyan,
+    color: zoneColor,
     tickTimer: 30,
+    id,
   });
 
-  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: radius, life: 20, maxLife: 20, color: COL.cyan });
+  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: radius, life: 20, maxLife: 20, color: zoneColor, style: 'zone' });
 }
 
 function triggerBuff(id, s) {
@@ -526,9 +548,7 @@ function triggerBuff(id, s) {
   const duration = s.duration || 240;
   const boost    = s.boost    || 0.3;
 
-  // Map ability id to rapidfire boost (fire-rate buffs) or generic buff
-  if (id === 'turret_overclock' || id === 'rapidfire' || id === 'god_mode' ||
-      id === 'turret_ascension' || id === 'power_surge') {
+  if (id === 'turret_overclock' || id === 'god_mode' || id === 'turret_ascension' || id === 'power_surge') {
     rapidfireActive       = true;
     rapidfireTimer        = Math.round(duration);
     currentRapidfireBoost = boost;
@@ -541,6 +561,11 @@ function triggerBuff(id, s) {
   _activeBuff = { id, timer: Math.round(duration), stats: s };
   _buffGlowTimer = Math.round(duration);
   _buffGlowColor = '#ffaa00';
+
+  // Spawn rotating sparkles around turret
+  for (let i = 0; i < 8; i++) {
+    _buffSparkles.push({ angle: (i / 8) * Math.PI * 2, dist: 32 + Math.random() * 10, life: Math.round(duration), maxLife: Math.round(duration) });
+  }
 
   for (let i = 0; i < 16; i++) {
     const a = (i / 16) * Math.PI * 2;
@@ -560,26 +585,40 @@ function triggerDebuff(id, s) {
   const duration = s.stunDuration || s.duration || 120;
   const slow     = s.slowAmount  || 0;
   const amplify  = s.damageAmplify || 0;
+  const knockback = s.knockback || 0;
 
   const inRange = radius >= 9000
     ? aliveEnemies
     : aliveEnemies.filter(e => Math.hypot(e.x - turret.x, e.y - turret.y) < radius);
 
   for (const e of inRange) {
-    if (slow > 0)    { e._debuffSlow    = slow;   e._debuffSlowTimer    = duration; }
+    if (slow > 0)    { e._debuffSlow = slow;    e._debuffSlowTimer    = duration; }
     if (amplify > 0) { e._debuffAmplify = amplify; e._debuffAmplifyTimer = duration; }
-    if (s.stunDuration) { e._stunTimer  = duration; }
+    if (s.stunDuration) { e._stunTimer = duration; }
+    if (knockback > 0) {
+      const a = Math.atan2(e.y - turret.y, e.x - turret.x);
+      e.x += Math.cos(a) * knockback;
+      e.y += Math.sin(a) * knockback;
+    }
     _spawnImpactParticles(e.x, e.y, COL.blue, 5);
+    // Dark tendril to each debuffed enemy
+    _debuffTendrils.push({ x1: turret.x, y1: turret.y, x2: e.x, y2: e.y, life: 20, maxLife: 20, color: '#cc44ff' });
   }
 
-  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: Math.min(radius, 500), life: 22, maxLife: 22, color: COL.blue });
+  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: Math.min(radius, 500), life: 22, maxLife: 22, color: '#cc44ff', style: 'debuff' });
 
-  // Also slow enemies globally (piggyback freeze for radius-wide slows)
+  // Also propagate radius-wide slows through global freeze system
   if (slow > 0 && radius >= 9000) {
-    freezeActive          = true;
-    freezeTimer           = Math.max(freezeTimer, duration);
+    freezeActive            = true;
+    freezeTimer             = Math.max(freezeTimer, duration);
     currentFreezeSlowAmount = Math.max(currentFreezeSlowAmount, slow);
     freezeRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 450, life: 25, maxLife: 25 });
+  }
+  // Per-enemy slow also piggybacked onto freeze for movement
+  if (slow > 0 && radius < 9000) {
+    freezeActive            = true;
+    freezeTimer             = Math.max(freezeTimer, duration);
+    currentFreezeSlowAmount = Math.max(currentFreezeSlowAmount, slow);
   }
 }
 
@@ -607,14 +646,21 @@ function triggerHeal(id, s) {
   const amount = s.heal || s.healPerSecond || 30;
   turret.hp = Math.min(turret.hp + amount, turret.maxHp);
 
+  // Spawn upward-floating heal particles
   for (let i = 0; i < 20; i++) {
     const a = Math.random() * Math.PI * 2;
     const r = 10 + Math.random() * 25;
-    spawnParticle(
-      turret.x + Math.cos(a) * r, turret.y + Math.sin(a) * r,
-      Math.cos(a) * 0.5, -1.5 - Math.random() * 1.5,
-      COL.teal, 20 + Math.random() * 20, 2);
+    _healParticles.push({
+      x: turret.x + Math.cos(a) * r,
+      y: turret.y + Math.sin(a) * r,
+      vy: -(1.5 + Math.random() * 1.5),
+      vx: (Math.random() - 0.5) * 0.8,
+      life: 35 + Math.random() * 20,
+      maxLife: 55,
+    });
   }
+
+  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 80, life: 22, maxLife: 22, color: COL.teal, style: 'heal' });
 }
 
 function triggerSummon(id, s) {
@@ -642,7 +688,7 @@ function triggerSummon(id, s) {
     });
   }
 
-  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 120, life: 18, maxLife: 18, color: COL.teal });
+  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 120, life: 18, maxLife: 18, color: COL.teal, style: 'summon' });
 }
 
 function triggerUtility(id, s) {
@@ -658,7 +704,7 @@ function triggerUtility(id, s) {
       e.x += Math.cos(a) * force;
       e.y += Math.sin(a) * force;
     }
-    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: Math.min(radius, 400), life: 20, maxLife: 20, color: COL.white });
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: Math.min(radius, 400), life: 20, maxLife: 20, color: COL.white, style: 'damage' });
     camera.shakeX = (Math.random() - 0.5) * 8;
     camera.shakeY = (Math.random() - 0.5) * 8;
 
@@ -669,28 +715,26 @@ function triggerUtility(id, s) {
       e.x += Math.cos(a) * force;
       e.y += Math.sin(a) * force;
     }
-    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 350, life: 20, maxLife: 20, color: COL.teal });
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 350, life: 20, maxLife: 20, color: COL.teal, style: 'zone' });
 
   } else {
-    // decoy_signal, flare_launch, etc.: apply global damage amplify briefly
     for (const e of aliveEnemies) {
       e._debuffAmplify      = 0.15;
       e._debuffAmplifyTimer = s.duration || 180;
     }
-    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 300, life: 18, maxLife: 18, color: COL.yellow });
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 300, life: 18, maxLife: 18, color: COL.yellow, style: 'buff' });
   }
 }
 
 function triggerTriggered(id, s) {
   if (!turret.alive) return;
-  // Arm the trigger; it fires when an enemy dies near turret
   _triggeredAbilities[id] = {
     armed:  true,
     damage: s.damage || 80,
     radius: s.radius || s.blastRadius || 120,
-    timer:  600, // 10 second arm window
+    timer:  600,
   };
-  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 200, life: 18, maxLife: 18, color: COL.red });
+  _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 200, life: 18, maxLife: 18, color: COL.red, style: 'debuff' });
 }
 
 function triggerUnique(id, s) {
@@ -698,32 +742,44 @@ function triggerUnique(id, s) {
   const aliveEnemies = enemies.filter(e => e.alive);
 
   if (id === 'time_reversal' || id === 'temporal_stasis' || id === 'time_stop') {
-    // Freeze all enemies
     const dur = s.stunDuration || s.freezeDuration || 240;
-    freezeActive          = true;
-    freezeTimer           = Math.max(freezeTimer, dur);
+    freezeActive            = true;
+    freezeTimer             = Math.max(freezeTimer, dur);
     currentFreezeSlowAmount = 0.98;
     freezeRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 600, life: 30, maxLife: 30 });
+    // Blue time-flash ring
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 600, life: 28, maxLife: 28, color: COL.blue, style: 'time' });
     if (s.boost) { rapidfireActive = true; rapidfireTimer = Math.max(rapidfireTimer, dur); currentRapidfireBoost = Math.max(currentRapidfireBoost, s.boost); }
 
+  } else if (id === 'temporal_dilation') {
+    const dur = s.duration || 240;
+    freezeActive            = true;
+    freezeTimer             = Math.max(freezeTimer, dur);
+    currentFreezeSlowAmount = Math.max(currentFreezeSlowAmount, 0.7);
+    rapidfireActive         = true;
+    rapidfireTimer          = Math.max(rapidfireTimer, dur);
+    currentRapidfireBoost   = Math.max(currentRapidfireBoost, 2);
+    freezeRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 500, life: 28, maxLife: 28 });
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 500, life: 26, maxLife: 26, color: COL.blue, style: 'time' });
+
   } else if (id === 'gravity_inverter' || id === 'dimensional_rift') {
-    // Repel all enemies
     const force = s.repulseForce || s.repelForce || 200;
     for (const e of aliveEnemies) {
       const a = Math.atan2(e.y - turret.y, e.x - turret.x);
       e.x += Math.cos(a) * force;
       e.y += Math.sin(a) * force;
     }
-    // AoE damage
     if (s.damage > 0) {
-      for (const e of aliveEnemies) e.takeDamage(s.damage || 50);
+      for (const e of aliveEnemies) {
+        e.takeDamage(s.damage || 50);
+        _projectileLines.push({ x1: turret.x, y1: turret.y, x2: e.x, y2: e.y, life: 10, maxLife: 10, color: COL.orange });
+      }
     }
-    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 500, life: 30, maxLife: 30, color: COL.orange });
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 500, life: 30, maxLife: 30, color: COL.orange, style: 'damage' });
     camera.shakeX = (Math.random() - 0.5) * 14;
     camera.shakeY = (Math.random() - 0.5) * 14;
 
   } else if (id === 'energy_leech' || id === 'vampire_field' || id === 'singularity_bomb' || id === 'void_collapse') {
-    // Deal % current HP damage and heal
     const radius = s.radius || 9999;
     let totalHealed = 0;
     for (const e of aliveEnemies) {
@@ -732,43 +788,32 @@ function triggerUnique(id, s) {
       e.takeDamage(dmg);
       totalHealed += dmg * 0.2;
       _spawnImpactParticles(e.x, e.y, COL.teal, 5);
+      _projectileLines.push({ x1: e.x, y1: e.y, x2: turret.x, y2: turret.y, life: 12, maxLife: 12, color: COL.teal });
     }
     if (turret.hp !== undefined) turret.hp = Math.min(turret.hp + totalHealed, turret.maxHp);
-    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: Math.min(radius, 500), life: 28, maxLife: 28, color: COL.teal });
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: Math.min(radius, 500), life: 28, maxLife: 28, color: COL.teal, style: 'heal' });
 
   } else if (id === 'phase_shift') {
-    // Temporary immunity + AoE on return
     shieldActive = true;
     shieldHp     = 999999;
     shieldTimer  = s.duration || 120;
     _uniqueState[id] = { returnTimer: s.duration || 120, damage: s.damage || 120, radius: s.radius || 200 };
 
   } else if (id === 'solar_flare' || id === 'eternal_storm' || id === 'overload_field') {
-    // DoT all + buff turret
     const dur = s.duration || 300;
     if (s.damage > 0) {
       for (const e of aliveEnemies) {
         if (!e._dotStack) e._dotStack = [];
-        e._dotStack.push({ damage: s.damage, timer: dur, tickTimer: 30 });
+        e._dotStack.push({ damage: s.damage, timer: dur, tickTimer: 30, color: COL.orange });
+        _debuffTendrils.push({ x1: turret.x, y1: turret.y, x2: e.x, y2: e.y, life: 20, maxLife: 20, color: COL.orange });
       }
     }
     if (s.boost) { rapidfireActive = true; rapidfireTimer = Math.max(rapidfireTimer, dur); currentRapidfireBoost = Math.max(currentRapidfireBoost, s.boost); }
-    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 500, life: 30, maxLife: 30, color: COL.yellow });
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 500, life: 30, maxLife: 30, color: COL.yellow, style: 'damage' });
     camera.shakeX = (Math.random() - 0.5) * 12;
     camera.shakeY = (Math.random() - 0.5) * 12;
 
-  } else if (id === 'temporal_dilation') {
-    const dur = s.duration || 240;
-    freezeActive          = true;
-    freezeTimer           = Math.max(freezeTimer, dur);
-    currentFreezeSlowAmount = Math.max(currentFreezeSlowAmount, s.boost ? 0.7 : 0.5);
-    rapidfireActive       = true;
-    rapidfireTimer        = Math.max(rapidfireTimer, dur);
-    currentRapidfireBoost = Math.max(currentRapidfireBoost, 2);
-    freezeRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 500, life: 28, maxLife: 28 });
-
   } else if (id === 'reality_fracture' || id === 'infinity_mirror' || id === 'matrix_hack') {
-    // Buff that acts like rapidfire + damage boost
     const dur   = s.duration || 480;
     const boost = s.boost    || 3;
     rapidfireActive       = true;
@@ -776,7 +821,48 @@ function triggerUnique(id, s) {
     currentRapidfireBoost = Math.max(currentRapidfireBoost, boost * 0.3);
     _buffGlowTimer = dur;
     _buffGlowColor = '#cc44ff';
-    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 300, life: 24, maxLife: 24, color: '#cc44ff' });
+    for (let i = 0; i < 8; i++) {
+      _buffSparkles.push({ angle: (i / 8) * Math.PI * 2, dist: 36 + Math.random() * 10, life: dur, maxLife: dur });
+    }
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 300, life: 24, maxLife: 24, color: '#cc44ff', style: 'unique' });
+
+  } else if (id === 'blackhole_seed') {
+    // Pull all enemies toward center then AoE
+    const radius = s.radius || 300;
+    for (const e of aliveEnemies) {
+      const a = Math.atan2(turret.y - e.y, turret.x - e.x);
+      const dist = Math.hypot(e.x - turret.x, e.y - turret.y);
+      const pullStr = Math.min(dist * 0.5, 120);
+      e.x += Math.cos(a) * pullStr;
+      e.y += Math.sin(a) * pullStr;
+      if (Math.hypot(e.x - turret.x, e.y - turret.y) < radius) e.takeDamage(s.damage || 200);
+    }
+    orbitalExplosions.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: radius, life: 40, maxLife: 40 });
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: radius, life: 30, maxLife: 30, color: '#cc44ff', style: 'unique' });
+    camera.shakeX = (Math.random() - 0.5) * 18;
+    camera.shakeY = (Math.random() - 0.5) * 18;
+
+  } else if (id === 'paradox_loop' || id === 'rewind_damage') {
+    // Heal turret and apply DoT to all enemies
+    const dur = s.duration || 480;
+    for (const e of aliveEnemies) {
+      if (!e._dotStack) e._dotStack = [];
+      e._dotStack.push({ damage: 15, timer: dur, tickTimer: 30, color: '#cc44ff' });
+    }
+    if (turret.hp !== undefined) turret.hp = Math.min(turret.hp + 50, turret.maxHp);
+    _genericRings.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 400, life: 26, maxLife: 26, color: '#cc44ff', style: 'unique' });
+
+  } else if (id === 'entropy_bomb') {
+    // AoE + debuff amplify
+    for (const e of aliveEnemies) {
+      e.takeDamage(s.damage || 100);
+      e._debuffAmplify = 0.5;
+      e._debuffAmplifyTimer = 180;
+      _projectileLines.push({ x1: turret.x, y1: turret.y, x2: e.x, y2: e.y, life: 12, maxLife: 12, color: '#cc44ff' });
+    }
+    orbitalExplosions.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: 450, life: 38, maxLife: 38 });
+    camera.shakeX = (Math.random() - 0.5) * 16;
+    camera.shakeY = (Math.random() - 0.5) * 16;
 
   } else {
     // Fallback: AoE damage
@@ -799,25 +885,25 @@ function triggerAbilityByType(id) {
   const stats    = getAbilityStatsComputed(id);
 
   switch (mechType) {
-    case 'emp_original':       triggerEMP();                  break;
-    case 'shield_original':    triggerShield();               break;
-    case 'rapidfire_original': triggerRapidfire();            break;
-    case 'chain_original':     triggerChain();                break;
-    case 'freeze_original':    triggerFreeze();               break;
-    case 'orbital_original':   triggerOrbital();              break;
+    case 'emp_original':       triggerEMP();                    break;
+    case 'shield_original':    triggerShield();                 break;
+    case 'rapidfire_original': triggerRapidfire();              break;
+    case 'chain_original':     triggerChain();                  break;
+    case 'freeze_original':    triggerFreeze();                 break;
+    case 'orbital_original':   triggerOrbital();                break;
     case 'instant_damage':     triggerInstantDamage(id, stats); break;
-    case 'aoe':                triggerAoE(id, stats);         break;
-    case 'dot':                triggerDoT(id, stats);         break;
-    case 'zone':               triggerZone(id, stats);        break;
-    case 'buff':               triggerBuff(id, stats);        break;
-    case 'debuff':             triggerDebuff(id, stats);      break;
+    case 'aoe':                triggerAoE(id, stats);           break;
+    case 'dot':                triggerDoT(id, stats);           break;
+    case 'zone':               triggerZone(id, stats);          break;
+    case 'buff':               triggerBuff(id, stats);          break;
+    case 'debuff':             triggerDebuff(id, stats);        break;
     case 'shield':             triggerShieldGeneric(id, stats); break;
-    case 'heal':               triggerHeal(id, stats);        break;
-    case 'summon':             triggerSummon(id, stats);      break;
-    case 'utility':            triggerUtility(id, stats);     break;
-    case 'triggered':          triggerTriggered(id, stats);   break;
-    case 'unique':             triggerUnique(id, stats);      break;
-    case 'passive':            triggerZone(id, stats);        break; // treat passive auras as zones
+    case 'heal':               triggerHeal(id, stats);          break;
+    case 'summon':             triggerSummon(id, stats);        break;
+    case 'utility':            triggerUtility(id, stats);       break;
+    case 'triggered':          triggerTriggered(id, stats);     break;
+    case 'unique':             triggerUnique(id, stats);        break;
+    case 'passive':            triggerZone(id, stats);          break;
   }
 }
 
@@ -864,16 +950,10 @@ function updateAbilities() {
     if (freezeTimer <= 0) { freezeActive = false; currentFreezeSlowAmount = 0; }
   }
 
-  // ── Buff timer ──
+  // ── Buff/debuff timers ──
   if (_buffGlowTimer > 0) _buffGlowTimer--;
-  if (_activeBuff) {
-    _activeBuff.timer--;
-    if (_activeBuff.timer <= 0) _activeBuff = null;
-  }
-  if (_activeDebuff) {
-    _activeDebuff.timer--;
-    if (_activeDebuff.timer <= 0) _activeDebuff = null;
-  }
+  if (_activeBuff) { _activeBuff.timer--; if (_activeBuff.timer <= 0) _activeBuff = null; }
+  if (_activeDebuff) { _activeDebuff.timer--; if (_activeDebuff.timer <= 0) _activeDebuff = null; }
 
   // ── Zone update: damage + slow enemies inside each zone ──
   for (let i = _activeZones.length - 1; i >= 0; i--) {
@@ -886,7 +966,14 @@ function updateAbilities() {
         if (!e.alive) continue;
         if (Math.hypot(e.x - z.x, e.y - z.y) < z.radius) {
           if (z.damage > 0) e.takeDamage(z.damage);
-          if (z.slowAmount > 0) { e._debuffSlow = z.slowAmount; e._debuffSlowTimer = 35; }
+          if (z.slowAmount > 0) {
+            e._debuffSlow      = z.slowAmount;
+            e._debuffSlowTimer = 35;
+            // Also maintain global freeze so enemies.js movement is slowed
+            freezeActive            = true;
+            freezeTimer             = Math.max(freezeTimer, 35);
+            currentFreezeSlowAmount = Math.max(currentFreezeSlowAmount, z.slowAmount);
+          }
         }
       }
     }
@@ -903,6 +990,8 @@ function updateAbilities() {
       if (dot.tickTimer <= 0) {
         dot.tickTimer = 30;
         e.takeDamage(dot.damage);
+        // Spawn a puff visual on the enemy
+        _dotPuffs.push({ x: e.x, y: e.y - (e.radius || 12), life: 20, maxLife: 20, color: dot.color || COL.teal });
       }
       if (dot.timer <= 0) e._dotStack.splice(i, 1);
     }
@@ -916,6 +1005,12 @@ function updateAbilities() {
     if (e._stunTimer          > 0) e._stunTimer--;
     if (e._debuffSlowTimer    <= 0) e._debuffSlow    = 0;
     if (e._debuffAmplifyTimer <= 0) e._debuffAmplify = 0;
+    // Apply per-enemy slow through global freeze (enemies.js reads freezeActive)
+    if (e._debuffSlow > 0 && e._debuffSlowTimer > 0) {
+      freezeActive            = true;
+      freezeTimer             = Math.max(freezeTimer, e._debuffSlowTimer);
+      currentFreezeSlowAmount = Math.max(currentFreezeSlowAmount, e._debuffSlow);
+    }
   }
 
   // ── Summon update: orbit turret, auto-fire ──
@@ -926,12 +1021,10 @@ function updateAbilities() {
     d.timer--;
     if (d.timer <= 0) { _summons.splice(i, 1); continue; }
 
-    // Orbit
     d.angle += d.orbitSpeed;
     d.x = turret.x + Math.cos(d.angle) * d.orbitRadius;
     d.y = turret.y + Math.sin(d.angle) * d.orbitRadius;
 
-    // Fire at nearest enemy
     d.fireTimer--;
     if (d.fireTimer <= 0) {
       d.fireTimer = d.fireRate;
@@ -943,29 +1036,26 @@ function updateAbilities() {
       }
       if (nearest) {
         nearest.takeDamage(d.damage);
-        chainLightningLines.push({ x1: d.x, y1: d.y, x2: nearest.x, y2: nearest.y, life: 8, maxLife: 8 });
+        // Bullet-line from drone to target
+        _projectileLines.push({ x1: d.x, y1: d.y, x2: nearest.x, y2: nearest.y, life: 10, maxLife: 10, color: COL.teal });
       }
     }
   }
 
-  // ── Triggered ability check: fire when enemy dies in radius ──
+  // ── Triggered ability check: fire when enemy dies this frame ──
   for (const id in _triggeredAbilities) {
     const t = _triggeredAbilities[id];
     if (!t.armed) continue;
     t.timer--;
     if (t.timer <= 0) { delete _triggeredAbilities[id]; continue; }
 
-    // Check for a dead enemy inside trigger radius
     for (const e of enemies) {
       if (e.alive) continue;
-      if (!e._justDied) continue; // only enemies that died this frame
+      if (!e._justDied) continue;
       if (Math.hypot(e.x - turret.x, e.y - turret.y) < (t.radius * 1.5)) {
-        // Detonate
         for (const target of enemies) {
           if (!target.alive) continue;
-          if (Math.hypot(target.x - e.x, target.y - e.y) < t.radius) {
-            target.takeDamage(t.damage);
-          }
+          if (Math.hypot(target.x - e.x, target.y - e.y) < t.radius) target.takeDamage(t.damage);
         }
         orbitalExplosions.push({ x: e.x, y: e.y, radius: 0, maxRadius: t.radius, life: 30, maxLife: 30 });
         _spawnImpactParticles(e.x, e.y, COL.red, 20);
@@ -975,18 +1065,20 @@ function updateAbilities() {
     }
   }
 
+  // Clear _justDied flag after triggered check
+  for (const e of enemies) {
+    if (e._justDied) e._justDied = false;
+  }
+
   // ── Unique state update ──
   for (const id in _uniqueState) {
     const u = _uniqueState[id];
     if (id === 'phase_shift' && u.returnTimer !== undefined) {
       u.returnTimer--;
       if (u.returnTimer <= 0) {
-        // Phase back: AoE damage
         for (const e of enemies) {
           if (!e.alive) continue;
-          if (Math.hypot(e.x - turret.x, e.y - turret.y) < u.radius) {
-            e.takeDamage(u.damage);
-          }
+          if (Math.hypot(e.x - turret.x, e.y - turret.y) < u.radius) e.takeDamage(u.damage);
         }
         orbitalExplosions.push({ x: turret.x, y: turret.y, radius: 0, maxRadius: u.radius, life: 35, maxLife: 35 });
         delete _uniqueState[id];
@@ -1017,6 +1109,30 @@ function updateAbilities() {
     r.life--;
     if (r.life <= 0) _genericRings.splice(i, 1);
   }
+  for (let i = _projectileLines.length - 1; i >= 0; i--) {
+    _projectileLines[i].life--;
+    if (_projectileLines[i].life <= 0) _projectileLines.splice(i, 1);
+  }
+  for (let i = _healParticles.length - 1; i >= 0; i--) {
+    const h = _healParticles[i];
+    h.x += h.vx;
+    h.y += h.vy;
+    h.life--;
+    if (h.life <= 0) _healParticles.splice(i, 1);
+  }
+  for (let i = _dotPuffs.length - 1; i >= 0; i--) {
+    _dotPuffs[i].life--;
+    if (_dotPuffs[i].life <= 0) _dotPuffs.splice(i, 1);
+  }
+  for (let i = _debuffTendrils.length - 1; i >= 0; i--) {
+    _debuffTendrils[i].life--;
+    if (_debuffTendrils[i].life <= 0) _debuffTendrils.splice(i, 1);
+  }
+  for (let i = _buffSparkles.length - 1; i >= 0; i--) {
+    _buffSparkles[i].life--;
+    _buffSparkles[i].angle += 0.08;
+    if (_buffSparkles[i].life <= 0) _buffSparkles.splice(i, 1);
+  }
 }
 
 // ════════════════════════════════════════════
@@ -1024,40 +1140,144 @@ function updateAbilities() {
 // ════════════════════════════════════════════
 
 function drawAbilityEffects(ctx) {
-  // ── Active zones (semi-transparent ground circles) ──
+
+  // ── Active zones: filled semi-transparent circle with pulsing border ──
   for (const z of _activeZones) {
-    const alpha = Math.min(1, z.timer / 60) * 0.35;
+    const fade  = Math.min(1, z.timer / 60);
+    const pulse = 0.5 + Math.sin(frameCount * 0.08) * 0.3;
+    const col   = z.color || COL.cyan;
     ctx.save();
-    ctx.fillStyle = z.slowAmount > 0
-      ? `rgba(0, 136, 255, ${alpha})`
-      : `rgba(0, 255, 200, ${alpha})`;
-    ctx.strokeStyle = z.color || COL.cyan;
-    ctx.lineWidth   = 2;
-    ctx.shadowColor = z.color || COL.cyan;
-    ctx.shadowBlur  = 14;
+    // Filled area
+    const grad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
+    grad.addColorStop(0, `rgba(${_hexToRgb(col)}, ${fade * 0.18})`);
+    grad.addColorStop(0.7, `rgba(${_hexToRgb(col)}, ${fade * 0.10})`);
+    grad.addColorStop(1, `rgba(${_hexToRgb(col)}, 0)`);
+    ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
     ctx.fill();
+    // Pulsing border
+    ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${fade * (0.4 + pulse * 0.4)})`;
+    ctx.lineWidth   = 2;
+    ctx.shadowColor = col;
+    ctx.shadowBlur  = 12;
     ctx.stroke();
+    // Inner tick ring
+    ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${fade * 0.25})`;
+    ctx.lineWidth   = 1;
+    ctx.shadowBlur  = 0;
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.radius * 0.6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Projectile lines from turret / drones to targets ──
+  for (const line of _projectileLines) {
+    const alpha = line.life / line.maxLife;
+    const col   = line.color || COL.cyan;
+    ctx.save();
+    ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha})`;
+    ctx.lineWidth   = 2 * alpha + 0.5;
+    ctx.shadowColor = col;
+    ctx.shadowBlur  = 8;
+    ctx.beginPath();
+    ctx.moveTo(line.x1, line.y1);
+    ctx.lineTo(line.x2, line.y2);
+    ctx.stroke();
+    // Bright core
+    ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.6})`;
+    ctx.lineWidth   = 0.8;
+    ctx.shadowBlur  = 0;
+    ctx.beginPath();
+    ctx.moveTo(line.x1, line.y1);
+    ctx.lineTo(line.x2, line.y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Heal particles: rising green/teal dots ──
+  ctx.save();
+  for (const h of _healParticles) {
+    const alpha = h.life / h.maxLife;
+    ctx.fillStyle   = `rgba(0, 255, 180, ${alpha * 0.9})`;
+    ctx.shadowColor = COL.teal;
+    ctx.shadowBlur  = 6;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, 3 * alpha + 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  // ── DoT puffs on enemies ──
+  for (const p of _dotPuffs) {
+    const alpha = p.life / p.maxLife;
+    const col   = p.color || COL.teal;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.8;
+    ctx.fillStyle   = col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur  = 8;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5 + (1 - alpha) * 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur  = 0;
+    ctx.restore();
+  }
+
+  // ── Debuff tendrils: jagged lines to enemies ──
+  for (const t of _debuffTendrils) {
+    const alpha = (t.life / t.maxLife) * 0.7;
+    const col   = t.color || '#cc44ff';
+    const mx    = (t.x1 + t.x2) / 2 + (Math.random() - 0.5) * 20;
+    const my    = (t.y1 + t.y2) / 2 + (Math.random() - 0.5) * 20;
+    ctx.save();
+    ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha})`;
+    ctx.lineWidth   = 1.5;
+    ctx.shadowColor = col;
+    ctx.shadowBlur  = 6;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(t.x1, t.y1);
+    ctx.quadraticCurveTo(mx, my, t.x2, t.y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
     ctx.shadowBlur = 0;
     ctx.restore();
   }
 
-  // ── Shield ring ──
+  // ── Shield ring: hexagonal pattern ──
   if (shieldActive && turret && turret.alive) {
     const pulse       = 0.6 + Math.sin(shieldRingPulse * 0.12) * 0.3;
     const shieldRadius = 46;
     ctx.save();
-    ctx.strokeStyle = `rgba(0, 255, 242, ${pulse * 0.5})`;
-    ctx.lineWidth   = 4;
     ctx.shadowColor = COL.cyan;
     ctx.shadowBlur  = 20;
+    // Main circle
+    ctx.strokeStyle = `rgba(0, 255, 242, ${pulse * 0.5})`;
+    ctx.lineWidth   = 3;
     ctx.beginPath();
     ctx.arc(turret.x, turret.y, shieldRadius, 0, Math.PI * 2);
     ctx.stroke();
-    const grad = ctx.createRadialGradient(turret.x, turret.y, shieldRadius * 0.6, turret.x, turret.y, shieldRadius);
-    grad.addColorStop(0, `rgba(0, 255, 242, ${pulse * 0.05})`);
-    grad.addColorStop(1, `rgba(0, 255, 242, ${pulse * 0.12})`);
+    // Hexagonal shimmer segments
+    const hexRot = shieldRingPulse * 0.015;
+    ctx.strokeStyle = `rgba(0, 255, 242, ${pulse * 0.3})`;
+    ctx.lineWidth   = 1.5;
+    for (let i = 0; i < 6; i++) {
+      const a1 = hexRot + (i / 6) * Math.PI * 2;
+      const a2 = hexRot + ((i + 0.5) / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(turret.x + Math.cos(a1) * shieldRadius, turret.y + Math.sin(a1) * shieldRadius);
+      ctx.lineTo(turret.x + Math.cos(a2) * (shieldRadius - 8), turret.y + Math.sin(a2) * (shieldRadius - 8));
+      ctx.lineTo(turret.x + Math.cos(a2 + (0.5 / 6) * Math.PI * 2) * shieldRadius, turret.y + Math.sin(a2 + (0.5 / 6) * Math.PI * 2) * shieldRadius);
+      ctx.stroke();
+    }
+    // Filled gradient interior
+    const grad = ctx.createRadialGradient(turret.x, turret.y, shieldRadius * 0.5, turret.x, turret.y, shieldRadius);
+    grad.addColorStop(0, `rgba(0, 255, 242, ${pulse * 0.04})`);
+    grad.addColorStop(1, `rgba(0, 255, 242, ${pulse * 0.10})`);
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(turret.x, turret.y, shieldRadius, 0, Math.PI * 2);
@@ -1066,7 +1286,7 @@ function drawAbilityEffects(ctx) {
     ctx.restore();
   }
 
-  // ── Rapidfire / buff glow ──
+  // ── Rapidfire / buff glow + rotating sparkles ──
   if ((rapidfireActive || _buffGlowTimer > 0) && turret && turret.alive) {
     const pulse = 0.5 + Math.sin(frameCount * 0.2) * 0.3;
     const col   = _buffGlowTimer > 0 ? _buffGlowColor : COL.orange;
@@ -1078,6 +1298,33 @@ function drawAbilityEffects(ctx) {
     ctx.beginPath();
     ctx.arc(turret.x, turret.y, 34, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // ── Buff sparkles: rotating diamonds around turret ──
+  if (_buffSparkles.length > 0 && turret && turret.alive) {
+    ctx.save();
+    for (const sp of _buffSparkles) {
+      const alpha = sp.life / sp.maxLife;
+      const sx    = turret.x + Math.cos(sp.angle) * sp.dist;
+      const sy    = turret.y + Math.sin(sp.angle) * sp.dist;
+      const size  = 3 + alpha * 2;
+      ctx.fillStyle   = `rgba(255, 200, 0, ${alpha * 0.9})`;
+      ctx.shadowColor = COL.yellow;
+      ctx.shadowBlur  = 6;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(sp.angle + frameCount * 0.05);
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      ctx.lineTo(size * 0.5, 0);
+      ctx.lineTo(0, size);
+      ctx.lineTo(-size * 0.5, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
     ctx.shadowBlur = 0;
     ctx.restore();
   }
@@ -1120,7 +1367,7 @@ function drawAbilityEffects(ctx) {
     ctx.restore();
   }
 
-  // ── Debuff rings on enemies with debuffs ──
+  // ── Debuff rings on enemies ──
   ctx.save();
   for (const e of enemies) {
     if (!e.alive) continue;
@@ -1195,39 +1442,147 @@ function drawAbilityEffects(ctx) {
     ctx.restore();
   }
 
-  // ── Generic expanding rings (debuffs, buffs, instant_damage, etc.) ──
+  // ── Generic expanding rings — styled by type ──
   for (const r of _genericRings) {
     const alpha = r.life / r.maxLife;
     const col   = r.color || COL.cyan;
+    const style = r.style || 'default';
     ctx.save();
-    ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha * 0.7})`;
-    ctx.lineWidth   = 2;
-    ctx.shadowColor = col;
-    ctx.shadowBlur  = 14;
-    ctx.beginPath();
-    ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+
+    if (style === 'time') {
+      // Blue crystalline ring with sparkle dashes
+      ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha * 0.8})`;
+      ctx.lineWidth   = 2.5;
+      ctx.shadowColor = col;
+      ctx.shadowBlur  = 20;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.strokeStyle = `rgba(200, 230, 255, ${alpha * 0.5})`;
+      ctx.lineWidth   = 1;
+      ctx.shadowBlur  = 0;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius * 0.75, 0, Math.PI * 2);
+      ctx.stroke();
+
+    } else if (style === 'damage') {
+      // Solid ring with particles suggestion
+      ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha * 0.8})`;
+      ctx.lineWidth   = 2.5;
+      ctx.shadowColor = col;
+      ctx.shadowBlur  = 18;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      // Inner bright flash
+      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.4})`;
+      ctx.lineWidth   = 1;
+      ctx.shadowBlur  = 0;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius * 0.4, 0, Math.PI * 2);
+      ctx.stroke();
+
+    } else if (style === 'heal') {
+      // Soft green glow ring
+      ctx.strokeStyle = `rgba(0, 255, 180, ${alpha * 0.7})`;
+      ctx.lineWidth   = 2;
+      ctx.shadowColor = COL.teal;
+      ctx.shadowBlur  = 22;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+    } else if (style === 'debuff' || style === 'dot') {
+      // Purple/dark dashed ring
+      ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha * 0.75})`;
+      ctx.lineWidth   = 2;
+      ctx.shadowColor = col;
+      ctx.shadowBlur  = 14;
+      ctx.setLineDash([6, 5]);
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.shadowBlur = 0;
+
+    } else if (style === 'zone') {
+      // Concentric pulsing rings
+      ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha * 0.7})`;
+      ctx.lineWidth   = 2;
+      ctx.shadowColor = col;
+      ctx.shadowBlur  = 16;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha * 0.35})`;
+      ctx.lineWidth   = 1;
+      ctx.shadowBlur  = 0;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius * 0.55, 0, Math.PI * 2);
+      ctx.stroke();
+
+    } else if (style === 'unique') {
+      // Spiral-like: rotating arc segments
+      ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha * 0.8})`;
+      ctx.lineWidth   = 2.5;
+      ctx.shadowColor = col;
+      ctx.shadowBlur  = 20;
+      const rot = frameCount * 0.05;
+      for (let seg = 0; seg < 4; seg++) {
+        const a = rot + (seg / 4) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.radius, a, a + Math.PI * 0.4);
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0;
+
+    } else {
+      // Default: plain ring with glow
+      ctx.strokeStyle = `rgba(${_hexToRgb(col)}, ${alpha * 0.7})`;
+      ctx.lineWidth   = 2;
+      ctx.shadowColor = col;
+      ctx.shadowBlur  = 14;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
     ctx.restore();
   }
 
-  // ── Summon drones (orbiting dots) ──
+  // ── Summon drones: glowing diamonds that orbit ──
   if (_summons.length > 0 && turret && turret.alive) {
     ctx.save();
     for (const d of _summons) {
       const pulse = 0.6 + Math.sin(frameCount * 0.15 + d.angle) * 0.3;
+      const size  = 6;
       ctx.fillStyle   = `rgba(0, 255, 200, ${pulse})`;
+      ctx.strokeStyle = `rgba(0, 255, 200, ${pulse * 0.5})`;
+      ctx.lineWidth   = 1.5;
       ctx.shadowColor = COL.teal;
-      ctx.shadowBlur  = 10;
+      ctx.shadowBlur  = 14;
+      ctx.save();
+      ctx.translate(d.x, d.y);
+      ctx.rotate(d.angle + frameCount * 0.04);
       ctx.beginPath();
-      ctx.arc(d.x, d.y, 5, 0, Math.PI * 2);
+      ctx.moveTo(0, -size);
+      ctx.lineTo(size * 0.6, 0);
+      ctx.lineTo(0, size);
+      ctx.lineTo(-size * 0.6, 0);
+      ctx.closePath();
       ctx.fill();
+      ctx.stroke();
+      ctx.restore();
     }
     ctx.shadowBlur = 0;
     ctx.restore();
   }
 
-  // ── Triggered arms indicator (pulsing ring at turret) ──
+  // ── Triggered arms indicator ──
   for (const id in _triggeredAbilities) {
     const t = _triggeredAbilities[id];
     if (!t.armed) continue;

@@ -93,6 +93,7 @@ class Enemy {
 
   die() {
     this.alive = false;
+    this._justDied = true; // read by emp.js triggered abilities, cleared next frame
     const isBoss = this.type === 'boss' || this.type === 'overlord';
     const isSentinel = this.type === 'sentinel';
 
