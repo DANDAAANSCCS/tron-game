@@ -89,6 +89,58 @@ function getCachedSession() {
   } catch (_) { return null; }
 }
 
+// ── Offline chest opening (replicates server logic) ──
+const _CHEST_DEFS = {
+  common: { cost: 150, rarities: ['common', 'rare'], weights: { common: 80, rare: 20 }, min: 25, max: 90 },
+  rare:   { cost: 350, rarities: ['rare', 'epic'],   weights: { rare: 75, epic: 25 },   min: 10, max: 30 },
+  epic:   { cost: 500, rarities: ['epic', 'legendary'], weights: { epic: 70, legendary: 30 }, min: 4, max: 8 },
+};
+const _ABILITY_RARITIES = { emp: 'common', shield: 'common', rapidfire: 'rare', chain: 'rare', freeze: 'epic', orbital: 'legendary' };
+
+function _offlineOpenChest(chestType) {
+  const chest = _CHEST_DEFS[chestType];
+  if (!chest) return null;
+
+  const cached = _offlineCache.getField('gamedata') || {};
+  const gems = cached.gems || 0;
+  if (gems < chest.cost) return { error: 'NOT ENOUGH GEMS' };
+
+  // Weighted card count (biased toward min)
+  const range = chest.max - chest.min;
+  const totalCards = chest.min + Math.floor(range * Math.pow(Math.random(), 2.5));
+
+  // Pick rarity for each card
+  const drop = {};
+  const weightEntries = Object.entries(chest.weights);
+  const totalWeight = weightEntries.reduce((s, [, w]) => s + w, 0);
+
+  for (let i = 0; i < totalCards; i++) {
+    let r = Math.random() * totalWeight;
+    let rarity = weightEntries[0][0];
+    for (const [rar, w] of weightEntries) { r -= w; if (r <= 0) { rarity = rar; break; } }
+    // Pick random ability of this rarity
+    const pool = Object.entries(_ABILITY_RARITIES).filter(([, r]) => r === rarity).map(([id]) => id);
+    if (!pool.length) continue;
+    const abilityId = pool[Math.floor(Math.random() * pool.length)];
+    drop[abilityId] = (drop[abilityId] || 0) + 1;
+  }
+
+  // Update local cache
+  const newGems = gems - chest.cost;
+  cached.gems = newGems;
+  const cards = cached.abilityCards || {};
+  const levels = cached.abilityLevels || {};
+  for (const [id, count] of Object.entries(drop)) {
+    cards[id] = (cards[id] || 0) + count;
+    if (cards[id] >= 1 && (!levels[id] || levels[id] < 1)) levels[id] = 1;
+  }
+  cached.abilityCards = cards;
+  cached.abilityLevels = levels;
+  _offlineCache.set({ gamedata: cached });
+
+  return { ok: true, gems: newGems, drop, totalCards, abilityCards: cards, abilityLevels: levels };
+}
+
 // ── Override fetch for offline resilience ──
 const _realFetch = window.fetch;
 
@@ -174,10 +226,66 @@ window.fetch = async function(url, options = {}) {
       }
     }
 
-    // For POST requests, queue them for later and return fake success
+    // For POST requests, handle offline
     if (method === 'POST') {
       try {
         const body = JSON.parse(options.body || '{}');
+
+        // Chest opening — run locally, don't queue (server can't replay randomness)
+        if (urlStr.includes('/api/chest/open')) {
+          const result = _offlineOpenChest(body.chestType);
+          if (!result) return new Response(JSON.stringify({ error: 'INVALID CHEST' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+          if (result.error) return new Response(JSON.stringify(result), { status: 400, headers: { 'Content-Type': 'application/json' } });
+          // Queue a gamedata sync for when we're back online
+          _offlineCache.queuePost(urlStr.replace('/chest/open', '/gamedata'), {
+            gems: result.gems,
+            // Server will reconcile cards on next online session
+          });
+          return new Response(JSON.stringify(result), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        // Ability equip/unequip — handle locally
+        if (urlStr.includes('/api/abilities/equip')) {
+          const cached = _offlineCache.getField('gamedata') || {};
+          const equipped = cached.equippedAbilities || [];
+          if (!equipped.includes(body.abilityId) && equipped.length < 5) {
+            equipped.push(body.abilityId);
+            cached.equippedAbilities = equipped;
+            _offlineCache.set({ gamedata: cached });
+          }
+          _offlineCache.queuePost(urlStr, body);
+          return new Response(JSON.stringify({ ok: true, equippedAbilities: equipped }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        if (urlStr.includes('/api/abilities/unequip')) {
+          const cached = _offlineCache.getField('gamedata') || {};
+          const equipped = (cached.equippedAbilities || []).filter(id => id !== body.abilityId);
+          cached.equippedAbilities = equipped;
+          _offlineCache.set({ gamedata: cached });
+          _offlineCache.queuePost(urlStr, body);
+          return new Response(JSON.stringify({ ok: true, equippedAbilities: equipped }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        // Ability upgrade — handle locally
+        if (urlStr.includes('/api/abilities/upgrade')) {
+          const cached = _offlineCache.getField('gamedata') || {};
+          const levels = cached.abilityLevels || {};
+          const currentLvl = levels[body.abilityId] || 0;
+          if (currentLvl < 20) {
+            levels[body.abilityId] = currentLvl + 1;
+            // Deduct silver (approximate — server will reconcile)
+            const rarity = _ABILITY_RARITIES[body.abilityId] || 'common';
+            const baseCosts = { common: 1500, rare: 3000, epic: 5000, legendary: 8000 };
+            const cost = Math.round((baseCosts[rarity] || 1500) * Math.pow(1.25, currentLvl - 1));
+            cached.silverCoins = Math.max(0, (cached.silverCoins || 0) - cost);
+            cached.abilityLevels = levels;
+            _offlineCache.set({ gamedata: cached });
+            _offlineCache.queuePost(urlStr, body);
+            return new Response(JSON.stringify({ ok: true, newLevel: currentLvl + 1, silverCoins: cached.silverCoins, abilityLevels: levels }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+          }
+        }
+
+        // Generic POST — queue for later
         _offlineCache.queuePost(urlStr, body);
 
         // Update local cache optimistically
