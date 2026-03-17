@@ -7,7 +7,7 @@
 // ── Upgrade panel hit-test constants (must match upgrades-panel.js draw calls) ──
 const PANEL_ROW_H = 50;
 const PANEL_START_OFFSET_Y = 70;
-const UPGRADE_KEYS = ['damage', 'fireRate', 'precision', 'doubleBul', 'health'];
+const UPGRADE_KEYS = ['damage', 'fireRate', 'doubleBul', 'health'];
 
 function _getPanelBounds() {
   const panelW = Math.min(440, canvas.width - 40); // match upgrades-panel.js

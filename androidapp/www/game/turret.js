@@ -27,6 +27,7 @@ class Turret {
     this.ringRotation = 0;
     this.outerRingRotation = 0;
     this.regenAccum = 0;
+    this.lastDamageFrame = 0; // frame when last took damage
   }
 
   update() {
@@ -36,8 +37,9 @@ class Turret {
     this.ringRotation += 0.015;
     this.outerRingRotation -= 0.008;
 
-    // Regen (permanent upgrade) — regen 0.5 HP/sec base * (1 + regenBonus)
-    if (permBonus.regen > 0 && this.alive && this.hp < this.maxHp) {
+    // Regen (permanent upgrade) — only after 4 seconds without taking damage
+    const regenDelay = 240; // 4 seconds at 60fps
+    if (permBonus.regen > 0 && this.alive && this.hp < this.maxHp && (frameCount - this.lastDamageFrame) >= regenDelay) {
       this.regenAccum += (0.5 / 60) * (1 + permBonus.regen * 10);
       if (this.regenAccum >= 1) {
         const heal = Math.floor(this.regenAccum);
@@ -122,10 +124,20 @@ class Turret {
     const s1 = (Math.random() - 0.5) * curSpread * 2;
     bullets.push(new Bullet(bx, by, this.angle + s1));
 
-    // Double bullet chance
-    if (Math.random() < getDoubleBulletChance()) {
-      const s2 = (Math.random() - 0.5) * curSpread * 2;
-      bullets.push(new Bullet(bx, by, this.angle + s2));
+    // Multi-shot: guaranteed extra bullets from completed tiers
+    const multiCount = (typeof getMultiShotCount === 'function') ? getMultiShotCount() : 0;
+    for (let i = 0; i < multiCount; i++) {
+      // Spread extra bullets in a fan pattern
+      const fanOffset = ((i + 1) / (multiCount + 1) - 0.5) * 0.4; // spread between -0.2 and +0.2 radians
+      const extraSpread = (Math.random() - 0.5) * curSpread;
+      bullets.push(new Bullet(bx, by, this.angle + fanOffset + extraSpread));
+    }
+
+    // Chance for one MORE bullet (building toward next tier at 60%)
+    const multiChance = (typeof getMultiShotChance === 'function') ? getMultiShotChance() : 0;
+    if (multiChance > 0 && Math.random() < multiChance) {
+      const extraOffset = (Math.random() - 0.5) * 0.5;
+      bullets.push(new Bullet(bx, by, this.angle + extraOffset));
     }
 
     this.recoil = 5;
@@ -143,6 +155,8 @@ class Turret {
   }
 
   takeDamage(dmg) {
+    this.lastDamageFrame = frameCount; // reset regen timer
+    this.regenAccum = 0;
     // Shield interception: absorb damage before it reaches the turret HP
     if (shieldActive && shieldHp > 0) {
       const absorbed = Math.min(dmg, shieldHp);

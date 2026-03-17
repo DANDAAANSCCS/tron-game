@@ -209,6 +209,10 @@ async function startGame() {
 
   initGame();
 
+  // Set wave max display
+  const waveMaxEl = document.getElementById('wave-max');
+  if (waveMaxEl) waveMaxEl.textContent = isInfiniteMode ? ' /∞' : ' /100';
+
   // Check for saved session to restore
   let restored = false;
   try {

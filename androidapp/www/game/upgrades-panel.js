@@ -10,7 +10,12 @@ function getUpgradePerLevel(upg) {
 
 function getUpgradeDesc(upg) {
   const pct = Math.round(getUpgradePerLevel(upg) * 100);
-  if (upg === upgrades.precision) return `-${pct}% ${upg.descBase}`;
+  if (upg === upgrades.doubleBul) {
+    const shots = 1 + ((typeof getMultiShotCount === 'function') ? getMultiShotCount() : 0);
+    const names = ['SINGLE', 'DOUBLE', 'TRIPLE', 'QUAD', 'PENTA', 'HEXA'];
+    const shotName = names[shots - 1] || (shots + 'x');
+    return `${shotName} SHOT`;
+  }
   return `+${pct}% ${upg.descBase}`;
 }
 
@@ -49,12 +54,26 @@ function getCurrentFireRate(base) {
 }
 
 function getCurrentSpread() {
-  const reduction = getUpgradeValue(upgrades.precision) + permBonus.precision;
+  // Precision only from permanent upgrades (capped at 100%)
+  const reduction = Math.min(1, permBonus.precision);
   return BASE_BULLET_SPREAD * Math.max(0.05, 1 - reduction);
 }
 
-function getDoubleBulletChance() {
-  return Math.min(upgrades.doubleBul.max, getUpgradeValue(upgrades.doubleBul));
+// Multi-shot: returns number of EXTRA bullets (0 = single, 1 = double, 2 = triple, etc.)
+// Each 60% threshold adds another bullet
+function getMultiShotCount() {
+  const val = getUpgradeValue(upgrades.doubleBul);
+  if (val < 0.60) return 0;
+  // 0.60 = double (1 extra), next threshold at 1.20 = triple (2 extra), etc.
+  return Math.floor(val / 0.60);
+}
+
+// Chance for the current multi-shot tier to proc (always building toward 60%)
+function getMultiShotChance() {
+  const val = getUpgradeValue(upgrades.doubleBul);
+  const tier = Math.floor(val / 0.60);
+  const progress = val - (tier * 0.60);
+  return Math.min(0.60, progress);
 }
 
 function getCurrentMaxHp() {
@@ -65,10 +84,6 @@ function buyUpgrade(key) {
   const upg = upgrades[key];
   const cost = getUpgradeCost(upg);
   if (gold < cost) {
-    if (typeof playDenySound === 'function') playDenySound();
-    return false;
-  }
-  if (key === 'doubleBul' && getUpgradeValue(upg) >= upg.max) {
     if (typeof playDenySound === 'function') playDenySound();
     return false;
   }
@@ -102,7 +117,7 @@ function drawUpgradesPanel() {
     return;
   }
 
-  const upgradeKeys = ['damage', 'fireRate', 'precision', 'doubleBul', 'health'];
+  const upgradeKeys = ['damage', 'fireRate', 'doubleBul', 'health'];
   const panelW = Math.min(440, canvas.width - 40);
   const rowH = 50;
   const panelH = 80 + upgradeKeys.length * rowH + 25;
@@ -177,7 +192,7 @@ function drawUpgradesPanel() {
     const key = upgradeKeys[i];
     const upg = upgrades[key];
     const cost = getUpgradeCost(upg);
-    const isMaxed = key === 'doubleBul' && getUpgradeValue(upg) >= upg.max;
+    const isMaxed = false; // multi-shot has no cap
     const canBuy = gold >= cost && !isMaxed;
     const ry = startY + i * rowH;
     const pipLvl = getPipLevel(upg);
