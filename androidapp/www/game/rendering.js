@@ -205,7 +205,7 @@ function drawCrosshair() {
   ctx.fillStyle = isAuto ? 'rgba(255, 102, 0, 0.5)' : 'rgba(0, 255, 242, 0.4)';
   ctx.textAlign = 'center';
   ctx.shadowBlur = 4;
-  ctx.fillText(isAuto ? 'AUTO' : 'MANUAL', mx, my + size + 18);
+  ctx.fillText(isAuto ? (typeof t === 'function' ? t('hud.auto') : 'AUTO') : (typeof t === 'function' ? t('hud.manual') : 'MANUAL'), mx, my + size + 18);
 
   ctx.shadowBlur = 0;
   ctx.restore();
@@ -356,13 +356,13 @@ function updateHUD() {
   const modeEl = document.getElementById('mode-val');
   if (modeEl) {
     if (mouseDown) {
-      modeEl.textContent = 'MANUAL';
+      modeEl.textContent = (typeof t === 'function' ? t('hud.manual') : 'MANUAL');
       modeEl.style.color = COL.cyan;
     } else if (autoAimTarget) {
-      modeEl.textContent = 'AUTO';
+      modeEl.textContent = (typeof t === 'function' ? t('hud.auto') : 'AUTO');
       modeEl.style.color = COL.orange;
     } else {
-      modeEl.textContent = 'IDLE';
+      modeEl.textContent = (typeof t === 'function' ? t('hud.idle') : 'IDLE');
       modeEl.style.color = 'rgba(0, 255, 242, 0.4)';
     }
   }

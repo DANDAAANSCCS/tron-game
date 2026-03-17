@@ -156,7 +156,7 @@ function drawRoulette() {
   ctx.shadowColor = '#c0c0c0';
   ctx.shadowBlur = 12;
   ctx.textAlign = 'center';
-  ctx.fillText('SILVER COINS', cx, cy - radius - 40);
+  ctx.fillText((typeof t === 'function' ? t('roulette.title') : 'SILVER COINS'), cx, cy - radius - 40);
   ctx.shadowBlur = 0;
 
   ctx.restore();
@@ -277,7 +277,7 @@ function drawRoulette() {
     ctx.fillStyle = 'rgba(192, 192, 192, 0.5)';
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
-    ctx.fillText('SILVER COINS', cx, cy + radius + 95);
+    ctx.fillText((typeof t === 'function' ? t('roulette.title') : 'SILVER COINS'), cx, cy + radius + 95);
     ctx.restore();
   }
 }

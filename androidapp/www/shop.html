@@ -850,7 +850,7 @@
     <div id="reveal-bg-particles" aria-hidden="true"></div>
 
     <div class="reveal-header">
-      <div class="reveal-title" id="reveal-title-text">COFRE ABIERTO</div>
+      <div class="reveal-title" id="reveal-title-text" data-i18n="shop.opened">COFRE ABIERTO</div>
       <div class="reveal-total" id="reveal-total" aria-live="polite"></div>
     </div>
 
@@ -859,9 +859,8 @@
     </div>
 
     <div class="reveal-continue-wrap">
-      <button class="reveal-continue-btn" id="reveal-continue-btn" aria-label="Continuar al menu">
-        CONTINUAR
-      </button>
+      <button class="reveal-continue-btn" id="reveal-continue-btn" aria-label="Continuar al menu"
+        data-i18n="shop.continue">CONTINUAR</button>
     </div>
   </div>
 
@@ -870,9 +869,9 @@
 
     <div class="shop-header">
       <h1 class="shop-title">
-        <span class="logo-bracket">[</span>TIENDA<span class="logo-bracket">]</span>
+        <span class="logo-bracket">[</span><span data-i18n="shop.title">TIENDA</span><span class="logo-bracket">]</span>
       </h1>
-      <div class="shop-subtitle">CARD SHOP MODULE</div>
+      <div class="shop-subtitle" data-i18n="shop.subtitle">CARD SHOP MODULE</div>
       <div class="shop-gems" id="shop-gems-display" aria-label="Gemas disponibles">
         <canvas id="shop-gem-icon" width="18" height="18" aria-hidden="true"></canvas>
         <span id="shop-gems-count">0</span>
@@ -891,20 +890,20 @@
           </div>
           <div class="chest-light-beam"></div>
         </div>
-        <div class="chest-name">COFRE COMUN</div>
-        <div class="chest-desc">Cartas comunes y raras</div>
-        <div class="chest-range">25 &ndash; 90 cartas</div>
+        <div class="chest-name" data-i18n="shop.chest_common">COFRE COMUN</div>
+        <div class="chest-desc" data-i18n="shop.chest_common_desc">Cartas comunes y raras</div>
+        <div class="chest-range" data-i18n="shop.cards_range" data-min="25" data-max="90">25 &ndash; 90 cartas</div>
         <div class="chest-divider"></div>
         <div class="chest-footer">
           <div class="chest-cost">
             <div class="chest-gem-icon" aria-hidden="true">💎</div>
             <div>
               <div class="chest-cost-val">150</div>
-              <div class="chest-cost-label">GEMAS</div>
+              <div class="chest-cost-label" data-i18n="shop.gems_label">GEMAS</div>
             </div>
           </div>
           <button class="chest-open-btn" data-chest="common"
-            aria-label="Abrir Cofre Comun por 150 gemas">ABRIR</button>
+            aria-label="Abrir Cofre Comun por 150 gemas" data-i18n="shop.open">ABRIR</button>
         </div>
         <div class="chest-error" aria-live="polite" aria-atomic="true"></div>
       </div>
@@ -918,20 +917,20 @@
           </div>
           <div class="chest-light-beam"></div>
         </div>
-        <div class="chest-name">COFRE RARO</div>
-        <div class="chest-desc">Cartas raras y épicas</div>
-        <div class="chest-range">10 &ndash; 30 cartas</div>
+        <div class="chest-name" data-i18n="shop.chest_rare">COFRE RARO</div>
+        <div class="chest-desc" data-i18n="shop.chest_rare_desc">Cartas raras y épicas</div>
+        <div class="chest-range" data-i18n="shop.cards_range" data-min="10" data-max="30">10 &ndash; 30 cartas</div>
         <div class="chest-divider"></div>
         <div class="chest-footer">
           <div class="chest-cost">
             <div class="chest-gem-icon" aria-hidden="true">💎</div>
             <div>
               <div class="chest-cost-val">350</div>
-              <div class="chest-cost-label">GEMAS</div>
+              <div class="chest-cost-label" data-i18n="shop.gems_label">GEMAS</div>
             </div>
           </div>
           <button class="chest-open-btn" data-chest="rare"
-            aria-label="Abrir Cofre Raro por 350 gemas">ABRIR</button>
+            aria-label="Abrir Cofre Raro por 350 gemas" data-i18n="shop.open">ABRIR</button>
         </div>
         <div class="chest-error" aria-live="polite" aria-atomic="true"></div>
       </div>
@@ -945,20 +944,20 @@
           </div>
           <div class="chest-light-beam"></div>
         </div>
-        <div class="chest-name">COFRE EPICO</div>
-        <div class="chest-desc">Cartas épicas y legendarias</div>
-        <div class="chest-range">4 &ndash; 8 cartas</div>
+        <div class="chest-name" data-i18n="shop.chest_epic">COFRE EPICO</div>
+        <div class="chest-desc" data-i18n="shop.chest_epic_desc">Cartas épicas y legendarias</div>
+        <div class="chest-range" data-i18n="shop.cards_range" data-min="4" data-max="8">4 &ndash; 8 cartas</div>
         <div class="chest-divider"></div>
         <div class="chest-footer">
           <div class="chest-cost">
             <div class="chest-gem-icon" aria-hidden="true">💎</div>
             <div>
               <div class="chest-cost-val">500</div>
-              <div class="chest-cost-label">GEMAS</div>
+              <div class="chest-cost-label" data-i18n="shop.gems_label">GEMAS</div>
             </div>
           </div>
           <button class="chest-open-btn" data-chest="epic"
-            aria-label="Abrir Cofre Epico por 500 gemas">ABRIR</button>
+            aria-label="Abrir Cofre Epico por 500 gemas" data-i18n="shop.open">ABRIR</button>
         </div>
         <div class="chest-error" aria-live="polite" aria-atomic="true"></div>
       </div>
@@ -966,17 +965,29 @@
     </div><!-- /chest-grid -->
 
     <div class="shop-footer">
-      <button class="back-btn" id="shop-back-btn" aria-label="Volver al menu principal">
+      <button class="back-btn" id="shop-back-btn" aria-label="Volver al menu principal"
+        onclick="window.location.href='menu.html'">
         <span class="menu-arrow" aria-hidden="true">&lt;</span>
-        <span class="menu-text">VOLVER</span>
+        <span class="menu-text" data-i18n="shop.back">VOLVER</span>
       </button>
     </div>
 
   </div><!-- /shop-container -->
 
   <script src="auth-check.js"></script>
+  <script src="shared/i18n.js"></script>
   <script src="shared/bg-animation.js"></script>
   <script src="shared/audio.js"></script>
   <script src="shop.js"></script>
+  <script>
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (key === 'shop.cards_range') {
+        el.textContent = t(key, { min: el.dataset.min, max: el.dataset.max });
+      } else {
+        el.textContent = t(key);
+      }
+    });
+  </script>
 </body>
 </html>

@@ -311,7 +311,7 @@ function buildStatsTableHTML(ab, info) {
         letter-spacing:3px;
         color:rgba(255,255,255,0.25);
         margin-bottom:6px;
-      ">ESTADISTICAS</div>
+      ">${(typeof t === 'function' ? t('abilities.stats') : 'ESTADISTICAS')}</div>
       ${rows}
     </div>
   `;
@@ -352,11 +352,11 @@ function openModal(ab) {
   // ── Level label ──
   let levelLabel;
   if (info.level === 0) {
-    levelLabel = `<span style="color:rgba(255,255,255,0.25);font-size:0.6rem;letter-spacing:2px;">SIN CARTAS</span>`;
+    levelLabel = `<span style="color:rgba(255,255,255,0.25);font-size:0.6rem;letter-spacing:2px;">${(typeof t === 'function' ? t('abilities.no_cards') : 'SIN CARTAS')}</span>`;
   } else if (isMax) {
-    levelLabel = `<span style="color:#ffaa00;text-shadow:0 0 8px rgba(255,170,0,0.6);font-size:0.65rem;letter-spacing:2px;">LVL MAX</span>`;
+    levelLabel = `<span style="color:#ffaa00;text-shadow:0 0 8px rgba(255,170,0,0.6);font-size:0.65rem;letter-spacing:2px;">${(typeof t === 'function' ? t('abilities.lvl_max') : 'LVL MAX')}</span>`;
   } else {
-    levelLabel = `<span style="color:${rarity.color};text-shadow:0 0 6px ${rarity.color};font-size:0.65rem;letter-spacing:2px;">LVL ${info.level}</span>`;
+    levelLabel = `<span style="color:${rarity.color};text-shadow:0 0 6px ${rarity.color};font-size:0.65rem;letter-spacing:2px;">${(typeof t === 'function' ? t('abilities.lvl') : 'LVL')} ${info.level}</span>`;
   }
 
   // ── Upgrade section ──
@@ -376,7 +376,7 @@ function openModal(ab) {
         color:rgba(255,100,68,0.7);
         letter-spacing:1px;
         margin-top:4px;
-      ">FALTAN ${cardsMissing} CARTAS</div>`;
+      ">${(typeof t === 'function' ? t('abilities.missing_cards', {n: cardsMissing}) : 'FALTAN ' + cardsMissing + ' CARTAS')}</div>`;
     } else if (!silverReady) {
       hintHTML = `<div style="
         font-family:'Share Tech Mono',monospace;
@@ -384,7 +384,7 @@ function openModal(ab) {
         color:rgba(255,100,68,0.7);
         letter-spacing:1px;
         margin-top:4px;
-      ">FALTA PLATA</div>`;
+      ">${(typeof t === 'function' ? t('abilities.missing_silver') : 'FALTA PLATA')}</div>`;
     }
 
     upgradeHTML = `
@@ -404,7 +404,7 @@ function openModal(ab) {
           box-shadow:${canUpgrade ? '0 0 8px rgba(0,255,102,0.08)' : 'none'};
           transition:all 0.2s ease;
         " ${canUpgrade ? '' : 'disabled'}>
-          MEJORAR
+          ${(typeof t === 'function' ? t('abilities.upgrade') : 'MEJORAR')}
           <span style="
             display:block;
             font-family:'Share Tech Mono',monospace;
@@ -439,7 +439,7 @@ function openModal(ab) {
           text-shadow:0 0 8px rgba(255,102,68,0.4);
           box-shadow:0 0 8px rgba(255,68,34,0.08);
           transition:all 0.2s ease;
-        ">DESEQUIPAR</button>
+        ">${(typeof t === 'function' ? t('abilities.unequip') : 'DESEQUIPAR')}</button>
       `;
     } else {
       const noSlots = !slotsAvailable;
@@ -459,7 +459,7 @@ function openModal(ab) {
           text-shadow:${noSlots ? 'none' : '0 0 8px rgba(0,255,242,0.4)'};
           box-shadow:${noSlots ? 'none' : '0 0 8px rgba(0,255,242,0.08)'};
           transition:all 0.2s ease;
-        " ${noSlots ? 'disabled' : ''}>EQUIPAR</button>
+        " ${noSlots ? 'disabled' : ''}>${(typeof t === 'function' ? t('abilities.equip') : 'EQUIPAR')}</button>
       `;
     }
   }
@@ -520,7 +520,7 @@ function openModal(ab) {
             color:${rarity.color};
             text-shadow:0 0 8px ${rarity.color}88;
             margin-bottom:5px;
-          ">${ab.name}</div>
+          ">${(typeof t === 'function' ? t('ability.' + ab.id) : ab.name)}</div>
           <span style="
             font-family:'Share Tech Mono',monospace;
             font-size:0.5rem;
@@ -528,7 +528,7 @@ function openModal(ab) {
             padding:2px 7px;
             border:1px solid ${rarity.border};
             color:${rarity.color};
-          ">${rarity.label}</span>
+          ">${(typeof t === 'function' ? t('rarity.' + ab.rarity) : rarity.label)}</span>
           ${isEquipped ? `<span style="
             font-family:'Share Tech Mono',monospace;
             font-size:0.48rem;
@@ -538,7 +538,7 @@ function openModal(ab) {
             border:1px solid rgba(0,255,102,0.35);
             background:rgba(0,255,102,0.08);
             margin-left:6px;
-          ">EQUIPADO</span>` : ''}
+          ">${(typeof t === 'function' ? t('abilities.equipped_badge') : 'EQUIPADO')}</span>` : ''}
         </div>
       </div>
 
@@ -550,7 +550,7 @@ function openModal(ab) {
         color:rgba(255,255,255,0.45);
         line-height:1.5;
         margin-bottom:14px;
-      ">${ab.description}</div>
+      ">${(typeof t === 'function' ? t('ability.' + ab.id + '.desc') : ab.description)}</div>
 
       <!-- LEVEL + PROGRESS -->
       <div style="
@@ -565,7 +565,7 @@ function openModal(ab) {
           font-size:0.52rem;
           letter-spacing:1px;
           color:rgba(255,255,255,0.3);
-        ">${info.level > 0 && !isMax ? info.cardsTowardNext + ' / ' + info.cardsNeeded + ' CARTAS' : ''}</span>
+        ">${info.level > 0 && !isMax ? info.cardsTowardNext + ' / ' + info.cardsNeeded + ' ' + (typeof t === 'function' ? t('abilities.cards') : 'CARTAS') : ''}</span>
       </div>
       ${!isMax ? progressBarHTML : ''}
 
@@ -592,7 +592,7 @@ function openModal(ab) {
         color:rgba(255,255,255,0.4);
         cursor:pointer;
         transition:all 0.2s ease;
-      ">CERRAR</button>
+      ">${(typeof t === 'function' ? t('settings.close') : 'CERRAR')}</button>
 
     </div>
   `;
@@ -701,7 +701,7 @@ function renderAbilities() {
         font-size:0.48rem;
         letter-spacing:2px;
         color:rgba(255,255,255,0.18);
-      ">SIN CARTAS</span>`;
+      ">${(typeof t === 'function' ? t('abilities.no_cards') : 'SIN CARTAS')}</span>`;
     } else if (isMax) {
       lvlBadgeHTML = `<span style="
         font-family:'Orbitron',sans-serif;
@@ -710,7 +710,7 @@ function renderAbilities() {
         letter-spacing:2px;
         color:#ffaa00;
         text-shadow:0 0 6px rgba(255,170,0,0.6);
-      ">LVL MAX</span>`;
+      ">${(typeof t === 'function' ? t('abilities.lvl_max') : 'LVL MAX')}</span>`;
     } else {
       lvlBadgeHTML = `<span style="
         font-family:'Orbitron',sans-serif;
@@ -719,7 +719,7 @@ function renderAbilities() {
         letter-spacing:2px;
         color:${rarity.color};
         text-shadow:0 0 5px ${rarity.color};
-      ">LVL ${info.level}</span>`;
+      ">${(typeof t === 'function' ? t('abilities.lvl') : 'LVL')} ${info.level}</span>`;
     }
 
     // Upgrade arrow indicator (top-right)
@@ -771,7 +771,7 @@ function renderAbilities() {
             font-weight:900;
             letter-spacing:2px;
             color:${hasCards ? rarity.color : 'rgba(255,255,255,0.22)'};
-          ">${ab.name}</span>
+          ">${(typeof t === 'function' ? t('ability.' + ab.id) : ab.name)}</span>
           <span style="
             font-family:'Share Tech Mono',monospace;
             font-size:0.48rem;
@@ -780,7 +780,7 @@ function renderAbilities() {
             border:1px solid ${rarity.border};
             color:${rarity.color};
             opacity:${hasCards ? 1 : 0.4};
-          ">${rarity.label}</span>
+          ">${(typeof t === 'function' ? t('rarity.' + ab.rarity) : rarity.label)}</span>
         </div>
 
         <!-- Level + equipped dot -->

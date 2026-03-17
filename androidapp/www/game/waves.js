@@ -213,7 +213,10 @@ function updateWaveSpawning() {
       if (typeof playLevelUpSound === 'function') playLevelUpSound();
       saveProgress(true);
       fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
-      showOverlay('VICTORY!', `LEVEL ${currentLevel} COMPLETE — SCORE: ${score}`);
+      showOverlay(
+        (typeof t === 'function' ? t('game.victory') : 'VICTORY!'),
+        (typeof t === 'function' ? t('game.level_complete', {n: currentLevel, s: score}) : `LEVEL ${currentLevel} COMPLETE — SCORE: ${score}`)
+      );
       spawnRewardPopup('LEVEL COMPLETE!', '#00ff66');
       spawnRewardPopup('+25 GEMS', '#e040fb');
       // Hide touch controls
@@ -253,15 +256,15 @@ function updateWaveSpawning() {
     }
 
     wave++;
-    let waveMsg = 'INCOMING...';
+    let waveMsg = (typeof t === 'function' ? t('game.incoming') : 'INCOMING...');
     if (currentLevel === 2) {
-      if (wave === 21) waveMsg = 'TANKS ONLY — BRACE YOURSELF...';
-      else if (wave === 70) waveMsg = 'SENTINEL APPROACHING...';
-      else if (wave === 71) waveMsg = 'NEW THREAT: PHANTOMS DETECTED...';
-      else if (wave === BOSS_WAVE) waveMsg = 'FINAL WAVE — OVERLORD INCOMING';
+      if (wave === 21) waveMsg = (typeof t === 'function' ? t('wave.tanks_only') : 'TANKS ONLY — BRACE YOURSELF...');
+      else if (wave === 70) waveMsg = (typeof t === 'function' ? t('wave.sentinel') : 'SENTINEL APPROACHING...');
+      else if (wave === 71) waveMsg = (typeof t === 'function' ? t('wave.phantoms') : 'NEW THREAT: PHANTOMS DETECTED...');
+      else if (wave === BOSS_WAVE) waveMsg = (typeof t === 'function' ? t('wave.overlord_final') : 'FINAL WAVE — OVERLORD INCOMING');
     } else {
-      if (wave === TANK_START_WAVE) waveMsg = 'NEW THREAT DETECTED...';
-      else if (wave === BOSS_WAVE) waveMsg = 'FINAL WAVE — BOSS INCOMING';
+      if (wave === TANK_START_WAVE) waveMsg = (typeof t === 'function' ? t('wave.tank_threat') : 'NEW THREAT DETECTED...');
+      else if (wave === BOSS_WAVE) waveMsg = (typeof t === 'function' ? t('wave.boss_final') : 'FINAL WAVE — BOSS INCOMING');
     }
     if (typeof playWaveStartSound === 'function') playWaveStartSound();
     showOverlay(`WAVE ${wave}`, waveMsg);

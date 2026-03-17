@@ -27,14 +27,14 @@ function getUpgradeValue(upg) {
   // Sum of all levels with their respective tier bonuses
   let total = 0;
   let lvl = 0;
-  let t = 0;
+  let t_tier = 0;
   while (lvl < upg.level) {
-    const tierEnd = Math.min(upg.level, (t + 1) * PIPS_PER_TIER);
+    const tierEnd = Math.min(upg.level, (t_tier + 1) * PIPS_PER_TIER);
     const count = tierEnd - lvl;
-    const perLvl = upg.basePerLevel + t * 0.01;
+    const perLvl = upg.basePerLevel + t_tier * 0.01;
     total += count * perLvl;
     lvl = tierEnd;
-    t++;
+    t_tier++;
   }
   return total;
 }
@@ -90,7 +90,7 @@ function buyUpgrade(key) {
     turret.hp = Math.min(turret.hp + hpGain, turret.maxHp);
   }
 
-  spawnFloatingText(turret.x, turret.y - 50, 'UPGRADED!', upg.color);
+  spawnFloatingText(turret.x, turret.y - 50, (typeof t === 'function' ? t('game.upgraded') : 'UPGRADED!'), upg.color);
   if (typeof playBuySound === 'function') playBuySound();
   return true;
 }
@@ -153,7 +153,7 @@ function drawUpgradesPanel() {
   ctx.shadowColor = COL.cyan;
   ctx.shadowBlur = 12;
   ctx.textAlign = 'center';
-  ctx.fillText('UPGRADES', px + panelW / 2, py + 30);
+  ctx.fillText((typeof t === 'function' ? t('panel.upgrades') : 'UPGRADES'), px + panelW / 2, py + 30);
   ctx.shadowBlur = 0;
 
   // Gold display
@@ -265,7 +265,7 @@ function drawUpgradesPanel() {
       ctx.fillStyle = upg.color;
       ctx.shadowColor = upg.color;
       ctx.shadowBlur = 6;
-      ctx.fillText('MAX', px + panelW - 22, ry + 28);
+      ctx.fillText((typeof t === 'function' ? t('panel.max') : 'MAX'), px + panelW - 22, ry + 28);
     } else {
       ctx.fillStyle = canBuy ? '#ffd700' : 'rgba(255, 200, 0, 0.25)';
       ctx.shadowColor = canBuy ? '#ffd700' : 'transparent';
@@ -279,7 +279,7 @@ function drawUpgradesPanel() {
   ctx.font = '600 10px Share Tech Mono';
   ctx.fillStyle = 'rgba(0, 255, 242, 0.4)';
   ctx.textAlign = 'center';
-  ctx.fillText('TAP UPGRADE TO BUY | TAP X TO CLOSE', px + panelW / 2, py + panelH - 10);
+  ctx.fillText((typeof t === 'function' ? t('panel.tap_buy') : 'TAP UPGRADE TO BUY | TAP X TO CLOSE'), px + panelW / 2, py + panelH - 10);
 
   ctx.restore();
 }

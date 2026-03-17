@@ -40,7 +40,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   const password = document.getElementById('login-pass').value;
 
   if (!identifier || !password) {
-    errEl.textContent = 'FILL ALL FIELDS';
+    errEl.textContent = (typeof t === 'function' ? t('login.error_fields') : 'FILL ALL FIELDS');
     if (typeof playDenySound === 'function') playDenySound();
     return;
   }
@@ -56,11 +56,11 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       if (typeof playSelectSound === 'function') playSelectSound();
       window.location.href = '/menu.html';
     } else {
-      errEl.textContent = data.error || 'LOGIN FAILED';
+      errEl.textContent = data.error || (typeof t === 'function' ? t('login.error_login') : 'LOGIN FAILED');
       if (typeof playDenySound === 'function') playDenySound();
     }
   } catch (err) {
-    errEl.textContent = 'CONNECTION ERROR';
+    errEl.textContent = (typeof t === 'function' ? t('login.error_connection') : 'CONNECTION ERROR');
     if (typeof playDenySound === 'function') playDenySound();
   }
 });
@@ -77,19 +77,19 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
   const password2 = document.getElementById('reg-pass2').value;
 
   if (!username || !email || !password || !password2) {
-    errEl.textContent = 'FILL ALL FIELDS';
+    errEl.textContent = (typeof t === 'function' ? t('login.error_fields') : 'FILL ALL FIELDS');
     if (typeof playDenySound === 'function') playDenySound();
     return;
   }
   // Validar formato email en cliente
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    errEl.textContent = 'INVALID EMAIL FORMAT';
+    errEl.textContent = (typeof t === 'function' ? t('login.error_email') : 'INVALID EMAIL FORMAT');
     if (typeof playDenySound === 'function') playDenySound();
     return;
   }
   if (password !== password2) {
-    errEl.textContent = 'PASSWORDS DO NOT MATCH';
+    errEl.textContent = (typeof t === 'function' ? t('login.error_password') : 'PASSWORDS DO NOT MATCH');
     if (typeof playDenySound === 'function') playDenySound();
     return;
   }
@@ -105,11 +105,11 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
       if (typeof playSelectSound === 'function') playSelectSound();
       window.location.href = '/menu.html';
     } else {
-      errEl.textContent = data.error || 'REGISTER FAILED';
+      errEl.textContent = data.error || (typeof t === 'function' ? t('login.error_register') : 'REGISTER FAILED');
       if (typeof playDenySound === 'function') playDenySound();
     }
   } catch (err) {
-    errEl.textContent = 'CONNECTION ERROR';
+    errEl.textContent = (typeof t === 'function' ? t('login.error_connection') : 'CONNECTION ERROR');
     if (typeof playDenySound === 'function') playDenySound();
   }
 });

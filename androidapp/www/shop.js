@@ -197,7 +197,7 @@ async function openChest(chestType, card) {
   const cost = parseInt(card.dataset.cost, 10);
 
   if (currentGems < cost) {
-    showCardError(card, 'GEMAS INSUFICIENTES');
+    showCardError(card, (typeof t === 'function' ? t('shop.not_enough') : 'GEMAS INSUFICIENTES'));
     return;
   }
 
@@ -216,7 +216,7 @@ async function openChest(chestType, card) {
     });
 
     if (!res.ok) {
-      let msg = 'ERROR AL ABRIR';
+      let msg = (typeof t === 'function' ? t('shop.error_open') : 'ERROR AL ABRIR');
       try {
         const body = await res.json();
         if (body && body.error) msg = body.error.toUpperCase();
@@ -240,7 +240,7 @@ async function openChest(chestType, card) {
     showRevealOverlay(data);
 
   } catch (_) {
-    showCardError(card, 'ERROR DE RED');
+    showCardError(card, (typeof t === 'function' ? t('shop.error_network') : 'ERROR DE RED'));
     if (typeof playDenySound === 'function') playDenySound();
   } finally {
     if (btn) btn.disabled = false;
@@ -308,17 +308,17 @@ function spawnCardSparkles(cardEl, color) {
 
 // Build a single ability card element (starts hidden/flipped for reveal)
 function buildAbilityCard(abilityKey, count) {
-  const name   = ABILITY_NAMES[abilityKey] || abilityKey.toUpperCase();
+  const name   = (typeof t === 'function' ? t('ability.' + abilityKey) : (ABILITY_NAMES[abilityKey] || abilityKey.toUpperCase()));
   const icon   = ABILITY_ICONS[abilityKey] || '?';
   const rarity = ABILITY_RARITY[abilityKey] || 'common';
   const color  = RARITY_COLORS[rarity] || '#00fff2';
 
-  const rarityName = {
+  const rarityName = (typeof t === 'function' ? t('rarity.' + rarity) : ({
     common:    'COMUN',
     rare:      'RARO',
     epic:      'EPICO',
     legendary: 'LEGENDARIO',
-  }[rarity] || rarity.toUpperCase();
+  }[rarity] || rarity.toUpperCase()));
 
   const card = document.createElement('div');
   card.className = 'ability-card';
@@ -365,7 +365,7 @@ function revealCardsSequentially(cards, viewport) {
       // Scroll the new card into view
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-      // Show CONTINUAR button after last card
+      // Show continue button after last card
       if (idx === cards.length - 1) {
         setTimeout(() => {
           if (continueBtn) {
@@ -400,7 +400,7 @@ function showRevealOverlay(data) {
   viewport.innerHTML = '';
   if (continueBtn) continueBtn.classList.remove('visible');
 
-  totalEl.textContent = `${total} CARTA${total !== 1 ? 'S' : ''} OBTENIDA${total !== 1 ? 'S' : ''}`;
+  totalEl.textContent = (typeof t === 'function' ? t('shop.cards_obtained', {n: total}) : `${total} CARTA${total !== 1 ? 'S' : ''} OBTENIDA${total !== 1 ? 'S' : ''}`);
 
   // Show overlay with fade
   overlay.style.opacity = '0';
@@ -441,6 +441,7 @@ function hideRevealOverlay() {
 function initOverlay() {
   const continueBtn = document.getElementById('reveal-continue-btn');
   if (continueBtn) {
+    continueBtn.textContent = (typeof t === 'function' ? t('shop.continue') : 'CONTINUAR');
     continueBtn.addEventListener('click', () => {
       if (typeof playSelectSound === 'function') playSelectSound();
       hideRevealOverlay();

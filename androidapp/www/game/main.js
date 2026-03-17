@@ -152,7 +152,10 @@ function gameLoop(timestamp) {
       const upgBtn = document.getElementById('touch-upgrades-btn');
       if (upgBtn) upgBtn.style.display = 'none';
       // Show death message briefly, then start roulette
-      showOverlay('SYSTEM OFFLINE', `WAVE ${wave} / ${MAX_WAVES} | SCORE: ${score}`);
+      showOverlay(
+        (typeof t === 'function' ? t('game.system_offline') : 'SYSTEM OFFLINE'),
+        `WAVE ${wave} / ${MAX_WAVES} | SCORE: ${score}`
+      );
     }
 
     // After 2 seconds of death screen, start roulette
@@ -214,14 +217,14 @@ async function startGame() {
   if (upgBtn) upgBtn.style.display = 'flex';
 
   if (restored) {
-    showOverlay(`WAVE ${wave}`, 'SESSION RESTORED — RESUMING...');
+    showOverlay(`WAVE ${wave}`, (typeof t === 'function' ? t('game.session_restored') : 'SESSION RESTORED — RESUMING...'));
     await sleep(1500);
   } else {
     for (let i = 3; i >= 1; i--) {
-      showOverlay(i.toString(), 'INITIALIZING DEFENSE GRID...');
+      showOverlay(i.toString(), (typeof t === 'function' ? t('game.countdown') : 'INITIALIZING DEFENSE GRID...'));
       await sleep(700);
     }
-    showOverlay('DEFEND!', '');
+    showOverlay((typeof t === 'function' ? t('game.defend') : 'DEFEND!'), '');
     await sleep(500);
   }
 
