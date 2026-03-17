@@ -11,7 +11,17 @@ function startWave() {
   waveSentinelSpawned = 0;
   waveOverlordSpawned = 0;
 
-  if (currentLevel === 2) {
+  if (isInfiniteMode) {
+    // ── Infinite mode: all enemy types, scaling difficulty ──
+    const w = wave;
+    waveEnemiesTotal = 5 + w * 2 + Math.floor(w / 10) * 3;
+    waveTanksToSpawn = w >= 5 ? Math.floor(w / 3) : 0;
+    wavePhantomsToSpawn = w >= 15 ? Math.floor((w - 15) / 4) + 1 : 0;
+    waveSentinelToSpawn = (w % 25 === 0 && w > 0) ? 1 : 0;
+    waveBossToSpawn = (w % 50 === 0 && w > 0) ? 1 : 0;
+    waveOverlordToSpawn = (w % 100 === 0 && w > 0) ? 1 : 0;
+    waveEnemiesTotal += waveSentinelToSpawn + waveBossToSpawn + waveOverlordToSpawn;
+  } else if (currentLevel === 2) {
     // ── Level 2 wave composition ──
     if (wave <= 20) {
       // Waves 1-20: Runner + Tank (tank less frequent)

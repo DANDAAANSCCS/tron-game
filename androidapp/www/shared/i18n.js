@@ -230,6 +230,30 @@ const LANGS = {
     'rewards.gems': 'GEMAS',
     'rewards.gold': 'oro',
 
+    // Menu
+    'menu.infinite': 'INFINITO',
+
+    // Infinite mode
+    'infinite.title': 'MODO INFINITO',
+    'infinite.subtitle': 'SOBREVIVE TODO LO QUE PUEDAS',
+    'infinite.start': 'INICIAR',
+    'infinite.best': 'MEJOR',
+    'infinite.no_record': 'SIN RECORD',
+
+    // Ranking
+    'ranking.title': 'RANKING',
+    'ranking.subtitle': 'TABLA DE CLASIFICACION',
+    'ranking.tab_levels': 'NIVELES',
+    'ranking.tab_infinite': 'INFINITO',
+    'ranking.rank': '#',
+    'ranking.player': 'JUGADOR',
+    'ranking.level': 'NIVEL',
+    'ranking.wave': 'OLEADA',
+    'ranking.score': 'PUNTOS',
+    'ranking.time': 'TIEMPO',
+    'ranking.no_data': 'SIN DATOS AUN',
+    'ranking.back': 'VOLVER',
+
     // Update
     'update.title': 'NUEVA VERSION',
     'update.download': 'DESCARGAR',
@@ -457,6 +481,30 @@ const LANGS = {
     // Rewards
     'rewards.gems': 'GEMS',
     'rewards.gold': 'gold',
+
+    // Menu
+    'menu.infinite': 'INFINITE',
+
+    // Infinite mode
+    'infinite.title': 'INFINITE MODE',
+    'infinite.subtitle': 'SURVIVE AS LONG AS YOU CAN',
+    'infinite.start': 'START',
+    'infinite.best': 'BEST',
+    'infinite.no_record': 'NO RECORD',
+
+    // Ranking
+    'ranking.title': 'RANKING',
+    'ranking.subtitle': 'LEADERBOARD',
+    'ranking.tab_levels': 'LEVELS',
+    'ranking.tab_infinite': 'INFINITE',
+    'ranking.rank': '#',
+    'ranking.player': 'PLAYER',
+    'ranking.level': 'LEVEL',
+    'ranking.wave': 'WAVE',
+    'ranking.score': 'SCORE',
+    'ranking.time': 'TIME',
+    'ranking.no_data': 'NO DATA YET',
+    'ranking.back': 'BACK',
 
     // Update
     'update.title': 'NEW VERSION',

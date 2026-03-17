@@ -27,8 +27,10 @@ const PLAYER_MAX_HP = 100;
 
 // ── Level config ──
 const urlParams = new URLSearchParams(window.location.search);
-const currentLevel = parseInt(urlParams.get('level')) || 1;
-const MAX_WAVES = 100;
+const _levelParam = urlParams.get('level') || '1';
+const isInfiniteMode = _levelParam === 'infinite';
+const currentLevel = isInfiniteMode ? 99 : (parseInt(_levelParam) || 1);
+const MAX_WAVES = isInfiniteMode ? Infinity : 100;
 const TANK_START_WAVE = 50;
 const BOSS_WAVE = 100;
 const STORAGE_KEY = 'neonDefenseProgress';

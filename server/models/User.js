@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema({
     abilityLevels: { type: mongoose.Schema.Types.Mixed, default: {} }, // { id: currentLevel }
     // Habilidades equipadas (max 5)
     equippedAbilities: { type: [String], default: [] },
+    // Infinite mode best
+    infiniteBest: {
+      score: { type: Number, default: 0 },
+      wave: { type: Number, default: 0 },
+      timePlayed: { type: Number, default: 0 }, // seconds
+    },
     // Auto-save: estado de partida en curso
     sessionState: { type: mongoose.Schema.Types.Mixed, default: null },
   }

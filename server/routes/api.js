@@ -410,4 +410,84 @@ router.delete('/autosave', requireAuth, async (req, res) => {
   }
 });
 
+// ── Infinite mode: save best score ──
+router.post('/infinite/save', requireAuth, async (req, res) => {
+  try {
+    const { score, wave, timePlayed } = req.body;
+    const user = await User.findById(req.user._id);
+    const best = user.gameData?.infiniteBest || { score: 0, wave: 0, timePlayed: 0 };
+
+    // Only update if new score is higher
+    if (score > best.score) {
+      await User.findByIdAndUpdate(req.user._id, {
+        $set: {
+          'gameData.infiniteBest.score': score,
+          'gameData.infiniteBest.wave': wave,
+          'gameData.infiniteBest.timePlayed': timePlayed,
+        }
+      });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'SAVE FAILED' });
+  }
+});
+
+// ── Leaderboards ──
+router.get('/leaderboard/levels', async (req, res) => {
+  try {
+    const users = await User.find(
+      { 'gameData.levelProgress': { $exists: true } },
+      { displayName: 1, username: 1, 'gameData.levelProgress': 1 }
+    ).lean();
+
+    const board = users.map(u => {
+      const lp = u.gameData?.levelProgress || {};
+      let maxWave = 0;
+      let maxLevel = 0;
+      let totalScore = 0;
+      for (const [key, val] of Object.entries(lp)) {
+        const lvlNum = parseInt(key.replace('level', ''));
+        if (val.completed) maxLevel = Math.max(maxLevel, lvlNum);
+        maxWave = Math.max(maxWave, val.waveReached || 0);
+        totalScore += val.score || 0;
+      }
+      return {
+        name: u.displayName || u.username || 'Unknown',
+        maxLevel,
+        maxWave,
+        totalScore,
+      };
+    }).filter(e => e.maxWave > 0)
+      .sort((a, b) => b.maxLevel - a.maxLevel || b.maxWave - a.maxWave || b.totalScore - a.totalScore)
+      .slice(0, 50);
+
+    res.json(board);
+  } catch (err) {
+    res.status(500).json({ error: 'LEADERBOARD FAILED' });
+  }
+});
+
+router.get('/leaderboard/infinite', async (req, res) => {
+  try {
+    const users = await User.find(
+      { 'gameData.infiniteBest.score': { $gt: 0 } },
+      { displayName: 1, username: 1, 'gameData.infiniteBest': 1 }
+    ).sort({ 'gameData.infiniteBest.score': -1 })
+      .limit(50)
+      .lean();
+
+    const board = users.map(u => ({
+      name: u.displayName || u.username || 'Unknown',
+      score: u.gameData?.infiniteBest?.score || 0,
+      wave: u.gameData?.infiniteBest?.wave || 0,
+      timePlayed: u.gameData?.infiniteBest?.timePlayed || 0,
+    }));
+
+    res.json(board);
+  } catch (err) {
+    res.status(500).json({ error: 'LEADERBOARD FAILED' });
+  }
+});
+
 module.exports = router;

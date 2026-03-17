@@ -150,34 +150,43 @@ function gameLoop(timestamp) {
     drawDeathEffect();
 
     if (deathTimer === 1) {
-      saveProgress();
+      if (isInfiniteMode) {
+        // Save infinite mode score
+        const timePlayed = Math.floor((Date.now() - levelStartTime) / 1000);
+        fetch('/api/infinite/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ score, wave, timePlayed }),
+        }).catch(() => {});
+      } else {
+        saveProgress();
+      }
       fetch('/api/autosave', { method: 'DELETE' }).catch(() => {});
       if (typeof stopMusic === 'function') stopMusic();
       if (typeof playDeathSound === 'function') playDeathSound();
-      // Hide touch controls on death
       const upgBtn = document.getElementById('touch-upgrades-btn');
       if (upgBtn) upgBtn.style.display = 'none';
-      // Show death message briefly, then start roulette
+      const waveText = isInfiniteMode ? `${(typeof t==='function'?t('hud.wave'):'WAVE')} ${wave}` : `${(typeof t==='function'?t('hud.wave'):'WAVE')} ${wave} / ${MAX_WAVES}`;
       showOverlay(
         (typeof t === 'function' ? t('game.system_offline') : 'SYSTEM OFFLINE'),
-        `WAVE ${wave} / ${MAX_WAVES} | SCORE: ${score}`
+        `${waveText} | ${(typeof t==='function'?t('hud.score'):'SCORE')}: ${score}`
       );
     }
+
+    const _returnUrl = isInfiniteMode ? '/infinite.html' : '/levels.html';
 
     // After 2 seconds of death screen, start roulette
     if (deathTimer === 120 && !_rouletteActive && score > 0) {
       hideOverlay();
       startRoulette(score, (coins) => {
         saveSilverCoins(coins);
-        setTimeout(() => {
-          window.location.href = '/levels.html';
-        }, 500);
+        setTimeout(() => { window.location.href = _returnUrl; }, 500);
       });
     }
 
     // If score is 0, skip roulette
     if (deathTimer >= DEATH_RETURN_DELAY && score === 0) {
-      window.location.href = '/levels.html';
+      window.location.href = _returnUrl;
       return;
     }
 

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script src="/app-config.js"></script>
+  <script src="shared/offline.js"></script>
+  <script src="shared/i18n.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEON DEFENSE — RANKING</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ══════════════════════════════════════ */
+    /*  RANKING PAGE                         */
+    /* ══════════════════════════════════════ */
+
+    .ranking-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Header ── */
+    .ranking-header {
+      flex-shrink: 0;
+      padding: 40px 16px 12px;
+      width: 100%;
+    }
+
+    .ranking-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 12px;
+      color: var(--cyan);
+      text-shadow:
+        0 0 10px var(--cyan),
+        0 0 30px var(--cyan),
+        0 0 60px rgba(0, 255, 242, 0.4);
+      user-select: none;
+    }
+
+    .ranking-subtitle {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 8px;
+      color: rgba(0, 255, 242, 0.4);
+      margin-top: 6px;
+    }
+
+    /* ── Tab Row ── */
+    .ranking-tabs {
+      display: flex;
+      flex-direction: row;
+      gap: 0;
+      margin-top: 16px;
+      border-bottom: 1px solid rgba(0, 255, 242, 0.12);
+      width: 100%;
+      max-width: 480px;
+      align-self: center;
+    }
+
+    .tab-btn {
+      flex: 1;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      padding: 10px 8px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: rgba(0, 255, 242, 0.3);
+      cursor: pointer;
+      transition: color 0.25s ease, border-color 0.25s ease, text-shadow 0.25s ease;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+
+    .tab-btn.active {
+      color: var(--cyan);
+      border-bottom: 2px solid var(--cyan);
+      text-shadow: 0 0 10px var(--cyan), 0 0 20px rgba(0, 255, 242, 0.4);
+    }
+
+    .tab-btn:not(.active):hover {
+      color: rgba(0, 255, 242, 0.6);
+    }
+
+    /* ── Scrollable content ── */
+    .ranking-content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
+      max-width: 480px;
+      align-self: center;
+      padding: 12px 12px 0;
+    }
+
+    .ranking-content::-webkit-scrollbar { width: 3px; }
+    .ranking-content::-webkit-scrollbar-track { background: transparent; }
+    .ranking-content::-webkit-scrollbar-thumb { background: rgba(0, 255, 242, 0.2); border-radius: 2px; }
+
+    /* ── Table ── */
+    .rank-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .rank-table thead tr {
+      border-bottom: 1px solid rgba(0, 255, 242, 0.25);
+    }
+
+    .rank-table thead th {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 400;
+      letter-spacing: 3px;
+      color: var(--cyan);
+      text-shadow: 0 0 6px rgba(0, 255, 242, 0.4);
+      padding: 8px 6px;
+      text-align: left;
+    }
+
+    .rank-table thead th:first-child {
+      text-align: center;
+      width: 38px;
+    }
+
+    .rank-table thead th:last-child {
+      text-align: right;
+    }
+
+    /* Data rows */
+    .rank-table tbody tr {
+      border-bottom: 1px solid rgba(0, 255, 242, 0.06);
+      min-height: 44px;
+      transition: background 0.2s ease;
+    }
+
+    .rank-table tbody tr:nth-child(odd) {
+      background: rgba(0, 255, 242, 0.02);
+    }
+
+    .rank-table tbody tr:nth-child(even) {
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .rank-table tbody tr:active {
+      background: rgba(0, 255, 242, 0.05);
+    }
+
+    .rank-table tbody td {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+      padding: 10px 6px;
+      min-height: 44px;
+      text-align: left;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    /* Rank cell — centered */
+    .rank-table tbody td.col-rank {
+      text-align: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 900;
+      width: 38px;
+      color: rgba(0, 255, 242, 0.5);
+    }
+
+    /* Top 3 rank colors */
+    .rank-table tbody tr.rank-1 td.col-rank {
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    }
+    .rank-table tbody tr.rank-2 td.col-rank {
+      color: #c0c0c0;
+      text-shadow: 0 0 8px rgba(192, 192, 192, 0.5);
+    }
+    .rank-table tbody tr.rank-3 td.col-rank {
+      color: #cd7f32;
+      text-shadow: 0 0 8px rgba(205, 127, 50, 0.5);
+    }
+
+    /* Numeric value cells */
+    .rank-table tbody td.col-value {
+      color: var(--cyan);
+      text-shadow: 0 0 6px rgba(0, 255, 242, 0.3);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .rank-table tbody td:last-child {
+      text-align: right;
+    }
+
+    /* No data message */
+    .rank-empty {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 4px;
+      color: rgba(0, 255, 242, 0.25);
+      text-align: center;
+      padding: 48px 16px;
+    }
+
+    /* Panels */
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* ── Footer ── */
+    .ranking-footer {
+      flex-shrink: 0;
+      padding: 12px 16px 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="scanlines"></div>
+
+  <div class="ranking-container">
+
+    <!-- Header -->
+    <div class="ranking-header">
+      <h1 class="ranking-title">
+        <span class="logo-bracket">[</span>
+        <span data-i18n="ranking.title">RANKING</span>
+        <span class="logo-bracket">]</span>
+      </h1>
+      <div class="ranking-subtitle" data-i18n="ranking.subtitle">GLOBAL LEADERBOARD</div>
+
+      <!-- Tab buttons -->
+      <div class="ranking-tabs" role="tablist" aria-label="Ranking tabs">
+        <button
+          class="tab-btn active"
+          id="tab-levels-btn"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-levels"
+          data-tab="levels"
+          data-i18n="ranking.tab_levels"
+        >NIVELES</button>
+        <button
+          class="tab-btn"
+          id="tab-infinite-btn"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-infinite"
+          data-tab="infinite"
+          data-i18n="ranking.tab_infinite"
+        >INFINITO</button>
+      </div>
+    </div>
+
+    <!-- Scrollable content area -->
+    <div class="ranking-content" id="ranking-content">
+
+      <!-- Levels panel -->
+      <div
+        class="tab-panel active"
+        id="panel-levels"
+        role="tabpanel"
+        aria-labelledby="tab-levels-btn"
+      >
+        <table class="rank-table" aria-label="Ranking por niveles">
+          <thead>
+            <tr>
+              <th scope="col" data-i18n="ranking.rank">#</th>
+              <th scope="col" data-i18n="ranking.player">PLAYER</th>
+              <th scope="col" data-i18n="ranking.level">LEVEL</th>
+              <th scope="col" data-i18n="ranking.wave">WAVE</th>
+              <th scope="col" data-i18n="ranking.score">SCORE</th>
+            </tr>
+          </thead>
+          <tbody id="levels-tbody">
+            <!-- Injected by ranking.js -->
+          </tbody>
+        </table>
+        <div class="rank-empty" id="levels-empty" style="display:none;" data-i18n="ranking.no_data" aria-live="polite">
+          SIN DATOS AUN
+        </div>
+      </div>
+
+      <!-- Infinite panel -->
+      <div
+        class="tab-panel"
+        id="panel-infinite"
+        role="tabpanel"
+        aria-labelledby="tab-infinite-btn"
+        aria-hidden="true"
+      >
+        <table class="rank-table" aria-label="Ranking modo infinito">
+          <thead>
+            <tr>
+              <th scope="col" data-i18n="ranking.rank">#</th>
+              <th scope="col" data-i18n="ranking.player">PLAYER</th>
+              <th scope="col" data-i18n="ranking.score">SCORE</th>
+              <th scope="col" data-i18n="ranking.wave">WAVE</th>
+              <th scope="col" data-i18n="ranking.time">TIME</th>
+            </tr>
+          </thead>
+          <tbody id="infinite-tbody">
+            <!-- Injected by ranking.js -->
+          </tbody>
+        </table>
+        <div class="rank-empty" id="infinite-empty" style="display:none;" data-i18n="ranking.no_data" aria-live="polite">
+          SIN DATOS AUN
+        </div>
+      </div>
+
+    </div><!-- /ranking-content -->
+
+    <!-- Footer -->
+    <div class="ranking-footer">
+      <a
+        href="/menu.html"
+        class="back-btn"
+        id="ranking-back-btn"
+        aria-label="Volver al menu principal"
+      >
+        <span class="menu-arrow" aria-hidden="true">&lt;</span>
+        <span class="menu-text" data-i18n="ranking.back">VOLVER</span>
+      </a>
+    </div>
+
+  </div><!-- /ranking-container -->
+
+  <script src="shared/bg-animation.js"></script>
+  <script src="shared/audio.js"></script>
+  <script src="ranking.js"></script>
+  <script>
+    // Apply i18n to all data-i18n elements
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.placeholder = typeof t === 'function' ? t(key) : el.textContent;
+      } else {
+        var val = typeof t === 'function' ? t(key) : null;
+        if (val) el.textContent = val;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -48,12 +48,14 @@ function selectItem(index) {
   setTimeout(() => item.classList.remove('flash'), 400);
 
   // Handle menu actions
-  const actions = ['start', 'upgrades', 'abilities', 'shop', 'controls', 'ranking'];
+  const actions = ['start', 'upgrades', 'abilities', 'shop', 'infinite', 'ranking'];
   const urls = {
     start: '/levels.html',
     upgrades: '/upgrades.html',
     abilities: '/abilities.html',
     shop: '/shop.html',
+    infinite: '/infinite.html',
+    ranking: '/ranking.html',
   };
   if (urls[actions[index]]) {
     setTimeout(() => {
