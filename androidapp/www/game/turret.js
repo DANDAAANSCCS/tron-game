@@ -120,14 +120,17 @@ class Turret {
     const bx = this.x + Math.cos(this.angle) * (this.radius + 12);
     const by = this.y + Math.sin(this.angle) * (this.radius + 12);
 
-    // Multi-shot: fire all guaranteed bullets in a fan pattern
-    const totalShots = (typeof getMultiShotCount === 'function') ? getMultiShotCount() : 1;
+    // Multi-shot: guaranteed bullets + chance for one extra
+    const guaranteed = (typeof getMultiShotGuaranteed === 'function') ? getMultiShotGuaranteed() : 1;
+    const extraChance = (typeof getMultiShotChance === 'function') ? getMultiShotChance() : 0;
+    const hasExtra = extraChance > 0 && Math.random() < extraChance;
+    const totalShots = guaranteed + (hasExtra ? 1 : 0);
 
     for (let i = 0; i < totalShots; i++) {
       let shotAngle = this.angle;
       if (totalShots > 1) {
         // Fan pattern: spread bullets evenly with slight randomness
-        const fanWidth = 0.15 * (totalShots - 1); // wider fan for more shots
+        const fanWidth = 0.12 * (totalShots - 1);
         const offset = (i / (totalShots - 1) - 0.5) * fanWidth * 2;
         shotAngle += offset + (Math.random() - 0.5) * curSpread;
       } else {

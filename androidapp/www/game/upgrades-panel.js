@@ -11,11 +11,11 @@ function getUpgradePerLevel(upg) {
 function getUpgradeDesc(upg) {
   const pct = Math.round(getUpgradePerLevel(upg) * 100);
   if (upg === upgrades.doubleBul) {
-    const shots = (typeof getMultiShotCount === 'function') ? getMultiShotCount() : 1;
+    const guaranteed = (typeof getMultiShotGuaranteed === 'function') ? getMultiShotGuaranteed() : 1;
+    const chance = (typeof getMultiShotChancePct === 'function') ? getMultiShotChancePct() : 0;
     const names = ['SINGLE', 'DOUBLE', 'TRIPLE', 'QUAD', 'PENTA', 'HEXA', 'HEPTA', 'OCTA'];
-    const shotName = names[shots - 1] || (shots + 'x');
-    const progress = (typeof getMultiShotProgressPct === 'function') ? getMultiShotProgressPct() : 0;
-    return `${shotName} [${progress}%]`;
+    const shotName = names[guaranteed - 1] || (guaranteed + 'x');
+    return `${shotName} [${chance}%]`;
   }
   return `+${pct}% ${upg.descBase}`;
 }
@@ -61,26 +61,29 @@ function getCurrentSpread() {
 }
 
 // Multi-shot system:
-// - Starts at SINGLE (1 bullet). Progress builds toward 60%.
-// - At 60%: upgrades to DOUBLE (2 bullets), progress resets to 0%.
-// - At 60% again: upgrades to TRIPLE (3 bullets), resets again.
-// - The current tier is always guaranteed (no chance), tier only at 60%.
+// - SINGLE: 1 guaranteed bullet. Progress 0-65% = chance for 2nd bullet.
+// - At 65%: becomes DOUBLE (2 guaranteed). Progress resets to 0%.
+// - Now 0-65% = chance for 3rd bullet. At 65%: becomes TRIPLE. Etc.
+// - Previous tier is always guaranteed, current tier is probability.
+// - Max chance per tier: 65%.
 
-function getMultiShotCount() {
-  // Returns total bullets to fire (1 = single, 2 = double, 3 = triple, etc.)
+const MULTI_SHOT_MAX_CHANCE = 0.65;
+
+function getMultiShotGuaranteed() {
+  // Returns number of GUARANTEED bullets (always fire these)
   const val = getUpgradeValue(upgrades.doubleBul);
-  return 1 + Math.floor(val / 0.60);
+  return 1 + Math.floor(val / MULTI_SHOT_MAX_CHANCE);
 }
 
-function getMultiShotProgress() {
-  // Returns progress toward next tier (0.0 to 0.60)
+function getMultiShotChance() {
+  // Returns chance (0.0 to 0.65) for ONE extra bullet beyond guaranteed
   const val = getUpgradeValue(upgrades.doubleBul);
-  return val % 0.60;
+  return val % MULTI_SHOT_MAX_CHANCE;
 }
 
-function getMultiShotProgressPct() {
-  // Returns progress as percentage (0 to 100)
-  return Math.round((getMultiShotProgress() / 0.60) * 100);
+function getMultiShotChancePct() {
+  // Returns chance as integer percentage (0 to 65)
+  return Math.round(getMultiShotChance() * 100);
 }
 
 function getCurrentMaxHp() {
@@ -95,17 +98,17 @@ function buyUpgrade(key) {
     return false;
   }
   // Track multi-shot before upgrade
-  const prevShots = (key === 'doubleBul' && typeof getMultiShotCount === 'function') ? getMultiShotCount() : 0;
+  const prevGuaranteed = (key === 'doubleBul' && typeof getMultiShotGuaranteed === 'function') ? getMultiShotGuaranteed() : 0;
 
   gold -= cost;
   upg.level++;
 
-  // Multi-shot tier up: show message when shot count increases
-  if (key === 'doubleBul' && typeof getMultiShotCount === 'function') {
-    const newShots = getMultiShotCount();
-    if (newShots > prevShots) {
+  // Multi-shot tier up: show message when guaranteed count increases
+  if (key === 'doubleBul' && typeof getMultiShotGuaranteed === 'function') {
+    const newGuaranteed = getMultiShotGuaranteed();
+    if (newGuaranteed > prevGuaranteed) {
       const names = ['SINGLE', 'DOUBLE', 'TRIPLE', 'QUAD', 'PENTA', 'HEXA', 'HEPTA', 'OCTA'];
-      const shotName = names[newShots - 1] || (newShots + 'x');
+      const shotName = names[newGuaranteed - 1] || (newGuaranteed + 'x');
       spawnFloatingText(turret.x, turret.y - 70, `${shotName} SHOT!`, upg.color);
       spawnRewardPopup(`${shotName} SHOT!`, upg.color);
       upg.tier++;
